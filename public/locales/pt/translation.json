@@ -1,0 +1,1722 @@
+{
+  "greeting": "Olá Mundo!",
+  "hero": {
+    "title": "Plataforma intuitiva de pré-venda.\nSDR inteligente 24/7 com hiperpersonalização e muito mais",
+    "subtitle": "Ganhe 1.000 mensagens gratuitas, receba relatórios diários e conte com uma IA que envia áudios e faz ligações automáticas de follow-up",
+    "emailPlaceholder": "digite seu e-mail...",
+    "scheduleButton": "Agendar Demonstração Gratuita"
+  },
+  "partnerships": {
+    "mainText": "Mais de 55 empresas já estão transformando seus resultados com as soluções da QualifAI",
+    "leftCard": {
+      "title": "Não fique para trás!",
+      "cta": "Ver Demonstração"
+    },
+    "benefits": [
+      {
+        "description": "Plataforma fácil de usar"
+      },
+      {
+        "description": "Mensageria sem markUP"
+      },
+      {
+        "description": "Respostas imediatas 24.7"
+      }
+    ]
+  },
+  "featuresSection": {
+    "title": "Seu time está ocupado demais com leads desqualificados?",
+    "subtitle": "Vendedores de alta performance perdem até 40% do tempo em tarefas operacionais que não geram receita: prospectar listas, enviar mensagens repetitivas e falar com leads que nunca vão comprar.",
+    "scheduleButton": "Agendar Demonstração",
+    "features": {
+      "wastedTime": {
+        "title": "Tempo Desperdiçado",
+        "description": "Horas em planilhas e follow-ups manuais."
+      },
+      "coldLeads": {
+        "title": "Leads Frios na Agenda",
+        "description": "Reuniões com curiosos, não com compradores."
+      },
+      "highCost": {
+        "title": "Custo Elevado",
+        "description": "Salários, comissões e ferramentas para treinamento de SDRs."
+      },
+      "lostOpportunities": {
+        "title": "Oportunidades Perdidas",
+        "description": "Leads que não são atendidos na hora e perdem interesse."
+      }
+    }
+  },
+  "servicesSection": {
+    "title": "A QualifAI: Inteligência que transforma seu funil de vendas em lucro.",
+    "specialistButton": "Falar com Especialista",
+    "services": {
+      "instantQualification": {
+        "title": "Qualificação Instantânea e Inteligente",
+        "description": "Nossa IA usa análise avançada para identificar e priorizar leads em tempo real, garantindo que sua equipe fale apenas com os mais promissores."
+      },
+      "humanCommunication": {
+        "title": "Comunicação Humana e em Escala",
+        "description": "A IA da QualifAI conversa com seus leads no WhatsApp e LinkedIn usando texto e áudios personalizados, construindo rapport e qualificando com perfeição."
+      },
+      "fullCalendar": {
+        "title": "Agenda Cheia, CRM Sincronizado",
+        "description": "A IA agenda reuniões diretamente no Google Calendar e atualiza seu CRM, criando um fluxo de vendas automático e sem atrito."
+      },
+      "service247": {
+        "title": "Atendimento 24/7. Sem Pausas.",
+        "description": "Nosso SDR virtual trabalha 24 horas por dia, 7 dias por semana, garantindo que nenhum lead seja perdido, não importa a hora que ele chegue."
+      }
+    }
+  },
+  "howItWorksSection": {
+    "title": "Receba reuniões qualificadas <br /> em 3 passos simples.",
+    "steps": {
+      "connect": {
+        "title": "Conecte seus canais em minutos",
+        "description": "Integre seu WhatsApp e CRM. Nossa IA está pronta para começar a trabalhar."
+      },
+      "qualify": {
+        "title": "Nossa IA qualifica leads",
+        "description": "Usando análise avançada, identificamos e priorizamos leads em tempo real."
+      },
+      "schedule": {
+        "title": "Receba reuniões na sua agenda",
+        "description": "A IA agenda as reuniões e atualiza seu CRM, criando um fluxo automático."
+      }
+    }
+  },
+  "contactSection": {
+    "title": "Agende uma Demonstração",
+    "subtitle": "Descubra como nossa solução pode transformar seu negócio.",
+    "address": "Espaço Regus, Center Shopping, Sala 646 – Av. João Naves de Ávila, 1331 – Uberlândia/MG",
+    "successTitle": "Agendamento Enviado!",
+    "successMessage": "Obrigado! Entraremos em contato em breve para confirmar.",
+    "calendar": {
+      "invalidDateError": "Erro: Data inválida para o calendário.",
+      "daysOfWeek": [
+        "Seg",
+        "Ter",
+        "Qua",
+        "Qui",
+        "Sex",
+        "Sáb",
+        "Dom"
+      ]
+    },
+    "form": {
+      "title": "Vamos Conversar?",
+      "labels": {
+        "fullName": "Nome Completo",
+        "workEmail": "Email Corporativo",
+        "countryCode": "DDI",
+        "phone": "Telefone",
+        "company": "Empresa",
+        "role": "Cargo",
+        "plan": "Plano de Interesse",
+        "help": "Como podemos ajudar?",
+        "time": "Horário"
+      },
+      "roles": {
+        "ceo": "CEO / Fundador",
+        "director": "Diretor",
+        "manager": "Gerente",
+        "sales": "Vendedor / SDR",
+        "other": "Outro"
+      },
+      "plans": {
+        "light": "Light",
+        "pro": "Pro",
+        "unlimited": "Ilimitado"
+      },
+      "checkboxes": {
+        "communications": "Concordo em receber outras comunicações da QualifAI.",
+        "privacyPolicy": "Eu li e concordo com a <1>Políticas de privacidade</1>."
+      },
+      "buttons": {
+        "confirm": "Confirmar Agendamento",
+        "schedule": "Agendar"
+      }
+    }
+  },
+  "footer": {
+    "tagline": "Transformando negócios com inteligência artificial de forma acessível e eficiente.",
+    "navigationTitle": "Navegação",
+    "socialMediaTitle": "Redes Sociais",
+    "usefulLinks": {
+      "blog": "Blog",
+      "home": "Início",
+      "contact": "Contato"
+    },
+    "privacyPolicy": "Políticas de Privacidade",
+    "termsOfUse": "Termos de Uso",
+    "copyright": "© {{year}} QualifAI. Todos os direitos reservados."
+  },
+  "registerPage": {
+    "title": "Vamos Conversar?",
+    "subtitle": "Estamos aqui para ajudar sua empresa a crescer. Seja para agendar uma demonstração, tirar dúvidas sobre planos ou explorar uma parceria, este é o seu canal direto com nossa equipe de especialistas.",
+    "labels": {
+      "fullName": "Nome Completo",
+      "workEmail": "Email Corporativo",
+      "phone": "Telefone",
+      "company": "Empresa",
+      "role": "Cargo",
+      "plan": "Plano de Interesse",
+      "help": "Como podemos ajudar?"
+    },
+    "roles": {
+      "ceo": "CEO / Fundador",
+      "director": "Diretor",
+      "manager": "Gerente",
+      "sales": "Vendedor / SDR",
+      "other": "Outro"
+    },
+    "plans": {
+      "light": "Light",
+      "pro": "Pro",
+      "unlimited": "Ilimitado"
+    },
+    "checkboxes": {
+      "communications": "Concordo em receber outras comunicações da QualifAI.",
+      "privacyPolicy": "Eu li e concordo com a <1>Politicas de privacidade</1>"
+    },
+    "buttons": {
+      "requestContact": "Solicitar Contato"
+    },
+    "toasts": {
+      "availabilityError": "Não foi possível carregar os horários disponíveis.",
+      "scheduleSuccess": "Demonstração agendada com sucesso! Verifique seu e-mail.",
+      "scheduleError": "Não foi possível agendar. Tente novamente."
+    }
+  },
+  "simpleContactSection": {
+    "title": "Agende uma Demonstração",
+    "subtitle": "Descubra como nossa solução pode transformar seu negócio.",
+    "address": "Espaço Regus no Center Shopping (Andar L6), Sala 646 – Avenida João Naves de Ávila, 1331, Tibery – Uberlândia/MG",
+    "successTitle": "Agendamento Enviado!",
+    "successMessage": "Obrigado! Entraremos em contato em breve para confirmar."
+  },
+  "simpleBookingForm": {
+    "loadingMessage": "Buscando horários disponíveis...",
+    "availableTimesTitle": "Horários Disponíveis",
+    "noSlotsMessage": "Nenhum horário disponível para esta data. Por favor, selecione outro dia.",
+    "mainTitle": "Selecione o horário",
+    "dateFormat": "EEEE, d 'de' MMMM",
+    "selectedTimeLabel": "Horário Selecionado",
+    "selectTimeDefault": "Escolha um horário abaixo",
+    "confirmButton": "Confirmar Agendamento"
+  },
+  "loginPage": {
+    "title": "Acesse sua conta",
+    "emailLabel": "Email",
+    "passwordLabel": "Senha",
+    "loginButton": "Entrar",
+    "loadingButton": "Entrando...",
+    "forgotPasswordLink": "Esqueceu sua senha?",
+    "validation": {
+      "emailRequired": "Email é obrigatório",
+      "emailInvalid": "Email inválido",
+      "passwordRequired": "Senha é obrigatória",
+      "passwordMinLength": "A senha deve ter pelo menos 6 caracteres"
+    },
+    "errors": {
+      "unexpected": "Erro inesperado. Por favor, tente novamente."
+    }
+  },
+  "forgotPasswordPage": {
+    "title": "Esqueceu sua senha?",
+    "successMessage": "Verifique sua caixa de entrada. Enviamos um link para redefinir sua senha.",
+    "emailLabel": "Email",
+    "submitButton": "Enviar email de recuperação",
+    "loadingButton": "Enviando...",
+    "backToLoginLink": "Voltar para Login",
+    "validation": {
+      "emailRequired": "Email é obrigatório",
+      "emailInvalid": "Email inválido"
+    },
+    "errors": {
+      "sendFailed": "Erro ao enviar o email. Tente novamente.",
+      "unexpected": "Erro inesperado. Tente novamente."
+    }
+  },
+  "dashboard": {
+    "title": "Visão Geral do Dashboard",
+    "toasts": {
+      "checkingSubscription": "Verificando sua assinatura, por favor aguarde...",
+      "subscriptionSuccess": "Assinatura confirmada com sucesso!",
+      "subscriptionError": "Não foi possível confirmar sua assinatura automaticamente. Por favor, atualize a página ou entre em contato com o suporte.",
+      "channelsError": "Não foi possível carregar os canais."
+    },
+    "statCards": {
+      "totalLeads": "Total de Leads",
+      "activeConversations": "Conversas Ativas",
+      "qualifiedLeads": "Leads Qualificados",
+      "escalatedConversations": "Conversas Escaladas",
+      "conversionRate": "Taxa de Conversão",
+      "total": "Total",
+      "now": "Agora",
+      "thisMonth": "Este mês"
+    },
+    "whatsappStats": {
+      "initiatedConversations": "Conversas Iniciadas",
+      "active": "Ativas",
+      "others": "Outras",
+      "sent": "Enviadas",
+      "received": "Recebidas"
+    },
+    "charts": {
+      "newLeadsTitle": "Novos Leads (Últimos 30 Dias)",
+      "leadsFunnelTitle": "Funil de Leads (Este Mês)",
+      "leadsBySourceTitle": "Leads por Origem",
+      "conversationsByChannelTitle": "Conversas por Canal",
+      "recentCampaignsTitle": "Desempenho de Campanhas Recentes",
+      "campaignAnalysisTitle": "Análise: {{campaignName}}",
+      "errorLoading": "Erro ao carregar dados.",
+      "noData": "Sem dados",
+      "leads": "Leads",
+      "conversations": "Conversas",
+      "average": "Média",
+      "newLeadsLegend": "Novos Leads",
+      "sends": "Envios",
+      "contactStatus": "Status dos Contatos",
+      "sendsPerDay": "Envios por Dia (últimos 30)"
+    },
+    "funnelLabels": {
+      "novo": "Novo",
+      "contatado": "Contatado",
+      "morno": "Quente",
+      "qualificado": "Qualificado",
+      "convertido": "Convertido"
+    },
+    "campaignStatus": {
+      "pending": "Pendentes",
+      "sent": "Enviados",
+      "replied": "Respondidos",
+      "failed": "Falhas"
+    },
+    "recentActivities": {
+      "title": "Atividades Recentes"
+    },
+    "channels": {
+      "whatsapp": "WhatsApp",
+      "email": "Email",
+      "chat": "Chat",
+      "linkedin": "LinkedIn",
+      "telefone": "Telefone",
+      "voice": "Ligação"
+    },
+    "leadSources": {
+      "form": "Formulário",
+      "linkedin": "LinkedIn",
+      "email": "Email",
+      "whatsapp": "WhatsApp",
+      "chat": "Chat",
+      "paid_traffic": "Tráfego Pago",
+      "hubspot": "HubSpot",
+      "pipedrive": "Pipedrive",
+      "salesforce": "Salesforce",
+      "rdstation": "RD Station",
+      "pipefy": "Pipefy",
+      "zoho": "Zoho CRM",
+      "kommo": "Kommo CRM",
+      "facebook": "Facebook",
+      "indicacao": "Indicação",
+      "instagram": "Instagram",
+      "outros": "Outros",
+      "website": "Website"
+    }
+  },
+  "exclusao_conta": {
+    "btn_voltar": "Voltar para Configurações",
+    "titulo_politica": "Política de Exclusão de Conta",
+    "data_atualizacao": "Última atualização",
+    "paragrafo_introducao": "A IoTeam Software e Aplicativos, proprietária da Qualifai, valoriza a privacidade e a liberdade de escolha de seus usuários. Esta Política de Exclusão de Conta explica como você pode solicitar a exclusão de sua conta e dos dados pessoais associados, bem como quais informações podem ser retidas para cumprir obrigações legais ou interesses legítimos.",
+    "secao_1": {
+      "titulo": "1. Solicitação de Exclusão",
+      "paragrafo": "O usuário pode, a qualquer momento, solicitar a atualização ou exclusão de seus dados através dos seguintes canais:",
+      "email": "E-mail"
+    },
+    "secao_2": {
+      "titulo": "2. Condições para Exclusão",
+      "paragrafo": "Os dados serão excluídos o mais rápido possível quando:",
+      "condicoes": {
+        "lista_1": "Não houver mais uma necessidade comercial legítima para mantê-los.",
+        "lista_2": "O produto ou serviço relacionado deixar de operar.",
+        "lista_3": "A exclusão for solicitada pelo usuário ou exigida pela empresa para proteger os usuários.",
+        "lista_4": "O usuário cancelar ou não possuir mais uma conta (exceto dados anonimizados).",
+        "lista_5": "A exclusão for exigida por lei ou regulamento.",
+        "lista_6": "Os dados foram recebidos por engano."
+      }
+    },
+    "secao_3": {
+      "titulo": "3. Retenção de Dados",
+      "paragrafo": "Mesmo após a exclusão, podemos reter certas informações pelo período necessário para:",
+      "retencao": {
+        "lista_1": "Cumprir obrigações legais ou regulatórias.",
+        "lista_2": "Resolver disputas.",
+        "lista_3": "Prevenir fraudes e garantir a segurança.",
+        "lista_4": "Cumprir obrigações fiscais e contábeis."
+      }
+    },
+    "secao_4": {
+      "titulo": "4. Cancelamento Automático",
+      "paragrafo": "A conta poderá ser excluída automaticamente se:",
+      "cancelamento_auto": {
+        "lista_1": "For identificada uma violação grave dos Termos de Uso ou da Política de Privacidade;",
+        "lista_2": "For detectado o uso indevido, fraudulento ou ilegal da plataforma."
+      }
+    },
+    "secao_5": {
+      "titulo": "5. Cancelamento e Prazos",
+      "paragrafo": "O titular dos dados poderá, a qualquer momento, exercer seus direitos de cancelamento do plano contratado.",
+      "prazos": {
+        "lista_1": "7 dias corridos a partir da data de contratação do plano (Poderá ocorrer pagamento proporcional pelos serviços utilizados)",
+        "lista_2": "A qualquer momento, mediante solicitação do usuário, com retenção de valores proporcionais pelos serviços já utilizados"
+      }
+    },
+    "secao_6": {
+      "titulo": "6. Direitos do Usuário",
+      "paragrafo": "O titular dos dados poderá, a qualquer momento, exercer seus direitos previstos na Lei Geral de Proteção de Dados (Lei nº 13.709/2018), incluindo:",
+      "direitos": {
+        "lista_1": "Confirmação da existência de tratamento.",
+        "lista_2": "Acesso aos dados.",
+        "lista_3": "Correção de dados incompletos, inexatos ou desatualizados.",
+        "lista_4": "Portabilidade dos dados para outro fornecedor, mediante solicitação expressa.",
+        "lista_5": "Eliminação dos dados tratados com consentimento."
+      }
+    },
+    "secao_7": {
+      "titulo": "7. Contato",
+      "paragrafo": "Para esclarecer dúvidas sobre esta Política ou exercer seus direitos, entre em contato conosco pelo e-mail: {{email}}"
+    },
+    "zona_perigo": {
+      "titulo": "Zona de Perigo: Ação Irreversível",
+      "aviso_dias": "Você tem {{days}} dias restantes em sua assinatura. Ao optar pela exclusão imediata, este período e quaisquer créditos serão perdidos permanentemente.",
+      "btn_excluir": "Excluir Conta"
+    },
+    "modal": {
+      "titulo": "Confirmar Exclusão",
+      "descricao": "Você tem um período de {{days}} dias para reconsiderar. O que você gostaria de fazer?",
+      "btn_agendar": "Agendar e excluir após {{days}} dias",
+      "btn_excluir_agora": "Excluir agora e perder os dias restantes",
+      "btn_cancelar": "Cancelar"
+    },
+    "log_agendar_exclusao": "CHAMADA DE API: Agendar exclusão.",
+    "log_excluir_imediato": "CHAMADA DE API: Excluir conta imediatamente."
+  },
+  "leadsPage": {
+    "title": "Gerenciamento de Leads",
+    "selectHint": "Selecione um ou mais leads para ver as ações disponíveis.",
+    "buttons": {
+      "importFromCrm": "Importar de CRMs",
+      "syncWithCrm": "Sincronizar com CRMs",
+      "selected": "{{count}} selecionado(s)",
+      "importFile": "Importar Arquivo",
+      "newLead": "Novo Lead",
+      "startConversation": "Iniciar Conversa ({{count}})",
+      "deleteSelected": "Excluir ({{count}})"
+    },
+    "filters": {
+      "searchPlaceholder": "Buscar por nome, e-mail, empresa...",
+      "status": "Status",
+      "allStatuses": "Todos os Status",
+      "source": "Origem",
+      "allSources": "Todas as Origens"
+    },
+    "table": {
+      "name": "Nome",
+      "email": "E-mail",
+      "company": "Empresa",
+      "source": "Origem",
+      "status": "Status",
+      "actions": "Ações",
+      "tooltip": {
+        "sendEmail": "Enviar E-mail",
+        "startIaConversation": "Iniciar Conversa (IA)",
+        "edit": "Editar",
+        "delete": "Excluir"
+      }
+    },
+    "leadModal": {
+      "newTitle": "Novo Lead",
+      "editTitle": "Editar Lead",
+      "nameLabel": "Nome",
+      "emailLabel": "E-mail",
+      "phoneLabel": "Telefone",
+      "companyLabel": "Empresa",
+      "positionLabel": "Cargo",
+      "sourceLabel": "Origem",
+      "createButton": "Criar",
+      "updateButton": "Atualizar"
+    },
+    "emailModal": {
+      "title": "Enviar E-mail para {{leadName}}",
+      "toLabel": "Para",
+      "subjectLabel": "Assunto",
+      "messageLabel": "Mensagem",
+      "sendButton": "Enviar E-mail"
+    },
+    "templateModal": {
+      "title": "Iniciar Conversa via WhatsApp",
+      "description": "Selecione a instância e o template de mensagem para iniciar a(s) conversa(s) com {{count}} lead(s).",
+      "instanceLabel": "Instância do WhatsApp",
+      "templateLabel": "Template de Mensagem",
+      "loading": "Carregando...",
+      "sendButton": "Enviar"
+    },
+    "toasts": {
+      "importSuccess": "{{count}} leads importados com sucesso!",
+      "importSkipped": "{{count}} leads duplicados foram ignorados.",
+      "importInvalid": "{{count}} registros com e-mail inválido foram ignorados.",
+      "importError": "Erro ao importar arquivo.",
+      "createSuccess": "Lead criado com sucesso!",
+      "createError": "Erro ao criar lead",
+      "updateSuccess": "Lead atualizado com sucesso!",
+      "updateError": "Erro ao atualizar lead",
+      "deleteSuccess": "Lead excluído com sucesso!",
+      "deleteError": "Erro ao excluir lead",
+      "deleteMultipleSuccess": "Leads excluídos com sucesso!",
+      "deleteMultipleError": "Erro ao excluir leads",
+      "conversationStartSuccess": "Conversa iniciada com sucesso!",
+      "conversationStartError": "Erro ao iniciar conversa",
+      "batchConversationStartSuccess": "{{count}} conversa(s) iniciada(s) com sucesso!",
+      "batchConversationStartError": "{{count}} conversa(s) falharam ao iniciar.",
+      "batchConversationError": "Erro ao iniciar conversas em lote",
+      "whatsappOfficialStartSuccess": "Conversa via WhatsApp Oficial iniciada!",
+      "emailSentSuccess": "E-mail enviado com sucesso!",
+      "emailSentError": "Erro ao enviar e-mail",
+      "syncSuccess": "Sincronização em segundo plano concluída!",
+      "syncError": "Erro ao iniciar a sincronização.",
+      "crmImportSuccess": "Importação concluída! {{created}} novos leads adicionados.",
+      "crmImportNoNew": "Nenhum novo lead encontrado para importar.",
+      "crmImportSkipped": "{{skipped}} leads existentes foram ignorados.",
+      "crmImportError": "Erro ao importar leads dos CRMs.",
+      "noPhoneError": "Este lead não possui um número de telefone cadastrado.",
+      "batchNoPhoneError": "Ação cancelada: {{count}} lead(s) selecionado(s) não possuem telefone.",
+      "zapiNotConnected": "A instância da Z-API não está conectada.",
+      "providerError": "Falha ao verificar o status da Z-API. O serviço pode estar offline.",
+      "providerConfigError": "Provedor de WhatsApp não configurado ou inválido.",
+      "checkingProvider": "Verificando provedor...",
+      "selectInstanceAndTemplate": "Por favor, selecione uma instância e um template."
+    },
+    "dialogs": {
+      "confirmDelete": "Você tem certeza que deseja excluir este lead?",
+      "confirmDeleteMultiple": "Você tem certeza que deseja excluir {{count}} lead(s) selecionado(s)?"
+    },
+    "validation": {
+      "nameRequired": "O nome é obrigatório",
+      "emailRequired": "O e-mail é obrigatório",
+      "emailInvalid": "E-mail inválido",
+      "companyRequired": "A empresa é obrigatória",
+      "sourceRequired": "A origem é obrigatória",
+      "subjectRequired": "O assunto é obrigatório",
+      "bodyRequired": "O corpo do e-mail é obrigatório"
+    }
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "send": "Enviar",
+    "noData": "Sema dados",
+    "loading": "Carregando...",
+    "activeFilters": "Filtros Ativos",
+    "filters": "Filtros",
+    "managementActions": "Ações",
+    "delete": "Deletar",
+    "next": "Próximo",
+    "back": "Voltar",
+    "upload": "Carregar"
+  },
+  "importFileDialog": {
+    "title": "Importar Leads de Arquivo",
+    "info": "Importe leads de arquivos CSV, Excel (xlsx, xls) ou PDF. Para CSV/Excel, a primeira linha deve ser o cabeçalho.",
+    "dropzoneDefault": "Clique ou arraste o arquivo aqui",
+    "dropzoneCaption": "CSV, Excel ou PDF. Tamanho máx: 10MB",
+    "importButton": "Importar",
+    "toastWarning": "Por favor, selecione um arquivo."
+  },
+  "conversationsPage": {
+    "filterPlaceholder": "Filtrar por nome, empresa ou conteúdo da conversa...",
+    "tooltips": {
+      "refresh": "Atualizar conversas",
+      "reset": "Apagar todas as conversas",
+      "hasNotes": "Possui notas",
+      "deleteConversation": "Deletar conversa"
+    },
+    "buttons": {
+      "reset": "Resetar"
+    },
+    "tags": {
+      "filterBy": "Filtrar por tags:",
+      "clearFilters": "Limpar filtros"
+    },
+    "cards": {
+      "company": "Empresa:",
+      "aiActive": "IA Ativa",
+      "aiInactive": "IA inativa",
+      "lastMessage": "Última mensagem:"
+    },
+    "status": {
+      "active": "Ativa",
+      "closed": "Fechada",
+      "escalated": "Escalada para humano"
+    },
+    "noConversations": "Nenhuma conversa encontrada com os filtros atuais",
+    "contactWithoutName": "Contato sem nome",
+    "phoneWithoutNumber": "Sem telefone",
+    "deleteConfirmDialog": {
+      "title": "Confirmar Exclusão Total",
+      "message": "Você tem certeza que deseja apagar <strong>TODAS</strong> as suas conversas? Esta ação é irreversível.",
+      "confirmButton": "Sim, Apagar Tudo"
+    },
+    "toasts": {
+      "escalation": "Lead {{leadName}} solicitou um especialista!",
+      "resetSuccess": "Todas as conversas foram deletadas.",
+      "resetError": "Erro ao resetar conversas.",
+      "refreshSuccess": "Conversas atualizadas com sucesso!",
+      "refreshError": "Erro ao atualizar conversas",
+      "aiStatusSuccess": "Status da IA alterado com sucesso!",
+      "aiStatusError": "Erro ao alterar status da IA.",
+      "adminUpdateSuccess": "Conversa atualizada pelo admin!",
+      "adminUpdateError": "Erro ao atualizar conversa.",
+      "statusUpdateSuccess": "Status atualizado!",
+      "statusUpdateError": "Erro ao atualizar status.",
+      "deleteSuccess": "Conversa deletada com sucesso!",
+      "deleteError": "Erro ao deletar conversa.",
+      "noteEmptyWarning": "A nota não pode estar vazia.",
+      "addNoteSuccess": "Nota adicionada com sucesso!",
+      "addNoteError": "Erro ao adicionar nota.",
+      "qualificationUpdateSuccess": "Qualificação atualizada!"
+    },
+    "dialogs": {
+      "confirmDelete": "Tem certeza que deseja deletar esta conversa?"
+    }
+  },
+  "conversationDialog": {
+    "noPhone": "Sem telefone",
+    "noCompany": "Sem empresa",
+    "unknown": "Desconhecido",
+    "invalidDate": "Data inválida",
+    "toasts": {
+      "sendSuccess": "Mensagem enviada!",
+      "sendError": "Falha ao enviar mensagem.",
+      "providerInvalidResponse": "Resposta inválida do servidor ao buscar o provedor.",
+      "providerConfigError": "Não foi possível verificar o provedor de WhatsApp. Verifique suas configurações."
+    },
+    "title": "Conversa com {{leadName}}",
+    "titleFallback": "Lead",
+    "channelVia": "Via:",
+    "statusLabel": "Status",
+    "statuses": {
+      "active": "Ativo",
+      "closed": "Fechado",
+      "escalated": "Escalado"
+    },
+    "tooltips": {
+      "viewNotes": "Ver Notas",
+      "aiAssistant": "Assistente de IA",
+      "humanAgent": "Agente Humano",
+      "lead": "Lead"
+    },
+    "aiSwitchLabel": "IA",
+    "escalatedAlert": "Este lead solicitou falar com um especialista. A IA foi desativada para esta conversa.",
+    "messageRoles": {
+      "ai": "QualifAI",
+      "human": "Agente",
+      "lead": "Lead"
+    },
+    "inputPlaceholder": "Digite sua mensagem..."
+  },
+  "campaignsPage": {
+    "title": "Campanhas",
+    "newCampaignButton": "Nova Campanha",
+    "card": {
+      "channelTooltip": "Canal: {{channel}}",
+      "restartTooltip": "Reiniciar Campanha",
+      "editTooltip": "Editar",
+      "duplicateTooltip": "Duplicar",
+      "cancelTooltip": "Cancelar",
+      "deleteTooltip": "Deletar",
+      "descriptionFallback": "Sem descrição.",
+      "progressLabel": "Progresso",
+      "sentTooltip": "Enviados",
+      "repliesTooltip": "Respostas",
+      "failuresTooltip": "Falhas",
+      "importContactsButton": "Importar Contatos",
+      "startButton": "Iniciar",
+      "pauseButton": "Pausar"
+    },
+    "formDialog": {
+      "editTitle": "Editar Campanha",
+      "newTitle": "Nova Campanha",
+      "step1": "1. Informações Básicas",
+      "nameLabel": "Nome da Campanha",
+      "nameRequired": "Nome é obrigatório",
+      "descriptionLabel": "Descrição (Objetivo da campanha)",
+      "step2": "2. Canal e Mensagem",
+      "channelLabel": "Canal",
+      "channelRequired": "Canal é obrigatório",
+      "whatsappOfficial": "WhatsApp Oficial",
+      "email": "E-mail",
+      "instanceLabel": "Instância do WhatsApp",
+      "instanceRequired": "Instância é obrigatória",
+      "subjectLabel": "Assunto do E-mail",
+      "subjectRequired": "Assunto é obrigatório",
+      "templateLabel": "Template de Mensagem Aprovado",
+      "templateRequired": "É obrigatório selecionar um template.",
+      "loading": "Carregando...",
+      "selectTemplate": "Selecione um template",
+      "messageBodyLabel": "Corpo da Mensagem/E-mail",
+      "messageBodyRequired": "A mensagem é obrigatória",
+      "messageBodyHelper": "Use variáveis como: {{nome}}, {{empresa}}, etc.",
+      "generateWithAiButton": "Gerar com IA",
+      "step3": "3. Configurações de Envio",
+      "delayLabel": "Atraso (segundos)",
+      "dailyLimitLabel": "Limite diário",
+      "step4": "4. Follow-up Automático (Opcional)",
+      "enableFollowUpLabel": "Ativar follow-up para contatos que não responderem",
+      "followUpTemplateLabel": "Template de Follow-up Aprovado",
+      "followUpTemplateRequired": "O template de follow-up é obrigatório.",
+      "followUpMessageLabel": "Mensagem de Follow-up",
+      "followUpMessageRequired": "A mensagem de follow-up é obrigatória",
+      "followUpMessageHelper": "Use {{nome}} para personalizar.",
+      "waitLabel": "Aguardar",
+      "unitLabel": "Unidade",
+      "hours": "Horas",
+      "days": "Dias",
+      "attemptsLabel": "Nº de Tentativas",
+      "saving": "Salvando...",
+      "saveChanges": "Salvar Alterações",
+      "createCampaign": "Criar Campanha"
+    },
+    "uploadDialog": {
+      "title": "Importar Contatos via CSV",
+      "formatInfo": "Formato esperado:",
+      "requiredColumnsEmail": "Colunas obrigatórias: nome, email.",
+      "requiredColumnsWhatsapp": "Colunas obrigatórias: nome, telefone.",
+      "dropzone": "Clique ou arraste o arquivo .csv aqui",
+      "dropzoneCaption": "Tamanho máx: 5MB",
+      "importing": "Importando...",
+      "importButton": "Importar"
+    },
+    "emptyState": {
+      "title": "Nenhuma campanha por aqui",
+      "message": "Comece a engajar seus clientes criando sua primeira campanha.",
+      "button": "Criar Primeira Campanha"
+    },
+    "deleteDialog": {
+      "title": "Confirmar Exclusão",
+      "message": "Tem certeza que deseja deletar a campanha <strong>\"{{campaignName}}\"</strong>?",
+      "warning": "Esta ação não pode ser desfeita.",
+      "deleting": "Deletando...",
+      "deleteButton": "Deletar"
+    },
+    "toasts": {
+      "createSuccess": "Campanha criada com sucesso!",
+      "createError": "Erro ao criar campanha",
+      "updateSuccess": "Campanha atualizada com sucesso!",
+      "updateError": "Erro ao atualizar campanha",
+      "startSuccess": "Campanha iniciada!",
+      "startError": "Erro ao iniciar campanha",
+      "pauseSuccess": "Campanha pausada!",
+      "pauseError": "Erro ao pausar campanha",
+      "cancelSuccess": "Campanha cancelada!",
+      "cancelError": "Erro ao cancelar campanha",
+      "duplicateSuccess": "Campanha duplicada!",
+      "duplicateError": "Erro ao duplicar campanha",
+      "restartSuccess": "Campanha reiniciada com sucesso!",
+      "restartError": "Erro ao reiniciar campanha",
+      "deleteSuccess": "Campanha deletada com sucesso!",
+      "deleteError": "Erro ao deletar campanha",
+      "importSuccess": "{{count}} contatos importados!",
+      "importWarning": "{{count}} linhas com erros foram ignoradas.",
+      "importError": "Erro ao importar contatos",
+      "generateTemplateInfo": "Funcionalidade de IA para gerar templates ainda não implementada aqui."
+    },
+    "status": {
+      "running": "Rodando",
+      "paused": "Pausada",
+      "completed": "Concluída",
+      "cancelled": "Cancelada",
+      "draft": "Rascunho"
+    }
+  },
+  "templatesPage": {
+    "title": "Templates de Mensagem",
+    "newTemplateButton": "Novo Template",
+    "tabs": {
+      "conversation": "Templates de Conversa",
+      "followUp": "Templates de Follow-up"
+    },
+    "noConversationTemplates": "Nenhum template de conversa criado.",
+    "noFollowUpTemplates": "Nenhum template de follow-up criado.",
+    "status": {
+      "approved": "Aprovado",
+      "rejected": "Rejeitado",
+      "pending_approval": "Pendente",
+      "draft": "Rascunho"
+    },
+    "card": {
+      "editTooltip": "Editar",
+      "deleteTooltip": "Deletar",
+      "categoryLabel": "Categoria:",
+      "followUpChip": "Follow-up",
+      "conversationChip": "Conversa",
+      "noBodyText": "Template sem corpo de texto.",
+      "rejectionReason": "Motivo da Rejeição:",
+      "notSpecified": "Não especificado.",
+      "submitButton": "Enviar para Aprovação da Meta",
+      "headerLabel": "Cabeçalho",
+      "headerImage": "Imagem",
+      "headerVideo": "Vídeo",
+      "headerDocument": "Documento",
+      "buttonsLabel": "Botões"
+    },
+    "formDialog": {
+      "editTitle": "Editar Template",
+      "newTitle": "Novo Template de Mensagem",
+      "closeLabel": "Fechar",
+      "infoAlert": "O nome do template deve ser único e seguirá as regras de formatação da Meta.",
+      "configTitle": "Configuração Principal",
+      "nameLabel": "Nome do Template",
+      "nameRequired": "Nome é obrigatório",
+      "typeLabel": "Tipo de Template",
+      "typeRequired": "O tipo é obrigatório",
+      "typeConversation": "Conversa",
+      "typeFollowUp": "Follow-up",
+      "categoryLabel": "Categoria",
+      "categoryMarketing": "Marketing",
+      "categoryUtility": "Utilidade",
+      "categoryAuth": "Autenticação",
+      "languageLabel": "Idioma",
+      "langPtBr": "Português (Brasil)",
+      "langEnUs": "Inglês (US)",
+      "langEsEs": "Espanhol (Espanha)",
+      "contentTitle": "Conteúdo do Template",
+      "headerLabel": "Cabeçalho (Header)",
+      "headerNone": "Nenhum",
+      "headerText": "Texto",
+      "headerImage": "Imagem",
+      "headerTextRequired": "O texto do cabeçalho é obrigatório",
+      "headerTextLabel": "Texto do Cabeçalho",
+      "headerImageInfo": "Uma imagem de exemplo será solicitada ao submeter para aprovação.",
+      "bodyLabel": "Corpo da Mensagem",
+      "bodyRequired": "O corpo da mensagem é obrigatório",
+      "bodyHelper": "Use variáveis como {{1}}, {{2}}, etc.",
+      "footerLabel": "Rodapé (Footer)",
+      "footerHelper": "Texto curto que aparece abaixo da mensagem (opcional).",
+      "buttonsTitle": "Botões",
+      "buttonTypeLabel": "Tipo de Botão",
+      "buttonTypeQuickReply": "Resposta Rápida (Quick Reply)",
+      "buttonTypeUrl": "Link (URL)",
+      "buttonTextRequired": "O texto do botão é obrigatório",
+      "buttonTextLabel": "Texto do Botão",
+      "buttonUrlRequired": "A URL é obrigatória para este tipo de botão",
+      "buttonUrlLabel": "URL (sem 'https://')",
+      "addButton": "Adicionar Botão",
+      "correctAndResubmit": "Corrigir e Reenviar",
+      "saveChanges": "Salvar Alterações",
+      "createTemplate": "Criar Template",
+      "buttonTypeNone": "Nenhum",
+      "quickReplyHelp": "O usuário receberá botões que enviam uma mensagem de texto quando clicados.",
+      "urlButtonHelp": "O usuário receberá um botão que abre um link no navegador. Ideal para Marketing."
+    },
+    "submitDialog": {
+      "title": "Enviar para Aprovação da Meta",
+      "description": "Selecione a instância para submeter o template <1>{{templateName}}</1> à Meta.",
+      "instanceLabel": "Instância do WhatsApp",
+      "loadingInstances": "Carregando instâncias...",
+      "sendButton": "Enviar"
+    },
+    "deleteDialog": {
+      "title": "Confirmar Exclusão",
+      "areYouSure": "Tem certeza?",
+      "message": "Você está prestes a deletar o template <1>{{templateName}}</1>.",
+      "warning": "Esta ação é irreversível.",
+      "deleting": "Deletando...",
+      "deleteButton": "Deletar"
+    },
+    "emptyState": {
+      "title": "Nenhum template de mensagem criado",
+      "message": "Crie seu primeiro template para iniciar conversas com seus clientes.",
+      "button": "Criar Primeiro Template"
+    },
+    "toasts": {
+      "templateGenerated": "Template gerado com IA!",
+      "templateGenerationError": "Erro ao gerar template com IA.",
+      "fillNameForAi": "Preencha o nome do template para dar contexto à IA.",
+      "templateSaved": "Template salvo como rascunho!",
+      "templateSaveError": "Erro ao salvar template.",
+      "templateUpdated": "Template atualizado com sucesso!",
+      "templateUpdateError": "Erro ao atualizar template.",
+      "templateDeleted": "Template deletado com sucesso!",
+      "templateDeleteError": "Erro ao deletar template.",
+      "templateSubmitted": "Template enviado para aprovação!",
+      "templateSubmitError": "Erro ao enviar template.",
+      "templateResubmitted": "Nova versão enviada para aprovação!",
+      "templateResubmitError": "Erro ao reenviar template.",
+      "selectInstance": "Selecione uma instância.",
+      "statusUpdate": "O status do template \"{{templateName}}\" foi atualizado!",
+      "buttonUrlRequired": "Por favor, preencha a URL para todos os botões do tipo 'Link'."
+    }
+  },
+  "perfil": {
+    "titulo_pagina": "Perfil do usuário",
+    "titulo_informacoes": "Informações do Perfil",
+    "label_nome": "Nome",
+    "label_email": "Email",
+    "label_empresa": "Empresa",
+    "btn_salvar": "Salvar Alterações"
+  },
+  "faturamento": {
+    "titulo": "Faturamento e Assinatura",
+    "plano_atual": "Plano Atual",
+    "status": "Status",
+    "renovacao_em": "Seu plano renova em {{date}}",
+    "assinatura_ativa": "Sua assinatura está ativa.",
+    "assinatura_nao_ativa": "Sua assinatura não está ativa.",
+    "btn_gerenciar_assinatura": "Gerenciar Assinatura",
+    "nao_inscrito": "Você não está inscrito em nenhum plano.",
+    "btn_ver_planos": "Ver Planos"
+  },
+  "perigo": {
+    "titulo": "Área de Perigo",
+    "aviso_irreversivel": "Tenha cuidado, esta ação é irreversível.",
+    "btn_excluir_conta": "Excluir minha conta"
+  },
+  "mensagens": {
+    "perfil_salvo_sucesso": "Perfil salvo com sucesso!",
+    "erro_salvar_perfil": "Erro ao salvar perfil",
+    "erro_abrir_portal_pagamento": "Não foi possível abrir o portal de gerenciamento."
+  },
+  "planos": {
+    "basico_mensal": "QualifAI Básico Mensal",
+    "basico_anual": "QualifAI Básico Anual",
+    "medio_mensal": "QualifAI Médio Mensal",
+    "medio_anual": "QualifAI Médio Anual",
+    "pro_mensal": "QualifAI Pro Mensal",
+    "pro_anual": "QualifAI Pro Anual"
+  },
+  "status_assinatura": {
+    "active": "ativo",
+    "trialing": "em teste",
+    "canceled": "cancelado",
+    "past_due": "vencido",
+    "unpaid": "não pago",
+    "incomplete": "incompleto",
+    "default": "Desconhecido"
+  },
+  "calendarPage": {
+    "title": "Calendário de Agendamentos",
+    "syncButton": {
+      "default": "Sincronizar com CRMs",
+      "loading": "Sincronizando..."
+    },
+    "eventModal": {
+      "title": "Detalhes do Agendamento",
+      "meetButton": "Acessar Google Meet",
+      "viewLeadButton": "Ver Lead",
+      "noLeadAssociated": "Nenhum lead associado na plataforma."
+    },
+    "createModal": {
+      "title": "Criar Novo Evento",
+      "titleLabel": "Título do Evento",
+      "titleRequired": "Título é obrigatório",
+      "descriptionLabel": "Descrição (opcional)",
+      "startTimeLabel": "Hora de Início",
+      "endTimeLabel": "Hora de Fim",
+      "linkLeadLabel": "Vincular a um Lead (opcional)",
+      "saveButton": "Salvar Evento",
+      "cancelButton": "Cancelar"
+    },
+    "bigCalendar": {
+      "allDay": "Dia todo",
+      "previous": "Anterior",
+      "next": "Próximo",
+      "today": "Hoje",
+      "month": "Mês",
+      "week": "Semana",
+      "day": "Dia",
+      "agenda": "Agenda",
+      "date": "Data",
+      "time": "Hora",
+      "event": "Evento",
+      "noEventsInRange": "Não há eventos neste período.",
+      "showMore": "+ Ver mais ({{count}})"
+    },
+    "toasts": {
+      "createSuccess": "Evento criado com sucesso!",
+      "createError": "Erro ao criar evento.",
+      "syncSuccess": "CRMs sincronizados com sucesso!",
+      "syncError": "Erro durante a sincronização com CRMs.",
+      "syncCrmError": "Erro ao sincronizar com {{crmName}}: {{error}}",
+      "syncCrmSuccess": "{{count}} eventos sincronizados de {{crmName}}."
+    }
+  },
+  "plansApresentation": {
+    "cards": [
+      {
+        "title": "Atendimento e Comunicação Inteligente",
+        "features": [
+          "API oficial do WhatsApp integrada",
+          "Disparo de mensagens em massa e campanhas segmentadas",
+          "Atendimento receptivo ilimitado via WhatsApp com IA personalizável",
+          "Mensagens de áudio inteligentes enviadas automaticamente por IA",
+          "Integração com E-mail e Google Calendário para agendamentos automáticos",
+          "IA que realiza follow-ups automáticos e programáveis"
+        ]
+      },
+      {
+        "title": " IA e Automação Comercial",
+        "features": [
+          "SDRs virtuais com IA para qualificação de leads e atendimento (multicontas disponíveis)",
+          "Agendamento automático de reuniões entre vendedor e lead direto no CRM",
+          "IA para acompanhamento e priorização de oportunidades",
+          "Painel com indicadores e dashboards de origem e desempenho dos contatos"
+        ]
+      },
+      {
+        "title": " Gestão de Vendas e Relacionamento",
+        "features": [
+          "Quadro Kanban para gestão de leads e pipeline",
+          "Prospeção ativa automatizada de novos leads",
+          "Closer virtual e customer success automatizado para conversão e retenção",
+          "Criação de campanhas inteligentes com segmentação avançada"
+        ]
+      },
+      {
+        "title": "Suporte e Personalização",
+        "features": [
+          "Onboarding personalizado com acompanhamento da equipe Qualifai",
+          "Suporte via e-mail, chat e WhatsApp",
+          "Desenvolvimento de funcionalidades adicionais sob demanda",
+          "Acesso multiusuário conforme necessidade da operação"
+        ]
+      }
+    ]
+  },
+  "statsSection": {
+    "sales": {
+      "title": "Mais vendas",
+      "description": "Sua equipe foca apenas em fechar negócios, não em prospectar."
+    },
+    "costReduction": {
+      "title": "Redução de Custo",
+      "description": "Diminua drasticamente os gastos com prospecção e SDRs operacionais."
+    },
+    "noPauses": {
+      "title": "Sem Pausas",
+      "description": "Nossa IA trabalha 24/7, garantindo que nenhum lead seja perdido, não importa a hora que ele chegue."
+    }
+  },
+  "whatsappPricing": {
+    "title": "Preços por Conversa (WhatsApp)",
+    "subtitle": "Os valores são cobrados por cada conversa de 24 horas, variando conforme a categoria.",
+    "tableAriaLabel": "tabela de preços da meta",
+    "categoryHeader": "Categoria e Descrição",
+    "priceHeader": "Preço Estimado",
+    "freeTierInfo": "As primeiras 1.000 conversas de serviço (iniciadas pelo usuário) de cada mês são gratuitas.",
+    "pricingData": [
+      {
+        "category": "marketing",
+        "type": "Marketing",
+        "description": "Iniciadas pela empresa para marketing, como ofertas e atualizações.",
+        "priceBRL": "R$ 0,35"
+      },
+      {
+        "category": "utility",
+        "type": "Utilidade",
+        "description": "Relacionadas a transações, como confirmações de pedido e pós-venda.",
+        "priceBRL": "R$ 0,08"
+      },
+      {
+        "category": "authentication",
+        "type": "Autenticação",
+        "description": "Para autenticar usuários com senhas de uso único.",
+        "priceBRL": "R$ 0,08"
+      },
+      {
+        "category": "service",
+        "type": "Serviço",
+        "description": "Qualquer conversa iniciada pelo usuário.",
+        "priceBRL": "R$ 0,08"
+      }
+    ]
+  },
+  "deleteAccountPage": {
+    "backButton": "Voltar para Configurações",
+    "mainTitle": "Política de Exclusão de Conta",
+    "lastUpdated": "Última atualização: 11 de Agosto de 2025",
+    "introParagraph": "A IoTeam Software e Aplicativos, proprietária da Qualifai, valoriza a privacidade e a liberdade de escolha de seus usuários. Esta Política de Exclusão de Conta explica como você pode solicitar a exclusão de sua conta e dos dados pessoais associados, bem como quais informações podem ser retidas para cumprir obrigações legais ou interesses legítimos.",
+    "sections": {
+      "deletionRequest": {
+        "title": "1. Solicitação de Exclusão",
+        "paragraph": "O usuário pode, a qualquer momento, solicitar a atualização ou exclusão de seus dados através dos seguintes canais:",
+        "email": "E-mail:"
+      },
+      "deletionConditions": {
+        "title": "2. Condições para Exclusão",
+        "paragraph": "Os dados serão excluídos o mais rápido possível quando:",
+        "conditions": [
+          "Não houver mais uma necessidade comercial legítima para mantê-los.",
+          "O produto ou serviço relacionado deixar de operar.",
+          "A exclusão for solicitada pelo usuário ou exigida pela empresa para proteger os usuários.",
+          "O usuário cancelar ou não possuir mais uma conta (exceto dados anonimizados).",
+          "A exclusão for exigida por lei ou regulamento.",
+          "Os dados foram recebidos por engano."
+        ]
+      },
+      "dataRetention": {
+        "title": "3. Retenção de Dados",
+        "paragraph": "Mesmo após a exclusão, podemos reter certas informações pelo período necessário para:",
+        "conditions": [
+          "Cumprir obrigações legais ou regulatórias.",
+          "Resolver disputas.",
+          "Prevenir fraudes e garantir a segurança.",
+          "Cumprir obrigações fiscais e contábeis."
+        ]
+      },
+      "autoCancellation": {
+        "title": "4. Cancelamento Automático",
+        "paragraph": "A conta poderá ser excluída automaticamente se:",
+        "conditions": [
+          "For identificada uma violação grave dos Termos de Uso ou da Política de Privacidade;",
+          "For detectado o uso indevido, fraudulento ou ilegal da plataforma."
+        ]
+      },
+      "cancellationDeadlines": {
+        "title": "5. Cancelamento e Prazos",
+        "paragraph": "O titular dos dados poderá, a qualquer momento, exercer seus direitos de cancelamento do plano contratado.",
+        "conditions": [
+          "7 dias corridos a partir da data de contratação do plano (Poderá ocorrer pagamento proporcional pelos serviços utilizados)",
+          "A qualquer momento, mediante solicitação do usuário, com retenção de valores proporcionais pelos serviços já utilizados"
+        ]
+      },
+      "userRights": {
+        "title": "6. Direitos do Usuário",
+        "paragraph": "O titular dos dados poderá, a qualquer momento, exercer seus direitos previstos na Lei Geral de Proteção de Dados (Lei nº 13.709/2018), incluindo:",
+        "conditions": [
+          "Confirmação da existência de tratamento.",
+          "Acesso aos dados.",
+          "Correção de dados incompletos, inexatos ou desatualizados.",
+          "Portabilidade dos dados para outro fornecedor, mediante solicitação expressa.",
+          "Eliminação dos dados tratados com consentimento."
+        ]
+      },
+      "contact": {
+        "title": "7. Contato",
+        "paragraph": "Para esclarecer dúvidas sobre esta Política ou exercer seus direitos, entre em contato conosco pelo e-mail: contato@qualifai.tech"
+      }
+    }
+  },
+  "dangerZone": {
+    "title": "Zona de Perigo: Ação Irreversível",
+    "warning": "Você tem {{days}} dias restantes em sua assinatura. Ao optar pela exclusão imediata, este período e quaisquer créditos serão perdidos permanentemente."
+  },
+  "modal": {
+    "title": "Confirmar Exclusão",
+    "description": "Você tem um período de {{days}} dias para reconsiderar. O que você gostaria de fazer?",
+    "scheduleButton": "Agendar e excluir após {{days}} dias",
+    "deleteNowButton": "Excluir agora e perder os dias restantes",
+    "cancelButton": "Cancelar"
+  },
+  "logs": {
+    "schedule": "CHAMADA DE API: Agendar exclusão.",
+    "deleteNow": "CHAMADA DE API: Excluir conta imediatamente."
+  },
+  "layout": {
+    "menuItems": {
+      "dashboard": "Dashboard",
+      "leads": "Leads",
+      "conversations": "Conversas",
+      "campaigns": "Campanhas Ativas",
+      "templates": "Templates",
+      "calendar": "Agenda",
+      "instagram": "Instagram",
+      "profile": "Perfil",
+      "settings": "Configurações",
+      "admin": "Admin",
+      "team": "Gestão de Time",
+      "ranking": "Ranking",
+      "blog": "Blog",
+      "noResponseLeads": "Leads sem Resposta",
+      "aiTraining": "Playground IA"
+    },
+    "pageTitleFallback": "QualifAI",
+    "sidebar": {
+      "expandTooltip": "Expandir menu",
+      "collapseTooltip": "Recolher menu",
+      "collapseText": "Recolher"
+    },
+    "appBar": {
+      "toggleTheme": "Mudar tema",
+      "userMenu": {
+        "profile": "Perfil",
+        "settings": "Configurações",
+        "logout": "Sair"
+      },
+      "loginButton": "Entrar",
+      "registerButton": "Cadastrar"
+    },
+    "supportFab": {
+      "tooltip": "Suporte"
+    },
+    "supportDialog": {
+      "title": "Contato com o Suporte",
+      "description": "Envie sua dúvida, sugestão ou relate um problema. Nossa equipe responderá o mais breve possível em seu e-mail de cadastro.",
+      "subjectLabel": "Assunto",
+      "subjectError": "O assunto é obrigatório.",
+      "messageLabel": "Mensagem",
+      "messageError": "A mensagem é obrigatória.",
+      "cancelButton": "Cancelar",
+      "sendButton": "Enviar"
+    },
+    "toasts": {
+      "supportSuccess": "Mensagem de suporte enviada com sucesso!",
+      "supportError": "Erro ao enviar mensagem."
+    }
+  },
+  "settingsPage": {
+    "inDevelopment": "(EM DESENVOLVIMENTO)",
+    "google": {
+      "title": "Google Calendar",
+      "description": "Conecte sua conta do Google para permitir que a QualifAI agende reuniões automaticamente em seu calendário e convide leads.",
+      "connectedStatus": "Conectado com sucesso",
+      "connectedInfo": "Agendamentos serão criados no calendário de:",
+      "buttons": {
+        "connect": "Conectar com Google",
+        "connecting": "Aguarde...",
+        "disconnect": "Desconectar",
+        "disconnecting": "Desconectando..."
+      },
+      "toasts": {
+        "authUrlError": "Não foi possível obter a URL de autenticação.",
+        "connectError": "Erro ao iniciar conexão com o Google.",
+        "disconnectSuccess": "Conta Google desconectada com sucesso!",
+        "disconnectError": "Erro ao desconectar a conta."
+      }
+    },
+    "crm": {
+      "connectedSuccess": "Conectado com sucesso",
+      "connectingButton": "Aguardando...",
+      "disconnectingButton": "Desconectando...",
+      "disconnectButton": "Desconectar",
+      "kommo": {
+        "title": "Kommo CRM",
+        "enableLabel": "Habilitar integração com Kommo",
+        "connectedStatus": "Integração com Kommo Ativa",
+        "connectButton": "Conectar e Autorizar no Kommo",
+        "alert": "Para conectar, sua aplicação precisa estar configurada no painel da Kommo. Após a configuração, clique no botão abaixo para autorizar o acesso.",
+        "connectedInfo": "Sua conta <1>{{subdomain}}.kommo.com</1> está autorizada.",
+        "toasts": {
+          "connectError": "Erro ao iniciar conexão.",
+          "disconnectSuccess": "Kommo desconectado.",
+          "disconnectError": "Erro ao desconectar."
+        }
+      },
+      "pipedrive": {
+        "title": "Pipedrive CRM",
+        "enableLabel": "Habilitar integração com Pipedrive",
+        "connectedStatus": "Integração com Pipedrive Ativa",
+        "connectButton": "Conectar com Pipedrive",
+        "connectedInfo": "Sua conta Pipedrive em <1>{{domain}}</1> está autorizada.",
+        "toasts": {
+          "connectError": "Erro ao iniciar conexão com Pipedrive.",
+          "disconnectSuccess": "Pipedrive desconectado.",
+          "disconnectError": "Erro ao desconectar."
+        }
+      },
+      "hubspot": {
+        "title": "HubSpot CRM",
+        "connectedStatus": "Conectado",
+        "description": "Conecte sua conta HubSpot para sincronizar leads e atividades automaticamente.",
+        "disconnectButton": "Desconectar",
+        "connectButton": "Conectar com HubSpot",
+        "toasts": {
+          "connectError": "Erro ao iniciar conexão com HubSpot.",
+          "disconnectSuccess": "HubSpot desconectado com sucesso!",
+          "disconnectError": "Erro ao desconectar HubSpot."
+        }
+      },
+      "salesforce": {
+        "title": "Salesforce",
+        "enableLabel": "Habilitar integração com Salesforce",
+        "instanceUrlLabel": "URL da Instância",
+        "instanceUrlHelper": "ex: https://sua-empresa.my.salesforce.com",
+        "clientIdLabel": "Client ID",
+        "clientIdHelper": "Do seu App Conectado no Salesforce",
+        "clientSecretLabel": "Client Secret",
+        "refreshTokenLabel": "Refresh Token"
+      },
+      "rdstation": {
+        "title": "RD Station",
+        "enableLabel": "Habilitar integração com RD Station",
+        "privateTokenLabel": "Token Privado",
+        "privateTokenHelper": "Encontre seu token privado em Conta > Integrações > Chave de API"
+      },
+      "pipefy": {
+        "title": "Pipefy",
+        "enableLabel": "Habilitar integração com Pipefy",
+        "pipelineIdLabel": "ID do Pipeline",
+        "pipelineIdHelper": "Encontre o ID na URL do seu pipeline",
+        "apiKeyLabel": "Chave da API (Token de Acesso Pessoal)",
+        "apiKeyHelper": "Gere no seu perfil de usuário do Pipefy",
+        "mappingTitle": "Mapeamento de Campos",
+        "mappingAlert": "Conecte os campos do QualifAI com os IDs de campo correspondentes em seu pipeline do Pipefy.",
+        "qualifaiFieldLabel": "Campo QualifAI",
+        "pipefyFieldLabel": "ID do Campo Pipefy",
+        "pipefyFieldPlaceholder": "ex: nome_do_lead",
+        "removeMappingLabel": "Remover mapeamento",
+        "addMappingButton": "Adicionar Mapeamento",
+        "qualifaiLeadFields": {
+          "name": "Nome do Lead",
+          "email": "Email",
+          "phone": "Telefone",
+          "company": "Empresa",
+          "position": "Cargo",
+          "source": "Origem",
+          "status": "Status"
+        }
+      },
+      "zoho": {
+        "title": "Zoho CRM",
+        "enableLabel": "Habilitar integração com Zoho CRM",
+        "apiDomainLabel": "Domínio da API",
+        "apiDomainHelper": "ex: www.zohoapis.com ou www.zohoapis.eu",
+        "clientIdLabel": "Client ID",
+        "clientIdHelper": "Do seu aplicativo no Console de API do Zoho",
+        "clientSecretLabel": "Client Secret",
+        "refreshTokenLabel": "Refresh Token"
+      }
+    }
+  },
+  "apresentation": {
+    "subtitle": "De agendas vazias a pipelines de vendas previsíveis",
+    "testimonials": [
+      {
+        "name": "Ana Silva",
+        "role": "Nexora Solutions",
+        "quote": "A QualifAI transformou nossa geração de leads. A qualificação é impecável e a comunicação da IA é surpreendentemente humana. Nossas agendas nunca estiveram tão cheias!",
+        "avatar": "image-carousel-3.jpg"
+      },
+      {
+        "name": "Bruno Costa",
+        "role": "Diretor de Vendas - Grupo Horizonte Azul",
+        "quote": "Estávamos perdendo tempo com leads desqualificados. Com a QualifAI, nossa equipe foca apenas no que realmente importa, aumentando a conversão em 40%.",
+        "avatar": "image-carousel-4.png"
+      },
+      {
+        "name": "Diego Mendes",
+        "role": "Gerente de Vendas - Trevoo",
+        "quote": "O suporte 24/7 da IA é uma vantagem enorme. Não perdemos mais oportunidades, mesmo fora do horário comercial. É como ter um SDR extra sempre ativo.",
+        "avatar": "image-carousel-2.jpg"
+      },
+      {
+        "name": "Diego Pereira",
+        "role": "Empreendedor - Luminec Systems",
+        "quote": "A integração com nosso CRM e Google Calendar é fantástica. Tudo funciona automaticamente, liberando nossa equipe para focar na estratégia e no fechamento de negócios.",
+        "avatar": "image-carousel.jpg"
+      }
+    ],
+    "buttons": {
+      "prev": "Anterior",
+      "next": "Próximo"
+    }
+  },
+  "conversationCard": {
+    "noName": "Sem nome",
+    "aiDisabledTooltip": "IA desativada para esta conversa",
+    "aiInactive": "IA Inativa",
+    "note": "Nota",
+    "messages": "mensagens",
+    "updatedAt": "Atualizado em:",
+    "openConversation": "Abrir Conversa",
+    "status": {
+      "active": "Ativa",
+      "closed": "Fechada",
+      "escalated": "Escalada para humano"
+    }
+  },
+  "notesDialog": {
+    "loadErrorToast": "Erro ao carregar notas. Por favor, tente novamente.",
+    "addSuccessToast": "Nota adicionada com sucesso!",
+    "addErrorToast": "Erro ao adicionar nota.",
+    "emptyWarningToast": "A nota não pode estar vazia.",
+    "invalidDate": "Data inválida",
+    "loadErrorTitle": "Erro ao Carregar Notas",
+    "loadErrorMessage": "Ocorreu um erro ao carregar as notas. Por favor, tente novamente.",
+    "closeButton": "Fechar",
+    "title": "Notas da Conversa",
+    "noNotes": "Nenhuma nota adicionada ainda.",
+    "addNoteLabel": "Adicionar Nota",
+    "sendButton": "Enviar"
+  },
+  "addCardDialog": {
+    "title": "Adicionar Novo Card",
+    "cardTitleLabel": "Título do Card",
+    "descriptionLabel": "Descrição (opcional)",
+    "priorityLabel": "Prioridade",
+    "tagsLabel": "Tags (separadas por vírgula)",
+    "columnLabel": "Coluna",
+    "selectColumnPlaceholder": "Selecione uma coluna",
+    "cancelButton": "Cancelar",
+    "addButton": "Adicionar Card",
+    "priorities": {
+      "low": "Baixa",
+      "medium": "Média",
+      "high": "Alta"
+    }
+  },
+  "addColumnDialog": {
+    "title": "Nova Coluna",
+    "columnNameLabel": "Nome da coluna",
+    "cancelButton": "Cancelar",
+    "createButton": "Criar Coluna"
+  },
+  "blog": {
+    "loadError": "Erro ao carregar posts: ",
+    "featured": "Destaque",
+    "recent": "Recente",
+    "category": "Categoria",
+    "noExcerpt": "Sem resumo disponível.",
+    "readMore": "Ler mais",
+    "loadMore": "Carregar mais artigos"
+  },
+  "individualPost": {
+    "defaultTitle": "Título do Post",
+    "defaultAlt": "Imagem do post",
+    "by": "por",
+    "defaultAuthor": "José Silva",
+    "readingTime": "{{minutes}} minutos de leitura",
+    "backToBlog": "Voltar para o Blog",
+    "defaultCategory": "Nome da categoria",
+    "shareInstagram": "Compartilhar no Instagram",
+    "shareLinkedIn": "Compartilhar no LinkedIn",
+    "shareTwitter": "Compartilhar no Twitter",
+    "copyLink": "Copiar link",
+    "defaultContent": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor. Cras elementum ultrices diam. Maecenas ligula massa, varius a, semper congue, euismod non, mi. Proin porttitor, orci nec nonummy molestie, enim est eleifend mi, non fermentum diam nisl sit amet erat."
+  },
+  "adminPage": {
+    "title": "Painel do Administrador",
+    "searchPlaceholder": "Buscar por nome, email...",
+    "filters": {
+      "plan": "Plano",
+      "allPlans": "Todos",
+      "guest": "Guest",
+      "basic": "Básico",
+      "pro": "Pro",
+      "premium": "Premium",
+      "role": "Função",
+      "allRoles": "Todas",
+      "admin": "Admin",
+      "manager": "Gerente",
+      "sales": "Vendas",
+      "status": "Status",
+      "allStatuses": "Todos",
+      "active": "Ativo",
+      "inactive": "Inativo"
+    },
+    "buttons": {
+      "createUser": "Criar Novo Usuário",
+      "generateCheckout": "Gerar Link de Checkout"
+    },
+    "userCard": {
+      "active": "Ativo",
+      "inactive": "Inativo",
+      "memberSince": "Membro desde {{date}}",
+      "company": "Empresa",
+      "noCompany": "N/A",
+      "edit": "Editar",
+      "viewDetails": "Ver Detalhes"
+    },
+    "userDetails": {
+      "title": "Detalhes do Usuário",
+      "userId": "ID do Usuário",
+      "status": "Status",
+      "plan": "Plano",
+      "role": "Função"
+    },
+    "createUserForm": {
+      "titleNew": "Criar Novo Usuário",
+      "titleEdit": "Editando {{name}}",
+      "nameLabel": "Nome Completo",
+      "emailLabel": "Email",
+      "passwordLabel": "Senha",
+      "companyLabel": "Empresa (Opcional)",
+      "roleLabel": "Função",
+      "planLabel": "Plano Inicial",
+      "buttonCreate": "Criar Usuário",
+      "buttonCreating": "Criando...",
+      "buttonSave": "Salvar Alterações",
+      "buttonSaving": "Salvando...",
+      "passwordStrength": "Força da senha: {{score}}/5 - {{hint}}",
+      "validations": {
+        "nameRequired": "Nome é obrigatório",
+        "emailRequired": "Email é obrigatório",
+        "emailInvalid": "Email inválido",
+        "passwordRequired": "Senha deve atender a todos os critérios de segurança",
+        "initialHint": "Digite uma senha forte para o usuário",
+        "length": "Mínimo 8 caracteres",
+        "uppercase": "Adicione uma letra maiúscula",
+        "lowercase": "Adicione uma letra minúscula",
+        "number": "Adicione um número",
+        "specialChar": "Adicione um caractere especial (!@#$...)",
+        "strong": "Senha forte!"
+      }
+    },
+    "checkoutGenerator": {
+      "title": "Gerar Link de Checkout do Stripe",
+      "selectUser": "Selecionar Usuário",
+      "selectPlan": "Selecionar Plano",
+      "generateButton": "Gerar Link de Checkout",
+      "dialogTitle": "Link de Checkout Gerado",
+      "dialogAlert": "Link de checkout criado com sucesso! Envie este link para o usuário completar a assinatura.",
+      "dialogLinkFieldLabel": "Link de Checkout",
+      "copyButton": "Copiar Link",
+      "closeButton": "Fechar",
+      "plans": {
+        "basic_monthly": "Básico Mensal",
+        "pro_monthly": "Pro Mensal",
+        "premium_monthly": "Premium Mensal",
+        "basic_yearly": "Básico Anual",
+        "pro_yearly": "Pro Anual",
+        "premium_yearly": "Premium Anual"
+      }
+    },
+    "toasts": {
+      "userCreated": "Usuário criado com sucesso!",
+      "userCreateError": "Erro ao criar usuário",
+      "userUpdated": "Usuário atualizado com sucesso!",
+      "userUpdateError": "Erro ao atualizar usuário.",
+      "checkoutLinkGenerated": "{{message}}",
+      "checkoutLinkError": "Erro ao gerar link de checkout",
+      "selectUserAndPlan": "Selecione um usuário e um plano",
+      "linkCopied": "Link copiado para a área de transferência!",
+      "copyLinkError": "Erro ao copiar link",
+      "idCopied": "ID copiado!"
+    }
+  },
+  "salesMethodologies": {
+    "mainTitle": "Nossa IA domina as principais<1/>metodologias de vendas",
+    "transitionMessage": "Analisando próximo framework...",
+    "SPIN": {
+      "name": "SPIN Selling",
+      "imagePath": "/spin.png",
+      "color": "#7356FC",
+      "explanation": "Focada em fazer as perguntas certas para guiar o cliente à solução, explorando a Situação, Problema, Implicação e Necessidade.",
+      "chat": [
+        {
+          "sender": "ai",
+          "text": "Olá! Para entendermos seu cenário, pode me descrever seu processo de vendas atual?"
+        },
+        {
+          "sender": "lead",
+          "text": "Claro. É bastante manual, usamos planilhas para quase tudo."
+        },
+        {
+          "sender": "ai",
+          "text": "Entendo. E qual o maior desafio que esse processo manual gera para vocês?"
+        },
+        {
+          "sender": "lead",
+          "text": "O ciclo de vendas é muito longo. Levamos semanas para qualificar um lead."
+        },
+        {
+          "sender": "ai",
+          "text": "Imagino o impacto disso. Essa lentidão já fez vocês perderem negócios para concorrentes?"
+        },
+        {
+          "sender": "lead",
+          "text": "Sim, várias vezes. É frustrante."
+        },
+        {
+          "sender": "ai",
+          "text": "Então, uma solução que automatize tarefas e acelere o ciclo seria a prioridade para vocês?"
+        },
+        {
+          "sender": "lead",
+          "text": "Com certeza! Seria exatamente o que precisamos."
+        },
+        {
+          "sender": "ai",
+          "text": "Perfeito. Análise concluída: Lead qualificado via SPIN.",
+          "final": true
+        }
+      ]
+    },
+    "SPICE": {
+      "name": "SPICE",
+      "imagePath": "/spiced.png",
+      "color": "#33A1FF",
+      "explanation": "Mapeia a Situação, a Dor, o Impacto financeiro, o Evento Crítico (o que acontece se nada for feito) e os critérios de Avaliação do sucesso.",
+      "chat": [
+        {
+          "sender": "ai",
+          "text": "Analisando seu fluxo de trabalho, qual tarefa mais consome tempo da equipe?"
+        },
+        {
+          "sender": "lead",
+          "text": "A geração de relatórios mensais. É uma dor de cabeça."
+        },
+        {
+          "sender": "ai",
+          "text": "Vamos quantificar o impacto disso. Quantas horas de trabalho são gastas nesses relatórios?"
+        },
+        {
+          "sender": "lead",
+          "text": "Facilmente umas 80 horas por mês, um custo operacional significativo."
+        },
+        {
+          "sender": "ai",
+          "text": "Certo. E qual o evento crítico se nada mudar e a demanda dobrar no próximo trimestre?"
+        },
+        {
+          "sender": "lead",
+          "text": "A equipe não daria conta, a qualidade dos dados cairia e afetaria nossas decisões."
+        },
+        {
+          "sender": "ai",
+          "text": "Ok. E como vocês avaliariam o sucesso de uma nova solução para isso?"
+        },
+        {
+          "sender": "lead",
+          "text": "Se conseguirmos gerar relatórios precisos em menos de 5 minutos, seria uma vitória."
+        },
+        {
+          "sender": "ai",
+          "text": "Métricas claras. Análise concluída: Lead qualificado via SPICE.",
+          "final": true
+        }
+      ]
+    },
+    "BANT": {
+      "name": "BANT",
+      "imagePath": "/bant.jpeg",
+      "color": "#DC3884",
+      "explanation": "Framework de qualificação rápida para focar nos leads com maior potencial, validando Orçamento, Autoridade, Necessidade e Prazo.",
+      "chat": [
+        {
+          "sender": "ai",
+          "text": "Para sermos eficientes, vamos validar alguns pontos. Vocês têm um orçamento definido para novas ferramentas?"
+        },
+        {
+          "sender": "lead",
+          "text": "Sim, temos um budget aprovado de até $15k para a ferramenta certa."
+        },
+        {
+          "sender": "ai",
+          "text": "Ótimo. E quem mais está envolvido na decisão final de compra?"
+        },
+        {
+          "sender": "lead",
+          "text": "Eu faço a avaliação, mas a Diretora de Vendas dá a aprovação final."
+        },
+        {
+          "sender": "ai",
+          "text": "Entendido. A necessidade principal é aumentar a produtividade da equipe, correto?"
+        },
+        {
+          "sender": "lead",
+          "text": "Exato. Menos tempo em tarefas administrativas, mais tempo vendendo."
+        },
+        {
+          "sender": "ai",
+          "text": "E qual o prazo para ter essa solução implementada e gerando resultados?"
+        },
+        {
+          "sender": "lead",
+          "text": "Idealmente, gostaríamos de começar no próximo trimestre."
+        },
+        {
+          "sender": "ai",
+          "text": "Excelente. Análise concluída: Lead qualificado via BANT.",
+          "final": true
+        }
+      ]
+    },
+    "MEDDIC": {
+      "name": "MEDDIC",
+      "imagePath": "/meddic.jpeg",
+      "color": "#2CE5A9",
+      "explanation": "Ideal para vendas complexas B2B, garantindo uma qualificação profunda ao analisar Métricas, Decisor Econômico, Critérios, Dor e um Defensor interno.",
+      "chat": [
+        {
+          "sender": "ai",
+          "text": "Iniciando análise aprofundada. Qual métrica de negócio (KPI) vocês mais precisam impactar agora?"
+        },
+        {
+          "sender": "lead",
+          "text": "Precisamos diminuir nosso Custo de Aquisição de Clientes (CAC) em 20%."
+        },
+        {
+          "sender": "ai",
+          "text": "Uma meta clara. Quem é o decisor econômico que aprova projetos com esse impacto?"
+        },
+        {
+          "sender": "lead",
+          "text": "É o nosso CFO, ele aprova todos os investimentos acima de $20k."
+        },
+        {
+          "sender": "ai",
+          "text": "Certo. E quais os critérios técnicos mais importantes para vocês?"
+        },
+        {
+          "sender": "lead",
+          "text": "Integração com nosso CRM, segurança dos dados e um suporte ágil."
+        },
+        {
+          "sender": "ai",
+          "text": "Anotado. E o que acontece se o CAC não diminuir? Qual é a dor real?"
+        },
+        {
+          "sender": "lead",
+          "text": "Nossa margem de lucro será comprometida e teremos que cortar outros investimentos."
+        },
+        {
+          "sender": "ai",
+          "text": "Compreendo a urgência. Análise concluída: Lead qualificado via MEDDIC.",
+          "final": true
+        }
+      ]
+    }
+  },
+  "blogPost": {
+    "title": "O Futuro da Qualificação de Leads: Como a IA da Qualifai Potencializa Metodologias de Vendas",
+    "slug": "qualificacao-de-leads-com-ia-da-qualifai",
+    "excerpt": "Descubra como a inteligência artificial pode transformar seu suporte, oferecendo respostas instantâneas, personalizadas e disponíveis 24/7, liberando sua equipe para focar em casos complexos.",
+    "content": "<blockquote>\"A metodologia SPIN Selling traz orientações sobre quais são as perguntas certas de se fazer em um processo comercial para aumentar as taxas de conversão.\" - RD Station [1]</blockquote><h3>SPICED: Uma Visão Abrangente do Cenário do Cliente</h3><p>O SPICED é um framework que vai além do problema, analisando a Situação, a Dor (Pain), o Impacto, o Evento Crítico e os Critérios de Decisão. Essa metodologia permite uma compreensão mais profunda do cenário do cliente e de suas motivações de compra. A IA da Qualifai utiliza o SPICED para qualificar leads de forma ainda mais precisa, garantindo que apenas as oportunidades mais quentes cheguem à equipe de vendas.</p><blockquote>\"O SPICED ajuda a estruturar conversas que geram valor desde o primeiro minuto, revelando o que o lead ainda não tinha clareza.\" - Pipelovers [2]</blockquote><h3>A Qualifai em Ação</h3><p>A plataforma da Qualifai integra-se ao WhatsApp e ao Instagram, conversando com os leads por meio de texto, áudio e ligações personalizados. A IA qualifica os leads, agenda reuniões diretamente no Google Calendar e atualiza o CRM, criando um fluxo de vendas automático e sem atritos. E o mais importante: a IA da Qualifai trabalha 24 horas por dia, 7 dias por semana, garantindo que nenhum lead seja perdido.</p><h3>Conclusão</h3><p>A combinação de Inteligência Artificial com metodologias de vendas consagradas como o SPIN Selling e o SPICED está revolucionando a qualificação de leads. A Qualifai está na vanguarda dessa transformação, oferecendo uma solução que não apenas otimiza o processo de vendas, mas também potencializa os resultados, permitindo que as empresas transformem seus funis de vendas em lucro previsível.</p>",
+    "imageUrl": "/image-blog-2.jpg",
+    "category": "Inteligência Artificial",
+    "isFeatured": true,
+    "author": {
+      "name": "Equipe QualifAI",
+      "imageUrl": "/QualifaiLogo.png"
+    },
+    "createdAt": "2024-08-18T18:01:39.000Z"
+  },
+  "aiTrainingPage": {
+    "title": "Simulador de IA",
+    "resetTooltip": "Resetar Conversa Simulada",
+    "currentStateLabel": "Estado Atual da IA",
+    "currentStatusLabel": "Status do Lead",
+    "inputPlaceholder": "Digite sua mensagem como 'lead'...",
+    "uploadCard": {
+      "title": "Ensinar com Documento",
+      "description": "Faça upload de transcrições de conversas passadas (boas ou ruins) ou documentos relevantes para que a IA aprenda com eles.",
+      "uploading": "Enviando...",
+      "button": "Escolher Arquivo",
+      "supportedFiles": "Suporta: .txt, .pdf, .docx (até 10MB)",
+      "analysisSuccess": "Documento \"{{fileName}}\" analisado com sucesso. {{insightsAdded}} novos insights adicionados à memória.",
+      "analysisError": "Falha ao analisar o documento: {{error}}"
+    },
+    "chartCard": {
+      "title": "Desempenho da IA",
+      "tooltip": "Este gráfico mostra a Taxa de Sucesso (%) das conversas REAIS ao longo do tempo. Se a IA está aprendendo com o RAG, esta curva deve subir.",
+      "yAxisSuccess": "Taxa de Sucesso (%)"
+    },
+    "chart": {
+      "title": "Curva de Aprendizado da IA (Taxa de Sucesso Real)",
+      "successRateLabel": "Taxa de Sucesso (%)"
+    }
+  }
+}

@@ -1,0 +1,28 @@
+.logo-img {
+  height: 200px;
+  margin-bottom: -80px;
+}
+
+@media (min-width: 600px) {
+  .logo-img {
+    height: 300px;
+    margin-bottom: -120px;
+  }
+}
+
+
+.logo-drawer {
+  height: 150px;
+  margin-bottom: -65px;
+  margin-top: -65px;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 600px) {
+  .logo-drawer {
+    height: 200px;
+    margin-bottom: -85px;
+    margin-top: -85px;
+  }
+}
