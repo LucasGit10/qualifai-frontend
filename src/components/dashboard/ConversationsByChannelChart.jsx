@@ -45,6 +45,27 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
+const EmptyChannelMessage = () => {
+  const { t } = useTranslation();
+  const theme = useTheme();
+
+  return (
+    <Box sx={{
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      textAlign: 'center',
+      p: 2,
+    }}>
+      <Typography variant="body2" sx={{ color: theme.palette.text.secondary, opacity: 0.7 }}>
+        {t('dashboard.charts.noData')}
+      </Typography>
+    </Box>
+  );
+};
+
 export default function ConversationsByChannelChart({ data }) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -55,14 +76,16 @@ export default function ConversationsByChannelChart({ data }) {
 
   const total = data?.reduce((sum, item) => sum + (item.count || 0), 0) || 1;
 
-  const formattedData = data?.length > 0
-    ? data.map((item, index) => ({
-        name: t(`dashboard.channels.${item._id.toLowerCase()}`) || item._id || 'Outro',
-        value: item.count || 0,
-        fill: PIE_COLORS[index % PIE_COLORS.length],
-        total: total
-      }))
-    : [{ name: t('dashboard.charts.noData'), value: 1, fill: theme.palette.grey[700] }];
+  const formattedData = data?.map((item, index) => ({
+    name: t(`dashboard.channels.${item._id.toLowerCase()}`) || item._id || 'Outro',
+    value: item.count || 0,
+    fill: PIE_COLORS[index % PIE_COLORS.length],
+    total: total
+  })) || [];
+
+  if (!data || data.length === 0 || total === 0) {
+    return <EmptyChannelMessage />;
+  }
 
   return (
     <Box

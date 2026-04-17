@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from 'react-query';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Grid, Typography, Box, LinearProgress, useTheme, alpha, Switch, FormControlLabel, Chip } from '@mui/material';
-import { People as PeopleIcon, TrendingUp as TrendingUpIcon, Chat as ChatIcon, CheckCircle as CheckCircleIcon, ReportProblem as ReportProblemIcon, Dashboard as DashboardIcon } from '@mui/icons-material';
+import { Grid, Typography, Box, LinearProgress, useTheme, alpha } from '@mui/material';
+import { 
+  People as PeopleIcon, 
+  TrendingUp as TrendingUpIcon, 
+  Chat as ChatIcon, 
+  CheckCircle as CheckCircleIcon, 
+  ReportProblem as ReportProblemIcon, 
+  Dashboard as DashboardIcon, 
+  AccountBalanceWallet as WalletIcon, 
+  Payment as PaymentIcon 
+} from '@mui/icons-material';
 import { format, subDays, eachDayOfInterval } from 'date-fns';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
@@ -10,7 +19,8 @@ import { useTranslation } from 'react-i18next';
 // --- ARQUIVOS DE SERVIÇO, ESTADO E CONTEXTO ---
 import api from '../services/api';
 import { useAuthStore } from '../stores/authStore';
-import { useTour } from '../contexts/TourContext'; // <-- 1. Importa o hook do tour
+import { useTour } from '../contexts/TourContext'; 
+import { USE_MOCKS } from '../config/env';
 
 // --- COMPONENTES DO DASHBOARD ---
 import StatCard from '../components/dashboard/StatCard';
@@ -24,7 +34,12 @@ import WhatsappStatsBoard from '../components/dashboard/WhatsappStatsBoard';
 import CampaignStatsChart from '../components/dashboard/CampaignStatsChart';
 import InstagramStatsBoard from '../components/dashboard/InstagramStatsBoard';
 
-// Dados mockados para quando a API não estiver disponível
+// ─── Helpers ──────────────────────────────────────────────────────────
+const fmt = (v) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 const MOCK_DATA = {
   stats: {
     totalLeads: 1247,
@@ -32,6 +47,11 @@ const MOCK_DATA = {
     qualifiedLeads: 89,
     escalatedConversations: 12,
     conversionRate: 7.2,
+    whatsappApiCost: '124,50',
+    financial: {
+      totalRecovered: '145.230,50',
+      commissions: '14.523,05'
+    },
     leadsOverTime: Array.from({ length: 30 }, (_, i) => ({
       _id: format(subDays(new Date(), 29 - i), 'yyyy-MM-dd'),
       count: Math.floor(Math.random() * 50) + 20
@@ -39,15 +59,16 @@ const MOCK_DATA = {
     leadsByStatus: [
       { _id: 'novo', count: 450 },
       { _id: 'contatado', count: 320 },
-      { _id: 'morno', count: 180 },
-      { _id: 'qualificado', count: 89 },
-      { _id: 'convertido', count: 64 }
+      { _id: 'em_negociacao', count: 180 },
+      { _id: 'acordado', count: 89 },
+      { _id: 'quitado', count: 64 },
+      { _id: 'judicial', count: 22 },
     ],
     leadsBySource: [
-      { _id: 'website', count: 420 },
-      { _id: 'instagram', count: 380 },
-      { _id: 'facebook', count: 210 },
-      { _id: 'indicacao', count: 150 },
+      { _id: 'whatsapp', count: 420 },
+      { _id: 'email', count: 380 },
+      { _id: 'telefone', count: 210 },
+      { _id: 'form', count: 150 },
       { _id: 'outros', count: 87 }
     ],
     conversationsByChannel: [
@@ -59,28 +80,30 @@ const MOCK_DATA = {
   },
   activities: {
     activities: [
-      { id: 1, type: 'lead', title: 'Novo Lead Capturado', description: 'João Silva via Website', timestamp: new Date().toISOString() },
+      { id: 1, type: 'lead', title: 'Novo Devedor Adicionado', description: 'João Silva via Importação CSV', timestamp: new Date().toISOString() },
       { id: 2, type: 'conversation', title: 'Conversa Ativa', description: 'Maria Santos no WhatsApp', timestamp: subDays(new Date(), 1).toISOString() },
-      { id: 3, type: 'lead', title: 'Lead Qualificado', description: 'Pedro Oliveira no Instagram', timestamp: subDays(new Date(), 2).toISOString() },
-      { id: 4, type: 'conversation', title: 'Conversa Escalada', description: 'Ana Costa via Email', timestamp: subDays(new Date(), 3).toISOString() },
-      { id: 5, type: 'lead', title: 'Novo Lead Capturado', description: 'Carlos Ribeiro no Facebook', timestamp: subDays(new Date(), 4).toISOString() }
+      { id: 3, type: 'lead', title: 'Acordo Firmado', description: 'Pedro Oliveira — R$ 4.200,00', timestamp: subDays(new Date(), 2).toISOString() },
+      { id: 4, type: 'conversation', title: 'Enviado para Jurídico', description: 'Ana Costa — Contrato #2891', timestamp: subDays(new Date(), 3).toISOString() },
+      { id: 5, type: 'lead', title: 'Novo Devedor Adicionado', description: 'Carlos Ribeiro via Form', timestamp: subDays(new Date(), 4).toISOString() }
     ]
   },
   instances: [
-    { _id: '1', instanceName: 'WhatsApp Principal', messagesSent: 1247, messagesReceived: 980 },
-    { _id: '2', instanceName: 'WhatsApp Vendas', messagesSent: 856, messagesReceived: 720 }
+    { _id: '1', instanceName: 'WhatsApp Cobrança', messagesSent: 1247, messagesReceived: 980 },
+    { _id: '2', instanceName: 'WhatsApp Jurídico', messagesSent: 856, messagesReceived: 720 }
   ],
+  campaigns: {
+    campaigns: [
+      { _id: '1', name: 'Campanha Jun/2025', status: 'active' },
+      { _id: '2', name: 'Segunda Via Boleto', status: 'running' },
+      { _id: '3', name: 'Negativados Q1', status: 'completed' }
+    ]
+  },
   conversations: {
     conversations: Array.from({ length: 45 }, (_, i) => ({
       id: i + 1,
-      status: i < 28 ? 'active' : 'closed'
-    })),
-    instagramConversations: {
-      conversations: Array.from({ length: 18 }, (_, i) => ({
-        id: i + 1,
-        status: i < 7 ? 'active' : 'closed'
-      }))
-    }
+      status: i < 28 ? 'active' : 'closed',
+      channel: i % 3 === 0 ? 'instagram' : 'whatsapp'
+    }))
   }
 };
 
@@ -92,25 +115,19 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [lineChartData, setLineChartData] = useState([]);
-  const [useMockData, setUseMockData] = useState(false);
 
-  // <-- 2. Pega as funções e o estado do contexto do tour -->
   const { isTourActive, currentStage, runStepTour, advanceTour } = useTour();
 
-  // <-- 3. Adiciona a lógica de "escuta" para o tour -->
+  // Tour Logic
   useEffect(() => {
-    // Verifica se o tour geral está ativo E se o capítulo atual é desta página
     if (isTourActive && currentStage?.path === '/app/dashboard') {
-      // Usamos um pequeno delay para garantir que todos os elementos da página
-      // já foram renderizados antes de o tour tentar destacá-los.
       setTimeout(() => {
-        // Inicia o tour específico desta página
-        // A função 'advanceTour' é passada para ser chamada quando o tour local terminar
         runStepTour(currentStage.steps, advanceTour);
-      }, 500); // 0.5 segundos de espera
+      }, 500);
     }
   }, [isTourActive, currentStage, runStepTour, advanceTour]);
 
+  // Stripe Polling Logic (Mantido intacto caso você precise no futuro)
   useEffect(() => {
     const stripeSuccess = searchParams.get('stripe_success') === 'true';
     if (stripeSuccess && user?.plan === 'guest') {
@@ -118,9 +135,12 @@ export default function Dashboard() {
 
       const interval = setInterval(async () => {
         try {
-          const response = await api.get('/auth/profile');
-          if (response.data.user && response.data.user.plan !== 'guest') {
-            updateUser(response.data.user);
+          // Aqui faria a requisição real de validação
+          // const response = await api.get('/auth/profile');
+          const fakeResponse = { data: { user: { ...user, plan: 'pro' } } }; // Mock
+          
+          if (fakeResponse.data.user && fakeResponse.data.user.plan !== 'guest') {
+            updateUser(fakeResponse.data.user);
             queryClient.invalidateQueries();
             clearInterval(interval);
             clearTimeout(timeout);
@@ -145,71 +165,81 @@ export default function Dashboard() {
     }
   }, [searchParams, setSearchParams, user, updateUser, queryClient, navigate, t]);
 
+  // ==========================================
+  // QUERIES MOCKADAS
+  // ==========================================
   const { data: statsData, isLoading: isLoadingStats } = useQuery(
     'dashboard-stats',
-    () => api.get('/dashboard/stats').then(res => res.data),
-    { 
-      refetchInterval: 30000, 
-      enabled: isAuthenticated && !useMockData, 
-      keepPreviousData: true 
-    }
+    async () => {
+      if (USE_MOCKS) {
+        await delay(800);
+        return MOCK_DATA.stats;
+      }
+      return api.get('/dashboard/stats').then(res => res.data);
+    },
+    { enabled: isAuthenticated, keepPreviousData: true }
   );
 
   const { data: activitiesData, isLoading: isLoadingActivities } = useQuery(
     'dashboard-activities',
-    () => api.get('/dashboard/activities').then(res => res.data),
-    { 
-      refetchInterval: 60000, 
-      enabled: isAuthenticated && !useMockData, 
-      keepPreviousData: true 
-    }
+    async () => {
+      if (USE_MOCKS) {
+        await delay(1000);
+        return MOCK_DATA.activities;
+      }
+      return api.get('/dashboard/activities').then(res => res.data);
+    },
+    { enabled: isAuthenticated, keepPreviousData: true }
   );
 
-  const { data: instances, isLoading: isLoadingInstances } = useQuery(
+  const { data: instancesData, isLoading: isLoadingInstances } = useQuery(
     'whatsapp-instances',
-    () => api.get('/whatsapp').then(res => res.data),
-    {
-      onError: (error) => {
-        toast.error(error.response?.data?.error || t('dashboard.toasts.channelsError'));
-      },
-      enabled: isAuthenticated && !useMockData,
-    }
+    async () => {
+      if (USE_MOCKS) {
+        await delay(1200);
+        return MOCK_DATA.instances;
+      }
+      return api.get('/whatsapp').then(res => res.data);
+    },
+    { enabled: isAuthenticated }
   );
 
   const { data: campaignsData } = useQuery(
     'dashboard-campaigns',
-    () => api.get('/campaigns?limit=4').then(res => res.data),
-    { 
-        enabled: isAuthenticated && !useMockData, 
-        staleTime: 5 * 60 * 1000 
-    }
+    async () => {
+      if (USE_MOCKS) {
+        await delay(900);
+        return MOCK_DATA.campaigns;
+      }
+      return api.get('/campaigns').then(res => res.data);
+    },
+    { enabled: isAuthenticated, staleTime: 5 * 60 * 1000 }
   );
 
   const { data: conversationsData, isLoading: isLoadingConversations } = useQuery(
     'conversations-data',
-    () => api.get('/conversations/').then(res => res.data),
-    {
-        enabled: isAuthenticated && !useMockData,
-        refetchInterval: 30000,
-    }
+    async () => {
+      if (USE_MOCKS) {
+        await delay(1100);
+        return MOCK_DATA.conversations;
+      }
+      return api.get('/conversations').then(res => res.data);
+    },
+    { enabled: isAuthenticated }
   );
 
-  const stats = useMockData ? MOCK_DATA.stats : statsData;
-  const activities = useMockData ? MOCK_DATA.activities.activities : activitiesData?.activities;
-  const allConversations = (useMockData ? MOCK_DATA.conversations : conversationsData)?.conversations || [];
+  // Derivando os dados das queries para as props dos componentes
+  const stats = statsData;
+  const activities = activitiesData?.activities || [];
+  const allConversations = conversationsData?.conversations || [];
 
   const whatsappConversations = allConversations.filter(c => c.channel === 'whatsapp');
   const instagramConversations = allConversations.filter(c => c.channel === 'instagram');
+  const whatsappInstances = instancesData || [];
   
-  const whatsappInstances = useMockData ? MOCK_DATA.instances : instances;
+  const campaignsToDisplay = campaignsData?.campaigns?.filter(c => c.status !== 'draft') || [];
 
-  const campaignsToDisplay = useMockData ? [
-    { _id: '1', name: 'Campanha de Verão', status: 'active' },
-    { _id: '2', name: 'Promoção Especial', status: 'running' },
-    { _id: '3', name: 'Novos Produtos', status: 'completed' }
-  ] : campaignsData?.campaigns?.filter(c => c.status !== 'draft') || [];
-
-  const isLoading = (isLoadingStats || isLoadingActivities || isLoadingInstances || isLoadingConversations) && !useMockData;
+  const isLoading = isLoadingStats || isLoadingActivities || isLoadingInstances || isLoadingConversations;
 
   useEffect(() => {
     if (!stats?.leadsOverTime) return;
@@ -243,10 +273,7 @@ export default function Dashboard() {
   }
 
   return (
-    <Box sx={{ 
-      minHeight: '100vh', 
-      p: { xs: 1, sm: 2, md: 3 },
-    }}>
+    <Box sx={{ minHeight: '100vh', p: { xs: 1, sm: 2, md: 3 } }}>
       <Box 
         sx={{ 
           p: { xs: 2, sm: 3 }, 
@@ -273,42 +300,24 @@ export default function Dashboard() {
               {t('dashboard.title')}
             </Typography>
             <Typography variant="body2" sx={{ color: theme.palette.text.primary, mt: 0.5, opacity: 0.8 }}>
-              Visão geral do seu desempenho
+              Visão geral do desempenho de recuperação de crédito
             </Typography>
           </Box>
         </Box>
-
-        {/* <Box display="flex" alignItems="center" gap={1}>
-          <Chip 
-            label={useMockData ? "Dados Demo" : "Dados Reais"} 
-            color={useMockData ? "secondary" : "primary"}
-            variant="outlined"
-          />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={useMockData}
-                onChange={(e) => setUseMockData(e.target.checked)}
-                color="primary"
-              />
-            }
-            label={<Typography variant="body2" sx={{ color: theme.palette.text.primary }}>Modo Demo</Typography>}
-          />
-        </Box> */}
       </Box>
 
       <Grid container spacing={{ xs: 1, sm: 2, md: 3 }}>
         <Grid item xs={12} container spacing={{ xs: 1, sm: 2, md: 3 }} id="tour-dashboard-statscards">
-          <Grid item xs={12} sm={6} md={4} lg={2.4}>
+          <Grid item xs={12} sm={6} md={4} lg={3}>
             <StatCard 
-              title={t('dashboard.statCards.totalLeads')} 
+              title={t('dashboard.statCards.totalDevedores')} 
               value={stats?.totalLeads || 0} 
               icon={<PeopleIcon />} 
               color={theme.palette.primary.main} 
               subtitle={t('dashboard.statCards.total')} 
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2.4}>
+          <Grid item xs={12} sm={6} md={4} lg={3}>
             <StatCard 
               title={t('dashboard.statCards.activeConversations')} 
               value={stats?.activeConversations || 0} 
@@ -317,66 +326,82 @@ export default function Dashboard() {
               subtitle={t('dashboard.statCards.now')} 
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2.4}>
+          <Grid item xs={12} sm={6} md={4} lg={3}>
             <StatCard 
-              title={t('dashboard.statCards.qualifiedLeads')} 
+              title={t('dashboard.statCards.acordosAtivos')} 
               value={stats?.qualifiedLeads || 0} 
               icon={<CheckCircleIcon />} 
               color={theme.palette.success.main} 
               subtitle={t('dashboard.statCards.thisMonth')} 
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={6} lg={2.4}>
+          <Grid item xs={12} sm={6} md={6} lg={3}>
             <StatCard 
-              title={t('dashboard.statCards.escalatedConversations')} 
-              value={stats?.escalatedConversations || 0} 
-              icon={<ReportProblemIcon />} 
-              color={theme.palette.error.main} 
+              title={t('dashboard.statCards.custoContato')} 
+              value={fmt(stats?.whatsappApiCost || 0)} 
+              icon={<ChatIcon />} 
+              color={theme.palette.info.main} 
               subtitle={t('dashboard.statCards.thisMonth')} 
             />
           </Grid>
-          <Grid item xs={12} sm={12} md={6} lg={2.4}>
+          <Grid item xs={12} sm={12} md={6} lg={4}>
+            <StatCard 
+              title={t('dashboard.statCards.totalRecovered')} 
+              value={fmt(stats?.financial?.totalRecovered || 0)} 
+              icon={<PaymentIcon />} 
+              color={theme.palette.success.main} 
+              subtitle={t('dashboard.statCards.thisMonth')} 
+            />
+          </Grid>
+          <Grid item xs={12} sm={6} md={6} lg={4}>
+            <StatCard 
+              title={t('dashboard.statCards.fees')} 
+              value={fmt(stats?.financial?.commissions || 0)} 
+              icon={<TrendingUpIcon />} 
+              color={theme.palette.warning.main} 
+              subtitle={t('dashboard.statCards.thisMonth')} 
+            />
+          </Grid>
+          <Grid item xs={12} sm={12} md={12} lg={4}>
             <StatCard 
               title={t('dashboard.statCards.conversionRate')} 
               value={`${stats?.conversionRate || 0}%`} 
               icon={<TrendingUpIcon />} 
-              color={theme.palette.custom.pink?.[500] || theme.palette.info.main} 
+              color={theme.palette.custom?.pink?.[500] || theme.palette.info.main} 
               subtitle={t('dashboard.statCards.thisMonth')} 
             />
           </Grid>
         </Grid>
-
-        {/* --- INÍCIO DA RESOLUÇÃO DO CONFLITO --- */}
-        {/* WhatsApp Stats */}
+ 
         <Grid item xs={12} id="tour-dashboard-whatsapp">
           <WhatsappStatsBoard instances={whatsappInstances} conversations={{ conversations: whatsappConversations }} />
         </Grid>
-
-        {/* Instagram Stats */}
-        <Grid item xs={12}>
-          <InstagramStatsBoard conversations={{ conversations: useMockData ? MOCK_DATA.instagramConversations.conversations : instagramConversations }} />
-        </Grid>
-        {/* --- FIM DA RESOLUÇÃO DO CONFLITO --- */}
+ 
+        {user?.role === 'admin' && (
+          <Grid item xs={12}>
+            <InstagramStatsBoard conversations={{ conversations: instagramConversations }} />
+          </Grid>
+        )}
 
         <Grid item xs={12} container spacing={{ xs: 1, sm: 2, md: 3 }} id="tour-dashboard-graficos">
           <Grid item xs={12} xl={7}>
-            <ChartPaper title={t('dashboard.charts.newLeadsTitle')}>
+            <ChartPaper title={t('dashboard.charts.newDevedoresTitle')}>
               <LineLeadsChart data={lineChartData} />
             </ChartPaper>
           </Grid>
           <Grid item xs={12} xl={5}>
-            <ChartPaper title={t('dashboard.charts.leadsFunnelTitle')}>
-              <FunnelLeads data={stats?.leadsByStatus} />
+            <ChartPaper title={t('dashboard.charts.devedoresFunnelTitle')}>
+              <FunnelLeads data={stats?.leadsByStatus || []} />
             </ChartPaper>
           </Grid>
           <Grid item xs={12} md={6} xl={4}>
             <ChartPaper title={t('dashboard.charts.leadsBySourceTitle')}>
-              <LeadsBySourceChart data={stats?.leadsBySource} />
+              <LeadsBySourceChart data={stats?.leadsBySource || []} />
             </ChartPaper>
           </Grid>
           <Grid item xs={12} md={6} xl={4}>
             <ChartPaper title={t('dashboard.charts.conversationsByChannelTitle')}>
-              <ConversationsByChannelChart data={stats?.conversationsByChannel} />
+              <ConversationsByChannelChart data={stats?.conversationsByChannel || []} />
             </ChartPaper>
           </Grid>
 
@@ -425,7 +450,7 @@ export default function Dashboard() {
               key={campaign._id} 
               campaignId={campaign._id} 
               campaignName={campaign.name} 
-              useMockData={useMockData}
+              useMockData={true} // Forçando true caso o componente filho exija
             />
           ))}
         </Grid>

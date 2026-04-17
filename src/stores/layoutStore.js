@@ -1,4 +1,3 @@
-// src/stores/layoutStore.js
 import { create } from 'zustand';
 
 export const useLayoutStore = create((set) => ({

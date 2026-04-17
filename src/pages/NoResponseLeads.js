@@ -16,6 +16,8 @@ import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 
 import api from '../services/api';
+import { USE_MOCKS } from '../config/env';
+import { MOCK_NO_RESPONSE_LEADS } from '../mocks';
 import { StyledDialog } from '../components/ui/StyledDialog';
 import { GradientButton } from '../components/ui/GradientButton'; // Este import pode ser removido se não for usado em outro lugar
 
@@ -158,9 +160,14 @@ export default function NoResponseLeads() {
   ), [theme.palette.mode, theme.palette.background.paper, theme.palette.divider]);
 
   const { data, isLoading } = useQuery(
-    // ... (código da query - sem alteração)
     ['noResponseLeads', paginationModel, debouncedTextFilter],
-    () => {
+    async () => {
+      if (USE_MOCKS) {
+        return {
+          leads: MOCK_NO_RESPONSE_LEADS,
+          total: MOCK_NO_RESPONSE_LEADS.length
+        };
+      }
       const params = new URLSearchParams({
         page: paginationModel.page + 1,
         limit: paginationModel.pageSize,
@@ -168,7 +175,8 @@ export default function NoResponseLeads() {
         status: 'nao_respondeu'
       });
       if (debouncedTextFilter) params.append('search', debouncedTextFilter);
-      return api.get(`/leads?${params.toString()}`).then(res => res.data);
+      const res = await api.get(`/leads?${params.toString()}`);
+      return res.data;
     },
     { keepPreviousData: true }
   );

@@ -1,6 +1,5 @@
 import { io } from 'socket.io-client';
 
-// Defina a URL da API aqui, dando preferência para a variável de ambiente.
 const SOCKET_URL = process.env.REACT_APP_API_URL;
 
 class SocketService {
@@ -9,14 +8,11 @@ class SocketService {
   }
 
   connect(userId) {
-    // Evita múltiplas conexões
     if (this.socket) {
       return this.socket;
     }
 
-    // Usa a variável SOCKET_URL definida acima
     this.socket = io(SOCKET_URL, {
-      // Opções recomendadas para reconexão automática
       reconnection: true,
       reconnectionAttempts: 5,
     });

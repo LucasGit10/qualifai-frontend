@@ -61,7 +61,6 @@ const darkPalette = {
   background: {
     default: '#0a071a',
     paper: '#1c1633',
-    // --- CORREÇÃO AQUI ---
     gradient: 'linear-gradient(135deg, #0a071a 0%, #1c1633 100%)',
   },
   text: { primary: '#e2d6ff', secondary: '#b3a2d8' },

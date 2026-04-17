@@ -27,7 +27,7 @@ import { GradientButton } from '../../components/ui/GradientButton';
 
 const locales = { pt: ptBR, en: enUS };
 
-const MessageBubble = ({ message, safeFormatDate, getMessageRoleLabel, theme }) => {
+const MessageBubble = ({ message, safeFormatDate, getMessageRoleLabel, theme, t }) => {
   const isLead = message.role === 'lead';
   
   const getAvatar = () => {
@@ -99,6 +99,13 @@ const MessageBubble = ({ message, safeFormatDate, getMessageRoleLabel, theme }) 
             {getMessageRoleLabel(message.role)}
           </Typography>
         </Box>
+        {message.metadata?.audioUrl && (
+          <Box sx={{ my: 1, maxWidth: '100%' }}>
+            <audio controls style={{ width: '100%', height: '40px' }} src={message.metadata.audioUrl}>
+              {t('conversationDialog.audioNotSupported')}
+            </audio>
+          </Box>
+        )}
         <Typography variant="body2" sx={{ 
           whiteSpace: 'pre-wrap', 
           wordBreak: 'break-word', 
@@ -336,6 +343,7 @@ export default function ConversationDialog({
                     safeFormatDate={safeFormatDate}
                     getMessageRoleLabel={getMessageRoleLabel}
                     theme={theme}
+                    t={t}
                   />
                 ))}
                 <div ref={messagesEndRef} />

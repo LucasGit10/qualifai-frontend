@@ -1,18 +1,31 @@
-import { Dialog } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import React from 'react';
+import { Dialog, useTheme } from '@mui/material';
 
-export const StyledDialog = styled(Dialog)(({ theme }) => ({
-  '& .MuiDialog-paper': {
-    borderRadius: 16,
-    background: theme.palette.mode === 'dark' 
-      ? 'rgba(28, 22, 51, 0.9)' 
-      : 'rgba(255, 255, 255, 0.95)',
-    backdropFilter: 'blur(20px)',
-    border: theme.palette.mode === 'dark' 
-      ? '1px solid rgba(252, 252, 252, 1)' 
-      : '1px solid rgba(0, 0, 0, 0.1)',
-    boxShadow: theme.palette.mode === 'dark'
-      ? '0 8px 32px rgba(0, 0, 0, 0.4)'
-      : '0 8px 32px rgba(0, 0, 0, 0.1)',
-  },
-}));
+export const StyledDialog = ({ PaperProps, ...props }) => {
+  const theme = useTheme();
+  return (
+    <Dialog
+      {...props}
+      PaperProps={{
+        ...PaperProps,
+        sx: {
+          borderRadius: 3,
+          background: theme.palette.mode === 'dark'
+            ? 'rgba(18, 18, 30, 0.85)'
+            : 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid',
+          borderColor: theme.palette.mode === 'dark'
+            ? 'rgba(255, 255, 255, 0.1)'
+            : 'rgba(0, 0, 0, 0.08)',
+          boxShadow: theme.palette.mode === 'dark'
+            ? '0 24px 64px rgba(0,0,0,0.5)'
+            : '0 24px 64px rgba(0,0,0,0.12)',
+          backgroundImage: 'none',
+          ...(PaperProps?.sx || {})
+        }
+      }}
+    />
+  );
+};

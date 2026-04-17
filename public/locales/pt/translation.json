@@ -240,7 +240,7 @@
     }
   },
   "dashboard": {
-    "title": "Visão Geral do Dashboard",
+    "title": "Central de Gestão de Cobrança",
     "toasts": {
       "checkingSubscription": "Verificando sua assinatura, por favor aguarde...",
       "subscriptionSuccess": "Assinatura confirmada com sucesso!",
@@ -248,11 +248,19 @@
       "channelsError": "Não foi possível carregar os canais."
     },
     "statCards": {
-      "totalLeads": "Total de Leads",
-      "activeConversations": "Conversas Ativas",
-      "qualifiedLeads": "Leads Qualificados",
-      "escalatedConversations": "Conversas Escaladas",
-      "conversionRate": "Taxa de Conversão",
+      "totalDevedores": "Total de Devedores",
+      "totalLeads": "Total de Devedores",
+      "activeConversations": "Contatos Ativos",
+      "acordosAtivos": "Acordos Firmados",
+      "qualifiedLeads": "Acordos Firmados",
+      "processoJudicial": "Processo Judicial",
+      "escalatedConversations": "Processo Judicial",
+      "custoContato": "Custo de Contato",
+      "whatsappApiCost": "Custo de Contato",
+      "conversionRate": "Taxa de Recuperação",
+      "totalRecovered": "Total Recuperado",
+      "fees": "Honorários",
+      "commissions": "Honorários (10%)",
       "total": "Total",
       "now": "Agora",
       "thisMonth": "Este mês"
@@ -265,28 +273,47 @@
       "received": "Recebidas"
     },
     "charts": {
-      "newLeadsTitle": "Novos Leads (Últimos 30 Dias)",
-      "leadsFunnelTitle": "Funil de Leads (Este Mês)",
-      "leadsBySourceTitle": "Leads por Origem",
-      "conversationsByChannelTitle": "Conversas por Canal",
-      "recentCampaignsTitle": "Desempenho de Campanhas Recentes",
+      "newDevedoresTitle": "Novos Devedores (Últimos 30 Dias)",
+      "newLeadsTitle": "Novos Devedores (Últimos 30 Dias)",
+      "devedoresFunnelTitle": "Funil de Devedores (Este Mês)",
+      "leadsFunnelTitle": "Funil de Devedores (Este Mês)",
+      "leadsBySourceTitle": "Devedores por Canal de Entrada",
+      "conversationsByChannelTitle": "Contatos por Canal",
+      "recentCampaignsTitle": "Desempenho de Campanhas de Cobrança",
       "campaignAnalysisTitle": "Análise: {{campaignName}}",
       "errorLoading": "Erro ao carregar dados.",
       "noData": "Sem dados",
       "leads": "Leads",
-      "conversations": "Conversas",
+      "devedores": "Devedores",
+      "conversations": "Contatos",
       "average": "Média",
-      "newLeadsLegend": "Novos Leads",
+      "newLeadsLegend": "Novos Devedores",
+      "newDevedoresLegend": "Novos Devedores",
       "sends": "Envios",
-      "contactStatus": "Status dos Contatos",
+      "contactStatus": "Status dos Devedores",
       "sendsPerDay": "Envios por Dia (últimos 30)"
     },
     "funnelLabels": {
-      "novo": "Novo",
+      "novo": "Novo Devedor",
       "contatado": "Contatado",
-      "morno": "Quente",
-      "qualificado": "Qualificado",
-      "convertido": "Convertido"
+      "em_negociacao": "Em Negociação",
+      "emNegociacao": "Em Negociação",
+      "acordado": "Acordo Firmado",
+      "morno": "Em Negociação",
+      "qualificado": "Acordo Firmado",
+      "escaleted": "Escalado",
+      "convertido": "Quitado",
+      "ativo": "Ativo",
+      "quitado": "Quitado",
+      "judicial": "Judicial",
+      "nao_respondeu": "Sem Resposta",
+      "naoRespondeu": "Sem Resposta",
+      "dispensou_ligacao": "Recusou Contato",
+      "dispensouLigacao": "Recusou Contato"
+    },
+    "funnel": {
+      "emptyTitle": "Funil de Devedores Vazio",
+      "emptyDescription": "Nenhum devedor encontrado neste período. Comece a importar sua carteira de cobrança para ver o desempenho aqui."
     },
     "campaignStatus": {
       "pending": "Pendentes",
@@ -405,48 +432,48 @@
     "log_excluir_imediato": "CHAMADA DE API: Excluir conta imediatamente."
   },
   "leadsPage": {
-    "title": "Gerenciamento de Leads",
-    "selectHint": "Selecione um ou mais leads para ver as ações disponíveis.",
+    "title": "Gestão de Devedores",
+    "selectHint": "Selecione um ou mais devedores para ver as ações disponíveis.",
     "buttons": {
       "importFromCrm": "Importar de CRMs",
-      "syncWithCrm": "Sincronizar com CRMs",
+      "syncWithCrm": "Sincronizar",
       "selected": "{{count}} selecionado(s)",
       "importFile": "Importar Arquivo",
-      "newLead": "Novo Lead",
-      "startConversation": "Iniciar Conversa ({{count}})",
+      "newLead": "Novo Devedor",
+      "startConversation": "Iniciar Contato ({{count}})",
       "deleteSelected": "Excluir ({{count}})"
     },
     "filters": {
-      "searchPlaceholder": "Buscar por nome, e-mail, empresa...",
+      "searchPlaceholder": "Buscar por nome, e-mail, CPF/CNPJ...",
       "status": "Status",
       "allStatuses": "Todos os Status",
-      "source": "Origem",
-      "allSources": "Todas as Origens"
+      "source": "Canal de Entrada",
+      "allSources": "Todos os Canais"
     },
     "table": {
       "name": "Nome",
       "email": "E-mail",
-      "company": "Empresa",
-      "source": "Origem",
+      "company": "Empresa/Credor",
+      "source": "Canal",
       "status": "Status",
       "actions": "Ações",
       "tooltip": {
         "sendEmail": "Enviar E-mail",
-        "startIaConversation": "Iniciar Conversa (IA)",
+        "startIaConversation": "Iniciar Contato (IA)",
         "edit": "Editar",
         "delete": "Excluir"
       }
     },
     "leadModal": {
-      "newTitle": "Novo Lead",
-      "editTitle": "Editar Lead",
-      "nameLabel": "Nome",
+      "newTitle": "Novo Devedor",
+      "editTitle": "Editar Devedor",
+      "nameLabel": "Nome Completo",
       "emailLabel": "E-mail",
       "phoneLabel": "Telefone",
-      "companyLabel": "Empresa",
-      "positionLabel": "Cargo",
-      "sourceLabel": "Origem",
-      "createButton": "Criar",
+      "companyLabel": "Empresa/Credor",
+      "positionLabel": "Relação com Dívida",
+      "sourceLabel": "Canal de Entrada",
+      "createButton": "Cadastrar",
       "updateButton": "Atualizar"
     },
     "emailModal": {
@@ -528,8 +555,8 @@
     "upload": "Carregar"
   },
   "importFileDialog": {
-    "title": "Importar Leads de Arquivo",
-    "info": "Importe leads de arquivos CSV, Excel (xlsx, xls) ou PDF. Para CSV/Excel, a primeira linha deve ser o cabeçalho.",
+    "title": "Importar Devedores de Arquivo",
+    "info": "Importe devedores de arquivos CSV, Excel (xlsx, xls) ou PDF. Para CSV/Excel, a primeira linha deve ser o cabeçalho com: nome, email, telefone, empresa, cpf.",
     "dropzoneDefault": "Clique ou arraste o arquivo aqui",
     "dropzoneCaption": "CSV, Excel ou PDF. Tamanho máx: 10MB",
     "importButton": "Importar",
@@ -1127,9 +1154,12 @@
   "layout": {
     "menuItems": {
       "dashboard": "Dashboard",
-      "leads": "Leads",
+      "devedores": "Devedores",
+      "leads": "Devedores",
+      "dividas": "Dívidas",
+      "debts": "Dívidas",
       "conversations": "Conversas",
-      "campaigns": "Campanhas Ativas",
+      "campaigns": "Campanhas",
       "templates": "Templates",
       "calendar": "Agenda",
       "instagram": "Instagram",
@@ -1139,7 +1169,7 @@
       "team": "Gestão de Time",
       "ranking": "Ranking",
       "blog": "Blog",
-      "noResponseLeads": "Leads sem Resposta",
+      "noResponseLeads": "Sem Resposta",
       "aiTraining": "Playground IA"
     },
     "pageTitleFallback": "QualifAI",

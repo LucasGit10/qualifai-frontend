@@ -9,7 +9,8 @@ import api from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { Close as CloseIcon, Sync as SyncIcon, Videocam as VideocamIcon, Person as PersonIcon, OpenInNew as OpenInNewIcon, AccessTime as AccessTimeIcon, CalendarToday as CalendarTodayIcon, Lock as LockIcon } from '@mui/icons-material';
 import { useShowcaseContext } from '../contexts/ShowcaseContext';
-import { mockCalendarEvents } from '../utils/mockData';
+import { USE_MOCKS } from '../config/env';
+import { MOCK_CALENDAR_EVENTS, MOCK_LEADS_LIST } from '../mocks';
 import { useForm, Controller } from 'react-hook-form';
 import ShowcaseBlocker from '../components/Showcase/ShowcaseBlocker';
 import { useTranslation } from 'react-i18next';
@@ -146,11 +147,18 @@ export default function CalendarPage() {
         }
     });
 
-    const { data: apiEvents = [], isLoading: apiIsLoading } = useQuery(['calendarEvents', dateRange], fetchEvents, { keepPreviousData: true, staleTime: 60 * 1000, enabled: !isGuestMode });
-    const { data: leads = [], isLoading: isLoadingLeads } = useQuery('leadsList', fetchLeadsList, { enabled: !isGuestMode && createModalOpen });
+    const { data: apiEvents = [], isLoading: apiIsLoading } = useQuery(['calendarEvents', dateRange], async ({ queryKey }) => {
+        if (USE_MOCKS) return MOCK_CALENDAR_EVENTS;
+        return fetchEvents({ queryKey });
+    }, { keepPreviousData: true, staleTime: 60 * 1000, enabled: true });
 
-    const events = isGuestMode ? mockCalendarEvents : apiEvents;
-    const isLoading = isGuestMode ? false : apiIsLoading;
+    const { data: leads = [], isLoading: isLoadingLeads } = useQuery('leadsList', async () => {
+        if (USE_MOCKS) return MOCK_LEADS_LIST;
+        return fetchLeadsList();
+    }, { enabled: createModalOpen });
+
+    const events = apiEvents;
+    const isLoading = apiIsLoading;
 
     const createEventMutation = useMutation((newEvent) => api.post('/calendar/events', newEvent), {
         onSuccess: () => {

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { USE_MOCKS } from '../config/env';
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'https://www.qualifai.tech/api',
@@ -6,28 +7,11 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Interceptor para requisições
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('auth-storage');
-    if (token) {
-      const parsed = JSON.parse(token);
-      if (parsed.state?.token) {
-        config.headers.Authorization = `Bearer ${parsed.state.token}`;
-      }
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Interceptor para respostas
+// Response interceptor: redireciona para /login em caso de token expirado
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    if (!USE_MOCKS && error.response?.status === 401) {
       localStorage.removeItem('auth-storage');
       window.location.href = '/login';
     }

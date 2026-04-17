@@ -54,244 +54,130 @@ const TemplateFormDialog = ({ open, onClose, onSubmit, template, isLoading }) =>
 
   return (
     <StyledDialog open={open} onClose={onClose} maxWidth="lg" fullWidth component="form" onSubmit={handleSubmit(onSubmit)}>
-      <DialogTitle sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        color: 'text.primary',
-        borderBottom: '1px solid',
-        borderColor: 'divider'
-      }}>
-        {isEditMode ? t('templatesPage.formDialog.editTitle') : t('templatesPage.formDialog.newTitle')}
-        <IconButton
-          aria-label="close"
-          onClick={onClose}
-          sx={{ color: 'text.secondary' }}
-        >
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: 'text.primary', pb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ width: 40, height: 40, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, rgba(33, 150, 243, 0.15) 0%, rgba(33, 203, 243, 0.05) 100%)', color: '#21CBF3', border: '1px solid rgba(33, 203, 243, 0.2)' }}>
+            <TemplateIcon />
+          </Box>
+          <Typography variant="h6" fontWeight="bold">
+            {isEditMode ? t('templatesPage.formDialog.editTitle') : t('templatesPage.formDialog.newTitle')}
+          </Typography>
+        </Box>
+        <IconButton aria-label="close" onClick={onClose} sx={{ color: 'text.secondary' }}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <DialogContent dividers sx={{ bgcolor: 'background.default' }}>
-        <Grid container spacing={4} sx={{ pt: 2 }}>
+
+      <DialogContent dividers sx={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <Grid container spacing={3} sx={{ pt: 1 }}>
           <Grid item xs={12} md={7}>
             <Stack spacing={3}>
-              <Alert
-                severity="info"
-                variant="outlined"
-                sx={{
-                  borderColor: 'info.light',
-                  color: 'text.primary',
-                  bgcolor: theme.palette.mode === 'dark'
-                    ? 'rgba(2, 136, 209, 0.1)'
-                    : 'rgba(2, 136, 209, 0.05)'
-                }}
-              >
+              <Alert severity="info" variant="outlined" sx={{ borderColor: 'info.light', color: 'text.primary', bgcolor: theme.palette.mode === 'dark' ? 'rgba(2, 136, 209, 0.1)' : 'rgba(2, 136, 209, 0.05)', borderRadius: 2 }}>
                 {t('templatesPage.formDialog.infoAlert')}
               </Alert>
 
-              <Controller
-                name="name"
-                control={control}
-                rules={{ required: t('templatesPage.formDialog.nameRequired') }}
-                render={({ field: { onChange, ...restField } }) => (
-                  <TextField
-                    {...restField}
-                    label={t('templatesPage.formDialog.nameLabel')}
-                    error={!!errors.name}
-                    helperText={errors.name?.message}
-                    onChange={(e) => onChange(applyNameMask(e.target.value))}
-                    fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        color: 'text.primary',
-                        '& fieldset': {
-                          borderColor: 'divider'
-                        },
-                        '&:hover fieldset': {
-                          borderColor: 'primary.main'
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: 'primary.main'
-                        }
-                      },
-                      '& .MuiInputLabel-root': {
-                        color: 'text.secondary',
-                        '&.Mui-focused': {
-                          color: 'primary.main'
-                        }
-                      }
-                    }}
-                  />
-                )}
-              />
-
-              <Controller
-                name="templateType"
-                control={control}
-                rules={{ required: t('templatesPage.formDialog.typeRequired') }}
-                render={({ field }) => (
-                  <FormControl fullWidth>
-                    <InputLabel sx={{ color: 'text.secondary' }}>
-                      {t('templatesPage.formDialog.typeLabel')}
-                    </InputLabel>
-                    <Select
-                      {...field}
-                      label={t('templatesPage.formDialog.typeLabel')}
-                      sx={{
-                        color: 'text.primary',
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'divider'
-                        },
-                        '&:hover .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'primary.main'
-                        },
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'primary.main'
-                        },
-                        '& .MuiSvgIcon-root': {
-                          color: 'text.secondary'
-                        }
-                      }}
-                    >
-                      <MenuItem value="conversation">{t('templatesPage.formDialog.typeConversation')}</MenuItem>
-                      <MenuItem value="follow_up">{t('templatesPage.formDialog.typeFollowUp')}</MenuItem>
-                    </Select>
-                  </FormControl>
-                )}
-              />
-
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+              {/* Bloco 1: Configurações Gerais */}
+              <Box sx={{ p: 3, borderRadius: 3, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)', border: '1px solid', borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }}>
+                <Typography variant="subtitle2" color="text.secondary" fontWeight="700" sx={{ mb: 3, textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.7rem' }}>
+                  ⚙️ Configurações Gerais
+                </Typography>
+                
+                <Stack spacing={2.5}>
                   <Controller
-                    name="category"
+                    name="name"
                     control={control}
-                    rules={{ required: true }}
+                    rules={{ required: t('templatesPage.formDialog.nameRequired') }}
+                    render={({ field: { onChange, ...restField } }) => (
+                      <TextField {...restField} label={t('templatesPage.formDialog.nameLabel')} error={!!errors.name} helperText={errors.name?.message} onChange={(e) => onChange(applyNameMask(e.target.value))} fullWidth sx={{ '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover fieldset': { borderColor: 'primary.main' } } }} />
+                    )}
+                  />
+                  <Controller
+                    name="templateType"
+                    control={control}
+                    rules={{ required: t('templatesPage.formDialog.typeRequired') }}
                     render={({ field }) => (
                       <FormControl fullWidth>
-                        <InputLabel sx={{ color: 'text.secondary' }}>
-                          {t('templatesPage.formDialog.categoryLabel')}
-                        </InputLabel>
-                        <Select
-                          {...field}
-                          label={t('templatesPage.formDialog.categoryLabel')}
-                          sx={{
-                            color: 'text.primary',
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'divider'
-                            },
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'primary.main'
-                            },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'primary.main'
-                            }
-                          }}
-                        >
-                          <MenuItem value="MARKETING">{t('templatesPage.formDialog.categoryMarketing')}</MenuItem>
-                          <MenuItem value="UTILITY">{t('templatesPage.formDialog.categoryUtility')}</MenuItem>
-                          <MenuItem value="AUTHENTICATION">{t('templatesPage.formDialog.categoryAuth')}</MenuItem>
+                        <InputLabel sx={{ color: 'text.secondary' }}>{t('templatesPage.formDialog.typeLabel')}</InputLabel>
+                        <Select {...field} label={t('templatesPage.formDialog.typeLabel')} sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' } }}>
+                          <MenuItem value="conversation">{t('templatesPage.formDialog.typeConversation')}</MenuItem>
+                          <MenuItem value="follow_up">{t('templatesPage.formDialog.typeFollowUp')}</MenuItem>
                         </Select>
                       </FormControl>
                     )}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Controller
-                    name="language"
-                    control={control}
-                    rules={{ required: true }}
-                    render={({ field }) => (
-                      <FormControl fullWidth>
-                        <InputLabel sx={{ color: 'text.secondary' }}>
-                          {t('templatesPage.formDialog.languageLabel')}
-                        </InputLabel>
-                        <Select
-                          {...field}
-                          label={t('templatesPage.formDialog.languageLabel')}
-                          sx={{
-                            color: 'text.primary',
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'divider'
-                            },
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'primary.main'
-                            },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                              borderColor: 'primary.main'
-                            }
-                          }}
-                        >
-                          <MenuItem value="pt_BR">{t('templatesPage.formDialog.langPtBr')}</MenuItem>
-                          <MenuItem value="en_US">{t('templatesPage.formDialog.langEnUs')}</MenuItem>
-                          <MenuItem value="es_ES">{t('templatesPage.formDialog.langEsEs')}</MenuItem>
-                        </Select>
-                      </FormControl>
-                    )}
-                  />
-                </Grid>
-              </Grid>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <Controller
+                        name="category"
+                        control={control}
+                        rules={{ required: true }}
+                        render={({ field }) => (
+                          <FormControl fullWidth>
+                            <InputLabel sx={{ color: 'text.secondary' }}>{t('templatesPage.formDialog.categoryLabel')}</InputLabel>
+                            <Select {...field} label={t('templatesPage.formDialog.categoryLabel')} sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' } }}>
+                              <MenuItem value="MARKETING">{t('templatesPage.formDialog.categoryMarketing')}</MenuItem>
+                              <MenuItem value="UTILITY">{t('templatesPage.formDialog.categoryUtility')}</MenuItem>
+                              <MenuItem value="AUTHENTICATION">{t('templatesPage.formDialog.categoryAuth')}</MenuItem>
+                            </Select>
+                          </FormControl>
+                        )}
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Controller
+                        name="language"
+                        control={control}
+                        rules={{ required: true }}
+                        render={({ field }) => (
+                          <FormControl fullWidth>
+                            <InputLabel sx={{ color: 'text.secondary' }}>{t('templatesPage.formDialog.languageLabel')}</InputLabel>
+                            <Select {...field} label={t('templatesPage.formDialog.languageLabel')} sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' } }}>
+                              <MenuItem value="pt_BR">{t('templatesPage.formDialog.langPtBr')}</MenuItem>
+                              <MenuItem value="en_US">{t('templatesPage.formDialog.langEnUs')}</MenuItem>
+                              <MenuItem value="es_ES">{t('templatesPage.formDialog.langEsEs')}</MenuItem>
+                            </Select>
+                          </FormControl>
+                        )}
+                      />
+                    </Grid>
+                  </Grid>
+                </Stack>
+              </Box>
 
-              <Controller
-                name="bodyText"
-                control={control}
-                rules={{ required: t('templatesPage.formDialog.bodyRequired') }}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label={t('templatesPage.formDialog.bodyLabel')}
-                    multiline
-                    rows={8}
-                    error={!!errors.bodyText}
-                    helperText={errors.bodyText?.message || t('templatesPage.formDialog.bodyHelper')}
-                    fullWidth
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        color: 'text.primary',
-                        '& fieldset': {
-                          borderColor: 'divider'
-                        },
-                        '&:hover fieldset': {
-                          borderColor: 'primary.main'
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: 'primary.main'
-                        }
-                      },
-                      '& .MuiInputLabel-root': {
-                        color: 'text.secondary',
-                        '&.Mui-focused': {
-                          color: 'primary.main'
-                        }
-                      }
-                    }}
-                  />
-                )}
-              />
+              {/* Bloco 2: Corpo da Mensagem */}
+              <Box sx={{ p: 3, borderRadius: 3, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)', border: '1px solid', borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }}>
+                <Typography variant="subtitle2" color="text.secondary" fontWeight="700" sx={{ mb: 3, textTransform: 'uppercase', letterSpacing: '1px', fontSize: '0.7rem' }}>
+                  ✍️ Composição da Mensagem
+                </Typography>
+                <Controller
+                  name="bodyText"
+                  control={control}
+                  rules={{ required: t('templatesPage.formDialog.bodyRequired') }}
+                  render={({ field }) => (
+                    <TextField 
+                      {...field} 
+                      label={t('templatesPage.formDialog.bodyLabel')} 
+                      multiline rows={8} 
+                      error={!!errors.bodyText} 
+                      helperText={errors.bodyText?.message || t('templatesPage.formDialog.bodyHelper')} 
+                      fullWidth 
+                      sx={{ '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover fieldset': { borderColor: 'primary.main' } } }} 
+                    />
+                  )}
+                />
+              </Box>
+
             </Stack>
           </Grid>
           <Grid item xs={12} md={5}>
-            <Box sx={{ position: 'sticky', top: 16 }}>
+            <Box sx={{ position: 'sticky', top: 0 }}>
               <Paper sx={{
                 p: 2,
-                borderRadius: 2,
-                backgroundColor: 'background.paper',
+                borderRadius: 3,
+                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.2)' : 'background.paper',
                 border: '1px solid',
-                borderColor: 'divider',
-                boxShadow: theme.palette.mode === 'dark'
-                  ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                  : '0 1px 3px rgba(0, 0, 0, 0.1)',
-                '& .MuiTypography-h4, & .MuiTypography-h5, & .MuiTypography-h6': {
-                  color: theme.palette.mode === 'dark' ? 'white' : 'black'
-                },
-                '& .MuiTypography-subtitle1, & .MuiTypography-subtitle2': {
-                  color: theme.palette.mode === 'dark' ? 'white' : 'black'
-                },
-                '& .MuiTypography-body1, & .MuiTypography-body2, & .MuiTypography-caption': {
-                  color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)'
-                },
-                '& *': {
-                  color: theme.palette.mode === 'dark' ? 'white' : 'black'
-                }
+                borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'divider',
+                boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 4px 12px rgba(0,0,0,0.05)'
               }}>
                 <MetaPricingTable selectedCategory={selectedCategory} />
               </Paper>
@@ -299,41 +185,11 @@ const TemplateFormDialog = ({ open, onClose, onSubmit, template, isLoading }) =>
           </Grid>
         </Grid>
       </DialogContent>
-      <DialogActions sx={{
-        p: '16px 24px',
-        bgcolor: 'background.paper',
-        borderTop: '1px solid',
-        borderColor: 'divider'
-      }}>
-        <Button
-          onClick={onClose}
-          disabled={isLoading}
-          color="inherit"
-          sx={{
-            color: 'text.secondary',
-            '&:hover': {
-              bgcolor: 'action.hover',
-              color: 'text.primary'
-            }
-          }}
-        >
+      <DialogActions sx={{ p: '16px 24px', justifyContent: 'space-between' }}>
+        <Button onClick={onClose} disabled={isLoading} color="inherit" sx={{ color: 'text.secondary' }}>
           {t('common.cancel')}
         </Button>
-        <GradientButton
-          type="submit"
-          loading={isLoading}
-          sx={{
-            background: 'linear-gradient(45deg, #2196F3, #21CBF3)',
-            color: 'white',
-            '&:hover': {
-              background: 'linear-gradient(45deg, #1976D2, #00ACC1)',
-            },
-            '&:disabled': {
-              background: theme.palette.mode === 'dark' ? 'grey.700' : 'grey.300',
-              color: theme.palette.mode === 'dark' ? 'grey.500' : 'grey.500'
-            }
-          }}
-        >
+        <GradientButton type="submit" disabled={isLoading} sx={{ px: 4 }}>
           {submitButtonText}
         </GradientButton>
       </DialogActions>
@@ -484,9 +340,13 @@ const TemplateCard = ({ template, onAction }) => {
 const SubmitApprovalDialog = ({ open, onClose, onSubmit, isLoading, template }) => {
   const { t } = useTranslation();
   const [instanceId, setInstanceId] = useState('');
-  const { data: instances, isLoading: instancesLoading } = useQuery('officialWhatsappInstances', () => api.get('/whatsapp/').then(res => res.data), { enabled: open });
+  const { data: instances, isLoading: instancesLoading } = useQuery('officialWhatsappInstances', async () => {
+    if (USE_MOCKS) return [{ _id: '1', instanceName: 'WhatsApp Cobrança', phoneNumber: '+55 11 99999-9999' }];
+    const res = await api.get('/whatsapp/');
+    return res.data;
+  }, { enabled: open });
   const handleSubmit = () => { if (!instanceId) { toast.error(t('templatesPage.toasts.selectInstance')); return; } onSubmit(instanceId); };
-  return (<StyledDialog open={open} onClose={onClose} maxWidth="xs" fullWidth><DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}><SendIcon />{t('templatesPage.submitDialog.title')}</DialogTitle><DialogContent dividers><Stack spacing={2} sx={{ pt: 2 }}><Typography><Trans i18nKey="templatesPage.submitDialog.description" values={{ templateName: formatTemplateNameForDisplay(template?.name) }}>Selecione a instância para submeter o template <Typography component="span" fontWeight="bold">"{formatTemplateNameForDisplay(template?.name)}"</Typography> à Meta.</Trans></Typography><FormControl fullWidth><InputLabel>{t('templatesPage.submitDialog.instanceLabel')}</InputLabel><Select value={instanceId} label={t('templatesPage.submitDialog.instanceLabel')} onChange={(e) => setInstanceId(e.target.value)} disabled={instancesLoading}>{instances?.map((instance) => (<MenuItem key={instance._id} value={instance._id}>{instance.instanceName} ({instance.phoneNumber})</MenuItem>))}</Select>{instancesLoading && <Typography variant="caption" sx={{ mt: 1 }}>{t('templatesPage.submitDialog.loadingInstances')}</Typography>}</FormControl></Stack></DialogContent><DialogActions sx={{ p: '16px 24px' }}><Button onClick={onClose} color="inherit" disabled={isLoading}>{t('common.cancel')}</Button><GradientButton onClick={handleSubmit} loading={isLoading} disabled={!instanceId}>{t('templatesPage.submitDialog.sendButton')}</GradientButton></DialogActions></StyledDialog>);
+  return (<StyledDialog open={open} onClose={onClose} maxWidth="xs" fullWidth><DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}><SendIcon />{t('templatesPage.submitDialog.title')}</DialogTitle><DialogContent dividers sx={{ borderColor: 'rgba(255,255,255,0.08)' }}><Stack spacing={2} sx={{ pt: 2 }}><Typography><Trans i18nKey="templatesPage.submitDialog.description" values={{ templateName: formatTemplateNameForDisplay(template?.name) }}>Selecione a instância para submeter o template <Typography component="span" fontWeight="bold">"{formatTemplateNameForDisplay(template?.name)}"</Typography> à Meta.</Trans></Typography><FormControl fullWidth><InputLabel>{t('templatesPage.submitDialog.instanceLabel')}</InputLabel><Select value={instanceId} label={t('templatesPage.submitDialog.instanceLabel')} onChange={(e) => setInstanceId(e.target.value)} disabled={instancesLoading} sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' } }}>{instances?.map((instance) => (<MenuItem key={instance._id} value={instance._id}>{instance.instanceName} ({instance.phoneNumber})</MenuItem>))}</Select>{instancesLoading && <Typography variant="caption" sx={{ mt: 1 }}>{t('templatesPage.submitDialog.loadingInstances')}</Typography>}</FormControl></Stack></DialogContent><DialogActions sx={{ p: '16px 24px' }}><Button onClick={onClose} color="inherit" disabled={isLoading} sx={{ color: 'text.secondary' }}>{t('common.cancel')}</Button><GradientButton onClick={handleSubmit} loading={isLoading} disabled={!instanceId}>{t('templatesPage.submitDialog.sendButton')}</GradientButton></DialogActions></StyledDialog>);
 };
 
 const DeleteConfirmationDialog = ({ open, onClose, onConfirm, isLoading, templateName }) => {
@@ -523,7 +383,11 @@ export default function MessageTemplates() {
   const [correctedData, setCorrectedData] = useState(null);
   const [currentTab, setCurrentTab] = useState(0);
   const queryClient = useQueryClient();
-  const { data: templates, isLoading } = useQuery('messageTemplates', () => api.get('/template-message').then(res => res.data));
+  const { data: templates, isLoading } = useQuery('messageTemplates', async () => {
+    if (USE_MOCKS) return MOCK_TEMPLATES;
+    const res = await api.get('/template-message');
+    return res.data;
+  });
 
   const { conversationTemplates, followUpTemplates } = useMemo(() => {
     if (!templates) return { conversationTemplates: [], followUpTemplates: [] };
@@ -589,7 +453,36 @@ export default function MessageTemplates() {
       {isLoading && <LinearProgress sx={{ mb: 3 }} />}
 
       {!isLoading && templates?.length === 0 ? (
-        <TemplateEmptyState onAction={() => handleOpenDialog('create')} />
+        <Box sx={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          py: 8, px: 2, mt: 4, borderRadius: 4,
+          border: '1px dashed',
+          borderColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)',
+          backdropFilter: theme.palette.mode === 'dark' ? 'blur(10px)' : 'none'
+        }}>
+          <Box sx={{
+            width: 80, height: 80, mb: 3, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 203, 243, 0.05) 100%)',
+            color: '#2196f3'
+          }}>
+            <TemplateIcon sx={{ fontSize: 40 }} />
+          </Box>
+          <Typography variant="h5" fontWeight="700" color="text.primary" gutterBottom>
+            Nenhum template encontrado
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 4, textAlign: 'center', maxWidth: 400 }}>
+            Você ainda não possui templates de mensagem criados no QualifAI. Crie seu primeiro template para padronizar suas abordagens.
+          </Typography>
+          <GradientButton
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenDialog('create')}
+            sx={{ px: 4, py: 1.5 }}
+          >
+            Criar meu primeiro Template
+          </GradientButton>
+        </Box>
       ) : !isLoading && (
         <Box>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>

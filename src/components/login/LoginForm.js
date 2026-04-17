@@ -4,13 +4,15 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import {
   Box, TextField, Button, Typography, Alert, Container, Avatar,
-  InputAdornment, IconButton, GlobalStyles
+  InputAdornment, IconButton, GlobalStyles, CircularProgress, Chip,
 } from '@mui/material';
 import { 
     Visibility, VisibilityOff, Https as HttpsIcon, ArrowForward as ArrowForwardIcon,
     MailOutline as MailOutlineIcon, LockOutlined as LockOutlineIcon,
+    BugReport as BugReportIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { USE_MOCKS } from 'config/env';
 
 const autofillAnimationStyles = `
   @keyframes onAutoFillStart { from {} to {} }
@@ -63,6 +65,31 @@ export default function LoginForm({ onSubmit, loading, error }) {
             <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3, cursor: 'pointer' }} onClick={() => navigate('/')}>
               <Box component="img" src="/Fundo transparente(1) 1.png" alt="Logo QualifAI" sx={{ width: '250px', height: 'auto', transition: 'transform 0.3s ease', '&:hover': { transform: 'scale(1.05)' } }}/>
             </Box>
+
+            {/* ── Banner modo mock ── */}
+            {USE_MOCKS && (
+              <Box sx={{
+                mb: 3, p: 2, borderRadius: 2,
+                background: 'rgba(99, 102, 241, 0.12)',
+                border: '1px solid rgba(99, 102, 241, 0.35)',
+                backdropFilter: 'blur(8px)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <BugReportIcon sx={{ fontSize: 16, color: '#818cf8' }} />
+                  <Typography variant="caption" sx={{ color: '#818cf8', fontWeight: 700, letterSpacing: 0.5 }}>
+                    MODO DESENVOLVIMENTO (MOCK)
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={14} sx={{ color: '#6366f1' }} />
+                  <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                    Redirecionando automaticamente...
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
               <Avatar sx={{ width: 56, height: 56, mb: 2, borderRadius: 3, background: 'linear-gradient(135deg, #6A11CB 30%, #fc00daff 90%)' }}>
                 <HttpsIcon sx={{ color: 'white' }}/>

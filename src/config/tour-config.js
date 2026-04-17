@@ -1,5 +1,3 @@
-// src/config/tour-config.js
-
 export const COMMON_TOUR_ROUTES = [  
   {
     path: '/app/dashboard',
@@ -117,7 +115,6 @@ export const COMMON_TOUR_ROUTES = [
   },
 ];
 
-// Módulo 2: Rotas adicionais para Gerentes (e Admins)
 export const MANAGER_TOUR_ROUTES = [
   {
     path: '/app/team',

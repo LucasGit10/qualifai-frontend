@@ -32,6 +32,35 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
     <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
 
+    <!-- OneSignal SDK -->
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "6a1527a1-2898-4453-a2cb-9b9995487909",
+          autoPrompt: false,
+          welcomeNotification: {
+            disable: true
+          }
+        });
+        // Fecha imediatamente se o SDK tentar abrir
+        try { OneSignal.Slidedown.close(); } catch(e) {}
+      });
+
+      // MutationObserver: remove o slidedown do OneSignal do DOM caso apareça
+      const observer = new MutationObserver(function() {
+        const slidedown = document.getElementById('onesignal-slidedown-container');
+        if (slidedown) {
+          slidedown.style.display = 'none';
+          slidedown.remove();
+        }
+      });
+      observer.observe(document.body || document.documentElement, {
+        childList: true,
+        subtree: true
+      });
+    </script>
   </head>
   <!-- comentatio -->
   <body>

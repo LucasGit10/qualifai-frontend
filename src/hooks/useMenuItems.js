@@ -6,6 +6,9 @@ import {
   AdminPanelSettings as AdminPanelSettingsIcon, AccountCircle as ProfileIcon,
   DynamicFeed as DynamicFeedIcon, EmojiEvents as RankingIcon, Groups as TeamIcon,
   Instagram as InstagramIcon, 
+  ReceiptLong as DebtsIcon,
+  Gavel as JudicialIcon,
+  AccountBalance as AccountBalanceIcon,
 } from '@mui/icons-material';
 
 export function useMenuItems(user, canAccess, plan) {
@@ -32,7 +35,8 @@ export function useMenuItems(user, canAccess, plan) {
   const itensMenu = useMemo(() => {
     let items = [
       { tKey: 'layout.menuItems.dashboard', icone: <DashboardIcon />, path: '/app/dashboard' },
-      { tKey: 'layout.menuItems.leads', icone: <PeopleIcon />, path: '/app/leads' },
+      { tKey: 'layout.menuItems.devedores', icone: <PeopleIcon />, path: '/app/leads' },
+      { tKey: 'layout.menuItems.dividas', icone: <DebtsIcon />, path: '/app/debts' },
       { tKey: 'layout.menuItems.conversations', icone: <ChatIcon />, path: '/app/conversations' },
       { tKey: 'layout.menuItems.campaigns', icone: <CampaignIcon />, path: '/app/campaigns' },
     ];
@@ -44,15 +48,11 @@ export function useMenuItems(user, canAccess, plan) {
     const roleBasedItems = {
       sales: [
         ...items, 
-        { tKey: 'layout.menuItems.ranking', icone: <RankingIcon />, path: '/app/ranking' }, 
         { tKey: 'layout.menuItems.profile', icone: <ProfileIcon />, path: '/app/profile' }
       ],
       manager: [
         ...items, 
-        { tKey: 'layout.menuItems.team', icone: <TeamIcon />, path: '/app/team' }, 
-        { tKey: 'layout.menuItems.ranking', icone: <RankingIcon />, path: '/app/ranking' }, 
         { tKey: 'layout.menuItems.profile', icone: <ProfileIcon />, path: '/app/profile' }, 
-        { tKey: 'layout.menuItems.instagram', icone: <InstagramIcon />, path: '/app/instagram' },
         { tKey: 'layout.menuItems.settings', icone: <SettingsIcon />, path: '/app/settings' },
         { tKey: 'layout.menuItems.noResponseLeads', icone: <ChatIcon />, path: '/app/no-response-leads' },
       ],

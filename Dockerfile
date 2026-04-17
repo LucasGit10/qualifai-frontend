@@ -1,20 +1,18 @@
-# Build stage
-FROM node:18-alpine as builder
+# Build stage / Development stage
+FROM node:18-alpine
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production
 
+# Install ALL dependencies (including devDependencies for react-scripts start)
+RUN npm install
+
+# In local dev, files will be synced via docker volume, but we copy them anyway for building if needed.
 COPY . .
-RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+# Expose port 3000 for local development
+EXPOSE 3000
 
-COPY --from=builder /app/build /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/nginx.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# Start local dev server
+CMD ["npm", "start"]

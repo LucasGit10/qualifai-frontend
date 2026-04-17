@@ -64,7 +64,7 @@ export default function MessageTemplates() {
 
       {isLoadingTemplates && <LinearProgress sx={{ mb: 3 }} />}
 
-      {!isLoadingTemplates && templates?.length === 0 ? (
+      {!isLoadingTemplates && (!templates || templates.length === 0) ? (
         <TemplateEmptyState onAction={() => handleOpenDialog('create')} />
       ) : !isLoadingTemplates && templates?.length > 0 && (
         <TemplateTabs

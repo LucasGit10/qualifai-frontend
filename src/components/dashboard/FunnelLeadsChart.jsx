@@ -40,7 +40,7 @@ const CustomTooltip = ({ active, payload }) => {
           color: theme.palette.text.primary, 
           fontSize: '0.85rem' 
         }}>
-          {t('dashboard.charts.leads')}: <strong style={{fontSize: '1.1rem'}}>{payload[0].value}</strong>
+          {t('dashboard.charts.devedores')}: <strong style={{fontSize: '1.1rem'}}>{payload[0].value}</strong>
         </Typography>
         {payload[0].payload.percentage && (
           <Typography variant="body2" sx={{ 
@@ -110,22 +110,23 @@ export default function FunnelLeadsChart({ data }) {
   const { t } = useTranslation();
   const theme = useTheme();
 
-  const funnelOrder = ['novo', 'contatado', 'morno', 'qualificado', 'convertido'];
+  // Ordem do funil de cobrança: fluxo do devedor
+  const funnelOrder = ['novo', 'contatado', 'em_negociacao', 'acordado', 'quitado', 'judicial'];
   const statusMap = new Map(data?.map(item => [item._id, item.count]) || []);
 
   // Verificar se há dados válidos (mais que zero)
   const hasValidData = data && data.some(item => item.count > 0);
-  const totalLeads = data?.reduce((sum, item) => sum + (item.count || 0), 0) || 0;
+  const totalDevedores = data?.reduce((sum, item) => sum + (item.count || 0), 0) || 0;
 
-  // Cores do funil adaptadas ao tema
-  const funnelColors = theme.palette.mode === 'dark' 
-    ? ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088fe'] // Cores vibrantes para tema escuro
-    : ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#3b82f6']; // Cores mais suaves para tema claro
+  // Cores orientadas a cobrança: azul → roxo → laranja → verde claro → verde escuro → vermelho
+  const funnelColors = theme.palette.mode === 'dark'
+    ? ['#3B82F6', '#8B5CF6', '#F59E0B', '#34D399', '#10B981', '#EF4444']
+    : ['#2563EB', '#7C3AED', '#D97706', '#059669', '#047857', '#DC2626'];
 
   // Calcular totais e porcentagens
   const formattedData = funnelOrder.map((status, index) => {
     const value = statusMap.get(status) || 0;
-    const percentage = totalLeads > 0 ? ((value / totalLeads) * 100).toFixed(1) : '0.0';
+    const percentage = totalDevedores > 0 ? ((value / totalDevedores) * 100).toFixed(1) : '0.0';
     
     return {
       name: t(`dashboard.funnelLabels.${status}`) || status,
@@ -136,7 +137,7 @@ export default function FunnelLeadsChart({ data }) {
   });
 
   // Se não há dados válidos, mostrar mensagem
-  if (!hasValidData || totalLeads === 0) {
+  if (!hasValidData || totalDevedores === 0) {
     return <EmptyFunnelMessage />;
   }
 

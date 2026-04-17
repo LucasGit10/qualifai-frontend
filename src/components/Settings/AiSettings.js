@@ -27,17 +27,16 @@ import ShowcaseBlocker from '../Showcase/ShowcaseBlocker';
 import { GradientButton } from '../ui/GradientButton';
 import { useTour } from '../../contexts/TourContext';
 
-// --- ESTRUTURA DE DADOS ---
-const methodologiesInfo = {
-  Default: { name: "Sem metodologia", logo: "/images-removebg-preview.png", gradient: "linear-gradient(135deg, #6c757d 0%, #cdd1d4ff 100%)", explanation: "Uma abordagem flexível e conversacional. A IA foca em criar um bom relacionamento e entender as necessidades gerais do lead." },
-  QUALIFAI: { name: "Qualifai", logo: "/Qaii.png", gradient: "linear-gradient(135deg, #7150caff 0%, #bb45dfff 100%)", explanation: "O método Qualifai  é uma abordagem híbrida, flexível e hiperpersonalizada, projetada para qualificar leads com precisão e construir relacionamentos duradouros." },
-  SPICED: { name: "SPICED", logo: "/apimentado.png", gradient: "linear-gradient(135deg, #f53844 0%, #ff8c42 100%)", explanation: "Foca em entender a Situação, a Dor (Pain), o Impacto, o Evento Crítico e o processo de Decisão. Ideal para vendas baseadas em valor." },
-  SPIN: { name: "SPIN Selling", logo: "/spin.png", gradient: "linear-gradient(135deg, #7356fc 0%, #56cdfc 100%)", explanation: "Guia o lead através de perguntas sobre Situação, Problema, Implicação e Necessidade de Solução, fazendo-o concluir o valor da oferta." },
-  BANT: { name: "BANT", logo: "/bandiit.png", gradient: "linear-gradient(135deg, #dc3884 0%, #f77737 100%)", explanation: "Framework de qualificação rápida que valida Orçamento (Budget), Autoridade de decisão, a real Necessidade e o Prazo (Timeline)." },
-  MEDDIC: { name: "MEDDIC", logo: '/MEDDIC CORRIGIDO.png', gradient: "linear-gradient(135deg, #2ce5a9 0%, #38dcc1 100%)", explanation: "Perfeita para vendas complexas. Investiga Métricas, Decisor Econômico, Critérios de decisão, Processo, Dor e busca um Campeão interno." },
-};
 
-const DEFAULT_AI_PROMPT = `Você é um SDR (Representante de Desenvolvimento de Vendas) virtual da QualifAI, especialista em iniciar conversas produtivas. Sua personalidade é profissional, prestativa e objetiva...`;
+
+// Modos de operação do agente de cobrança
+const collectionModesInfo = [
+  { key: 'amigavel',    label: 'Cordável',      accent: '#10b981', desc: 'Abordagem amigável e empática. Foco em entender a situação do devedor e propor um acordo viável.' },
+  { key: 'neutro',      label: 'Neutro',         accent: '#6366f1', desc: 'Tom profissional e objetivo. Identifica a dívida, informa sobre as obrigações e negocia sem julgamentos.' },
+  { key: 'persistente', label: 'Persistente',    accent: '#f59e0b', desc: 'Abordagem firme mas respeitosa. Enfatiza os impactos do inadimplimento e a urgência de resolver.' },
+];
+
+const DEFAULT_AI_PROMPT = `Você é um agente de cobrança profissional. Sua missão é entrar em contato de forma cordial, identificar a dívida em aberto e negociar as melhores condições de pagamento possíveis.`;
 
 const FieldLabel = ({ children, required = false, tooltip = null }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -309,14 +308,14 @@ export default function AiSettings() {
       element: '#tour-agent-profile',
       popover: {
         title: 'Perfil do Agente',
-        description: 'Aqui você define a identidade da sua IA, como o nome, estilo de comunicação e informações sobre sua empresa.'
+        description: 'Aqui você define a identidade da sua IA, como o nome, estilo de comunicação e informações sobre sua empresa de cobrança.'
       }
     },
     {
-      element: '#tour-methodologies',
+      element: '#tour-collection-mode',
       popover: {
-        title: 'Metodologias de Venda',
-        description: 'Escolha a estratégia principal que a IA usará para qualificar os leads. Passe o mouse sobre um card para ver a explicação e clique para selecioná-lo.',
+        title: 'Modo de Operação de Cobrança',
+        description: 'Escolha o tom que a IA usará nas negociações. "Cordial" é mais empático, "Persistente" é mais firme.',
         side: "top",
         align: 'start'
       }
@@ -343,8 +342,8 @@ export default function AiSettings() {
     {
       element: '#tour-qualification-criteria',
       popover: {
-        title: 'Critérios de Qualificação',
-        description: 'Ensine a IA a classificar os leads como Quente, Morno ou Frio com base nas palavras-chave que você definir aqui.',
+        title: 'Critérios de Prioridade',
+        description: 'Ensine a IA a classificar a prioridade de abordagem do devedor com base nos critérios que você definir aqui.',
         side: "top",
         align: 'start'
       }
@@ -562,7 +561,7 @@ export default function AiSettings() {
         <Box>
           <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold" gutterBottom>Inteligência Artificial</Typography>
           <Typography variant="body2" color="text.secondary">
-            Personalize o comportamento, a linguagem e os critérios de qualificação do seu agente de IA.
+            Personalize o comportamento, a linguagem e os critérios de prioridade do seu agente de IA.
           </Typography>
         </Box>
         <Button
@@ -587,29 +586,53 @@ export default function AiSettings() {
             <Grid item xs={12} md={6}><FieldLabel required>Setor/Indústria</FieldLabel><Controller name="companyIndustry" control={aiControl} rules={{ required: 'O setor é obrigatório.' }} render={({ field }) => (<TextField {...field} fullWidth error={!!aiErrors.companyIndustry} helperText={aiErrors.companyIndustry?.message} sx={formControlStyles} disabled={isGuestMode} />)} /></Grid>
             <Grid item xs={12} md={6}><FieldLabel>Idioma</FieldLabel><Controller name="language" control={aiControl} render={({ field }) => (<FormControl fullWidth sx={formControlStyles}><Select {...field} variant="outlined" disabled={isGuestMode}><MenuItem value="Brazilian Portuguese">Português do Brasil</MenuItem><MenuItem value="English">Inglês</MenuItem><MenuItem value="Español">Espanhol</MenuItem></Select></FormControl>)} /></Grid>
             <Grid item xs={12} sx={{ mt: 2 }}>
-              <Box id="tour-methodologies">
-                <FieldLabel tooltip="Selecione a estratégia principal que a IA usará para qualificar os leads.">Metodologia de Qualificação</FieldLabel>
+              <Box id="tour-collection-mode">
+                <FieldLabel tooltip="Selecione o tom que o agente usará nas negociações de cobrança.">Modo de Operação do Agente</FieldLabel>
               </Box>
               <Controller
                 name="salesMethodology"
                 control={aiControl}
                 render={({ field }) => (
-                  <Grid container spacing={2.5} sx={{ mt: 1 }}>
-                    {Object.entries(methodologiesInfo).map(([key, info]) => (
-                      // --- INÍCIO DA CORREÇÃO ---
-                      // Mudei sm={6} para sm={12} e lg={3} para lg={4}
-                      // Agora os cards ocupam a tela inteira em 'xs' e 'sm'
-                      <Grid item key={key} xs={12} sm={12} md={6} lg={4}>
-                      {/* --- FIM DA CORREÇÃO --- */}
-                        <MethodologyCard
-                          methodologyKey={key}
-                          info={info}
-                          isSelected={field.value === key}
-                          onSelect={() => {
+                  <Grid container spacing={2} sx={{ mt: 1 }}>
+                    {collectionModesInfo.map((mode) => (
+                      <Grid item key={mode.key} xs={12} sm={4}>
+                        <Box
+                          onClick={() => {
                             if (isGuestMode) { openModal(); return; }
-                            setValue('salesMethodology', key, { shouldValidate: true })
+                            setValue('salesMethodology', mode.key, { shouldValidate: true });
                           }}
-                        />
+                          sx={{
+                            p: 2.5, borderRadius: 2, cursor: 'pointer',
+                            border: `2px solid`,
+                            borderColor: field.value === mode.key ? mode.accent : 'rgba(255,255,255,0.1)',
+                            background: field.value === mode.key
+                              ? `linear-gradient(135deg, ${mode.accent}22, ${mode.accent}08)`
+                              : 'rgba(255,255,255,0.04)',
+                            backdropFilter: 'blur(10px)',
+                            transition: 'all 0.2s',
+                            '&:hover': {
+                              borderColor: mode.accent,
+                              background: `${mode.accent}10`,
+                              transform: 'translateY(-2px)',
+                            },
+                            transform: field.value === mode.key ? 'translateY(-3px)' : 'none',
+                            boxShadow: field.value === mode.key ? `0 8px 24px ${mode.accent}30` : 'none',
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <Box sx={{
+                              width: 8, height: 8, borderRadius: '50%',
+                              bgcolor: mode.accent,
+                              boxShadow: field.value === mode.key ? `0 0 8px ${mode.accent}` : 'none',
+                            }} />
+                            <Typography fontWeight={700} sx={{ color: field.value === mode.key ? mode.accent : 'text.primary' }}>
+                              {mode.label}
+                            </Typography>
+                          </Box>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', lineHeight: 1.4 }}>
+                            {mode.desc}
+                          </Typography>
+                        </Box>
                       </Grid>
                     ))}
                   </Grid>
@@ -703,12 +726,12 @@ export default function AiSettings() {
 
       <Fade in timeout={900}>
         <Paper id="tour-qualification-criteria" variant="outlined" sx={paperStyles}>
-          <Typography variant="h6" gutterBottom>Critérios de Qualificação</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>Defina os critérios que a IA usará para classificar os leads.</Typography>
+          <Typography variant="h6" gutterBottom>Critérios de Prioridade</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>Defina as palavras-chave para classificar a urgência e prioridade da negociação com o devedor.</Typography>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6} md={4}><CriteriaFieldArray control={aiControl} name="hotCriteria" label="Lead QUENTE" status="hot" /></Grid>
-            <Grid item xs={12} sm={6} md={4}><CriteriaFieldArray control={aiControl} name="warmCriteria" label="Lead MORNO" status="warm" /></Grid>
-            <Grid item xs={12} sm={12} md={4}><CriteriaFieldArray control={aiControl} name="coldCriteria" label="Lead FRIO" status="cold" /></Grid>
+            <Grid item xs={12} sm={6} md={4}><CriteriaFieldArray control={aiControl} name="hotCriteria" label="Alta Prioridade" status="hot" /></Grid>
+            <Grid item xs={12} sm={6} md={4}><CriteriaFieldArray control={aiControl} name="warmCriteria" label="Média Prioridade" status="warm" /></Grid>
+            <Grid item xs={12} sm={12} md={4}><CriteriaFieldArray control={aiControl} name="coldCriteria" label="Baixa Prioridade" status="cold" /></Grid>
           </Grid>
         </Paper>
       </Fade>

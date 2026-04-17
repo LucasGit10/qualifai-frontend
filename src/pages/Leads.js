@@ -6,13 +6,13 @@ import {
   Box, Typography, Button, Paper, DialogTitle, DialogContent, DialogActions,
   TextField, FormControl, InputLabel, Select, MenuItem, Chip, IconButton, Tooltip, Grid,
   CircularProgress, Card, CardContent, InputAdornment, useTheme, Menu, ListItemIcon, ListItemText,
-  FormControlLabel, Switch, useMediaQuery, Badge, Skeleton, Pagination
+  FormControlLabel, Switch, useMediaQuery, Badge, Skeleton, Pagination, Divider
 } from '@mui/material';
 import {
   Add as AddIcon, Chat as ChatIcon, Edit as EditIcon, Delete as DeleteIcon, Sync as SyncIcon,
   Email as EmailIcon, GetApp as GetAppIcon, Search as SearchIcon, AddCircleOutline as AddCircleOutlineIcon,
   FileUpload as FileUploadIcon, Send as SendIcon, MoreVert as MoreVertIcon, Close as CloseIcon, FilterList as FilterListIcon,
-  Business as BusinessIcon
+  Business as BusinessIcon, RequestQuote as RequestQuoteIcon
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useForm, Controller } from 'react-hook-form';
@@ -22,9 +22,11 @@ import { useTranslation } from 'react-i18next';
 
 import api from '../services/api';
 import { useShowcaseContext } from '../contexts/ShowcaseContext';
-import { mockLeads } from '../utils/mockData';
+import { MOCK_DEBTORS } from '../mocks';
+import { USE_MOCKS } from '../config/env';
 import ShowcaseBlocker from '../components/Showcase/ShowcaseBlocker';
 import ImportFileDialog from '../components/ImportFileDialog';
+import DebtManagementDialog from '../components/DebtManagementDialog';
 
 import { StyledDialog } from '../components/ui/StyledDialog';
 import { GradientButton } from '../components/ui/GradientButton';
@@ -171,6 +173,8 @@ export default function PaginaLeads() {
   const [selectedRowForMenu, setSelectedRowForMenu] = useState(null);
   
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
+  const [debtDialogOpen, setDebtDialogOpen] = useState(false);
+  const [selectedLeadForDebt, setSelectedLeadForDebt] = useState(null);
 
   const [showNonRespondedStatus, setShowNonRespondedStatus] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: isMobile ? 10 : 25 });
@@ -200,7 +204,9 @@ export default function PaginaLeads() {
   const { control: emailControl, handleSubmit: handleEmailSubmit, reset: resetEmailForm, formState: { errors: emailErrors } } = useForm();
   const { data: statusEnumData, isLoading: isLoadingStatusEnum } = useQuery('leadStatusEnums', () => api.get('/leads/statuses').then(res => res.data), { staleTime: 60000, initialData: [] });
 
-  const baseStatuses = statusEnumData && Array.isArray(statusEnumData) && statusEnumData.length > 0 ? statusEnumData : ['novo', 'contatado', 'qualificado', 'morno', 'frio', 'convertido'];
+  const baseStatuses = statusEnumData && Array.isArray(statusEnumData) && statusEnumData.length > 0
+    ? statusEnumData
+    : ['novo', 'contatado', 'em_negociacao', 'acordado', 'ativo', 'quitado', 'judicial'];
   const availableStatuses = showNonRespondedStatus ? [...baseStatuses, 'nao_respondeu'] : baseStatuses;
 
   const { data: apiData, isLoading: apiIsLoading } = useQuery(['leads', paginationModel, debouncedTextFilter, statusFilter, sourceFilter], () => {
@@ -211,8 +217,8 @@ export default function PaginaLeads() {
     return api.get(`/leads?${params.toString()}`).then(res => res.data);
   }, { keepPreviousData: true, enabled: !isGuestMode });
 
-  const data = isGuestMode ? mockLeads : apiData;
-  const isLoading = isGuestMode ? false : apiIsLoading;
+  const data = USE_MOCKS ? { leads: MOCK_DEBTORS.map(d => ({ ...d, _id: d.id, status: 'ativo', source: 'whatsapp' })), totalCount: MOCK_DEBTORS.length } : apiData;
+  const isLoading = USE_MOCKS ? false : apiIsLoading;
 
   const statusCountsMap = useMemo(() => (data?.leads || []).reduce((map, lead) => { if (lead.status) { map[lead.status] = (map[lead.status] || 0) + 1; } return map; }, {}), [data?.leads]);
   const nonRespondedCount = useMemo(() => !showNonRespondedStatus || !data?.leads ? 0 : (statusCountsMap['nao_respondeu'] || 0), [data?.leads, showNonRespondedStatus, statusCountsMap]);
@@ -232,9 +238,54 @@ export default function PaginaLeads() {
   const syncAllLeadsMutation = useMutation(() => api.post('/leads/sync-all'), { onSuccess: (response) => { toast.success(t('leadsPage.toasts.syncSuccess')); queryClient.invalidateQueries(['leads', 'dashboard-stats']); }, onError: (error) => { toast.error(error.response?.data?.message || t('leadsPage.toasts.syncError')); } });
   const importFromCRMsMutation = useMutation(() => api.post('/integrations/import-from-all-crms'), { onSuccess: (response) => { const { created, skipped } = response.data; if (created > 0) { toast.success(t('leadsPage.toasts.crmImportSuccess', { created })); } else { toast.info(t('leadsPage.toasts.crmImportNoNew')); } if (skipped > 0) { toast.info(t('leadsPage.toasts.crmImportSkipped', { skipped })); } queryClient.invalidateQueries(['leads', 'dashboard-stats']); }, onError: (error) => { toast.error(error.response?.data?.message || t('leadsPage.toasts.crmImportError')); } });
 
-  const handleOpenDialog = (lead = null) => { setEditingLead(lead); if (lead) { reset(lead); } else { reset({ name: '', email: '', phone: '', company: '', position: '', source: 'form' }); } setOpen(true); };
+  const handleOpenDialog = (lead = null) => { 
+    setEditingLead(lead); 
+    if (lead) { 
+      // Achatar os objetos aninhados para o formulário
+      reset({
+        ...lead,
+        street: lead.address?.street || '',
+        number: lead.address?.number || '',
+        complement: lead.address?.complement || '',
+        city: lead.address?.city || '',
+        state: lead.address?.state || '',
+        zipCode: lead.address?.zipCode || '',
+        linkedin: lead.socialMedia?.linkedin || '',
+        facebook: lead.socialMedia?.facebook || '',
+        instagram: lead.socialMedia?.instagram || ''
+      }); 
+    } else { 
+      reset({ name: '', email: '', phone: '', company: '', position: '', source: 'form', taxId: '', street: '', number: '', complement: '', city: '', state: '', zipCode: '', linkedin: '', facebook: '', instagram: '' }); 
+    } 
+    setOpen(true); 
+  };
   const handleCloseDialog = () => { setOpen(false); setEditingLead(null); reset(); };
-  const onSubmit = (data) => { const leadData = { ...data, phone: data.phone ? ('' + data.phone).replace(/\D/g, '') : '' }; if (editingLead) { updateLeadMutation.mutate({ id: editingLead._id, data: leadData }); } else { createLeadMutation.mutate(leadData); } };
+
+  const onSubmit = (data) => { 
+    const leadData = { 
+      ...data, 
+      phone: data.phone ? ('' + data.phone).replace(/\D/g, '') : '',
+      taxId: data.taxId,
+      address: {
+        street: data.street,
+        number: data.number,
+        complement: data.complement,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode
+      },
+      socialMedia: {
+        linkedin: data.linkedin,
+        facebook: data.facebook,
+        instagram: data.instagram
+      }
+    }; 
+    if (editingLead) { 
+      updateLeadMutation.mutate({ id: editingLead._id, data: leadData }); 
+    } else { 
+      createLeadMutation.mutate(leadData); 
+    } 
+  };
   const handleStartSingleConversation = async (lead) => { if (!lead.phone || !lead.phone.trim()) { toast.warn(t('leadsPage.toasts.noPhoneError')); return; } const provider = whatsAppProviderData?.provider; if (provider === 'zapi') { try { const statusResponse = await api.get('/zapi/status'); if (!statusResponse.data?.success || !statusResponse.data.status?.connected) { toast.warn(t('leadsPage.toasts.zapiNotConnected')); return; } startZapiConversationMutation.mutate({ leadId: lead._id }); } catch (error) { toast.error(t('leadsPage.toasts.providerError')); } } else if (provider === 'whatsapp') { setLeadsToContact([lead]); setTemplateModalOpen(true); } else { toast.error(isLoadingProvider ? t('leadsPage.toasts.checkingProvider') : t('leadsPage.toasts.providerConfigError')); } };
   const handleStartMultipleConversations = async () => { const selectedLeads = data?.leads.filter(lead => selectionModel.includes(lead._id)) || []; const leadsWithoutPhone = selectedLeads.filter(lead => !lead.phone || !lead.phone.trim()); if (leadsWithoutPhone.length > 0) { toast.warn(t('leadsPage.toasts.batchNoPhoneError', { count: leadsWithoutPhone.length })); return; } const provider = whatsAppProviderData?.provider; if (provider === 'zapi') { try { const statusResponse = await api.get('/zapi/status'); if (!statusResponse.data?.success || !statusResponse.data.status?.connected) { toast.warn(t('leadsPage.toasts.zapiNotConnected')); return; } startMultipleZapiConversationsMutation.mutate({ leadIds: selectionModel }); } catch (error) { toast.error(t('leadsPage.toasts.providerError')); } } else if (provider === 'whatsapp') { setLeadsToContact(selectedLeads); setTemplateModalOpen(true); } else { toast.error(isLoadingProvider ? t('leadsPage.toasts.checkingProvider') : t('leadsPage.toasts.providerConfigError')); } };
   const handleTemplateModalConfirm = ({ instanceId, templateId, leads }) => { if (leads.length === 1) { startWhatsappConversationMutation.mutate({ instanceId, templateId, leadId: leads[0]._id }); } else { startMultipleWhatsappConversationsMutation.mutate({ instanceId, templateId, leadIds: leads.map(lead => lead._id) }); } };
@@ -249,6 +300,8 @@ export default function PaginaLeads() {
   const handleOpenRowMenu = (event, row) => { setRowMenuAnchorEl(event.currentTarget); setSelectedRowForMenu(row); };
   const handleCloseRowMenu = () => { setRowMenuAnchorEl(null); setSelectedRowForMenu(null); };
   const handleStatusCardClick = (status) => { setStatusFilter(prevStatus => prevStatus === status ? '' : status); };
+  const handleOpenDebtDialog = (lead) => { setSelectedLeadForDebt(lead); setDebtDialogOpen(true); };
+  const handleCloseDebtDialog = () => { setDebtDialogOpen(false); setSelectedLeadForDebt(null); };
   const handleToggleNonRespondedStatus = () => { setShowNonRespondedStatus(prev => !prev); if (statusFilter === 'nao_respondeu') { setStatusFilter(''); } };
   
   const handlePageChange = (event, value) => {
@@ -395,6 +448,7 @@ export default function PaginaLeads() {
 
       <Menu anchorEl={rowMenuAnchorEl} open={Boolean(rowMenuAnchorEl)} onClose={handleCloseRowMenu} PaperProps={{ sx: transparentPaperStyle }}>
         <MenuItem onClick={() => { handleStartSingleConversation(selectedRowForMenu); handleCloseRowMenu(); }}><ListItemIcon><ChatIcon fontSize="small" /></ListItemIcon><ListItemText>{t('leadsPage.table.tooltip.startIaConversation')}</ListItemText></MenuItem>
+        <MenuItem onClick={() => { handleOpenDebtDialog(selectedRowForMenu); handleCloseRowMenu(); }}><ListItemIcon><RequestQuoteIcon fontSize="small" /></ListItemIcon><ListItemText>Gestão de Dívida</ListItemText></MenuItem>
         <MenuItem onClick={() => { handleOpenDialog(selectedRowForMenu); handleCloseRowMenu(); }}><ListItemIcon><EditIcon fontSize="small" /></ListItemIcon><ListItemText>{t('leadsPage.table.tooltip.edit')}</ListItemText></MenuItem>
         <MenuItem onClick={() => { handleDeleteLead(selectedRowForMenu._id); handleCloseRowMenu(); }} sx={{ color: 'error.main' }}><ListItemIcon><DeleteIcon fontSize="small" color="error" /></ListItemIcon><ListItemText>{t('leadsPage.table.tooltip.delete')}</ListItemText></MenuItem>
       </Menu>
@@ -409,6 +463,26 @@ export default function PaginaLeads() {
             <Controller name="company" control={control} rules={{ required: t('leadsPage.validation.companyRequired') }} render={({ field }) => <TextField {...field} label={t('leadsPage.leadModal.companyLabel')} error={!!errors.company} helperText={errors.company?.message} fullWidth />} />
             <Controller name="position" control={control} render={({ field }) => <TextField {...field} label={t('leadsPage.leadModal.positionLabel')} fullWidth />} />
             <Controller name="source" control={control} defaultValue="form" rules={{ required: t('leadsPage.validation.sourceRequired') }} render={({ field }) => (<FormControl fullWidth error={!!errors.source}><InputLabel>{t('leadsPage.leadModal.sourceLabel')}</InputLabel><Select {...field} label={t('leadsPage.leadModal.sourceLabel')} sx={{ '& fieldset': { borderColor: theme.palette.divider }, '& .MuiSvgIcon-root': { color: 'text.secondary' } }}>{Object.entries(t('dashboard.leadSources', { returnObjects: true })).map(([key, label]) => (<MenuItem key={key} value={key}>{label}</MenuItem>))}</Select></FormControl>)} />
+            
+            <Divider sx={{ gridColumn: '1 / -1', my: 1 }} />
+            <Typography variant="subtitle2" sx={{ gridColumn: '1 / -1' }}>Informações Pessoais e Endereço</Typography>
+            
+            <Controller name="taxId" control={control} render={({ field }) => <TextField {...field} label="CPF/CNPJ" fullWidth />} />
+            <Controller name="zipCode" control={control} render={({ field }) => <TextField {...field} label="CEP" fullWidth />} />
+            <Controller name="street" control={control} render={({ field }) => <TextField {...field} label="Logradouro" fullWidth />} />
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Controller name="number" control={control} render={({ field }) => <TextField {...field} label="Nº" sx={{ width: '80px' }} />} />
+              <Controller name="complement" control={control} render={({ field }) => <TextField {...field} label="Complemento" fullWidth />} />
+            </Box>
+            <Controller name="city" control={control} render={({ field }) => <TextField {...field} label="Cidade" fullWidth />} />
+            <Controller name="state" control={control} render={({ field }) => <TextField {...field} label="Estado" fullWidth />} />
+
+            <Divider sx={{ gridColumn: '1 / -1', my: 1 }} />
+            <Typography variant="subtitle2" sx={{ gridColumn: '1 / -1' }}>Redes Sociais</Typography>
+            
+            <Controller name="linkedin" control={control} render={({ field }) => <TextField {...field} label="LinkedIn" fullWidth />} />
+            <Controller name="instagram" control={control} render={({ field }) => <TextField {...field} label="Instagram" fullWidth />} />
+            <Controller name="facebook" control={control} render={({ field }) => <TextField {...field} label="Facebook" fullWidth />} />
           </Box></DialogContent>
           <DialogActions sx={{ p: '16px 24px' }}><Button onClick={handleCloseDialog} color="inherit">{t('common.cancel')}</Button><GradientButton type="submit" disabled={createLeadMutation.isLoading || updateLeadMutation.isLoading}>{createLeadMutation.isLoading || updateLeadMutation.isLoading ? <CircularProgress size={24} color="inherit" /> : (editingLead ? t('leadsPage.leadModal.updateButton') : t('leadsPage.leadModal.createButton'))}</GradientButton></DialogActions>
         </form>
@@ -434,6 +508,7 @@ export default function PaginaLeads() {
       
       <ImportFileDialog open={importDialogOpen} onClose={() => setImportDialogOpen(false)} onSubmit={handleImportFromFile} isLoading={importFromFileMutation.isLoading}/>
       <TemplateSelectionModal open={templateModalOpen} onClose={() => setTemplateModalOpen(false)} onConfirm={handleTemplateModalConfirm} leadsToContact={leadsToContact} isLoadingConfirm={startWhatsappConversationMutation.isLoading || startMultipleWhatsappConversationsMutation.isLoading}/>
+      <DebtManagementDialog open={debtDialogOpen} onClose={handleCloseDebtDialog} leadId={selectedLeadForDebt?._id} leadName={selectedLeadForDebt?.name} />
     
     </Box>
   );

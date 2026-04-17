@@ -59,16 +59,9 @@ export const ToggleButton = styled(Button)(({ theme }) => ({
 export const ScrollableList = styled(List)({
   flexGrow: 1,
   overflowY: 'auto',
-  scrollbarWidth: 'thin',
+  scrollbarWidth: 'none',
   '&::-webkit-scrollbar': {
-    width: '6px',
-  },
-  '&::-webkit-scrollbar-thumb': {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: '10px',
-  },
-  '&::-webkit-scrollbar-track': {
-    backgroundColor: 'transparent',
+    display: 'none',
   },
 });
 

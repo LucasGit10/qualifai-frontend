@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import io from 'socket.io-client';
 import { useAuthStore } from '../stores/authStore';
+import api from '../services/api';
+
+const rawUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const SOCKET_URL = rawUrl.replace('/api', '');
 
 const SocketContext = createContext();
 
@@ -21,35 +25,44 @@ export const SocketProvider = ({ children }) => {
     useEffect(() => {
         if (!isAuthenticated || !user?._id || !token) {
             if (socket) {
+                console.log('[Socket] Disconnecting: User not authenticated');
                 socket.disconnect();
                 setSocket(null);
                 setIsConnected(false);
             }
             return;
         }
-        if (socket?.connected) {
-            return;
-        }
+
+        // Se já está conectado, não faz nada
+        if (socket?.connected) return;
         
-        console.log('Connecting to the socket with:', {
+        // Se já existe uma instância tentando conectar, não cria outra (debounce simples)
+        if (socket && !socket.connected) return;
+
+        console.log('[Socket] Attempting connection:', {
+            url: SOCKET_URL,
             userId: user._id,
-            hasToken: !!token
         });
 
-        const newSocket = io('http://localhost:3001', {
+        const newSocket = io(SOCKET_URL, {
             auth: {
                 userId: user._id,
                 token: token
             },
-            transports: ['websocket', 'polling'],
+            // Removemos a restrição de transportes para permitir a melhor negociação (WS ou Polling)
+            path: '/socket.io/',
             withCredentials: true,
             reconnection: true,
-            reconnectionAttempts: 5,
-            reconnectionDelay: 1000
+            reconnectionAttempts: 10,
+            reconnectionDelay: 2000
         });
 
         newSocket.on('connect', () => {
+            console.log('[Socket] Connected!', newSocket.id);
             setIsConnected(true);
+
+            // Entra na sala individual do usuário para receber notificações privadas
+            newSocket.emit('join-room', user._id);
 
             newSocket.emit('test_connection', {
                 userId: user._id,
@@ -75,17 +88,21 @@ export const SocketProvider = ({ children }) => {
         });
 
         newSocket.on('disconnect', (reason) => {
-            console.log('Socket disconnected:', reason);
+            console.log('[Socket] Disconnected:', reason);
             setIsConnected(false);
+            if (reason === 'io server disconnect') {
+              // o servidor desconectou, precisamos reconectar manualmente
+              newSocket.connect();
+            }
         });
 
         newSocket.on('connect_error', (error) => {
-            console.error('Socket.io connection error:', error.message);
+            console.error('[Socket] Connection Error:', error.message);
             setIsConnected(false);
         });
 
         newSocket.on('error', (error) => {
-            console.error('Socket.io error:', error);
+            console.error('[Socket] General Error:', error);
         });
 
         setSocket(newSocket);
@@ -103,67 +120,30 @@ export const SocketProvider = ({ children }) => {
 
     const loadNotifications = async () => {
         try {
-            const response = await fetch('http://localhost:3001/api/notifications', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                setNotifications(data.notifications || []);
-            }
+            const { data } = await api.get('/notifications');
+            setNotifications(data.notifications || []);
         } catch (error) {
             console.error('Error loading notifications:', error);
         }
     };
 
+    const isValidObjectId = (id) =>
+        typeof id === 'string' && /^[0-9a-fA-F]{24}$/.test(id);
+
     const markAsRead = async (notificationId) => {
+        if (!isValidObjectId(notificationId)) {
+            console.error('Invalid ID for markAsRead:', notificationId);
+            return;
+        }
         try {
-            console.log('markAsRead called with ID:', {
-                notificationId,
-                type: typeof notificationId,
-                value: notificationId
-            });
-
-            if (!notificationId || 
-                notificationId === 'undefined' || 
-                notificationId === 'null' ||
-                notificationId === '' ||
-                typeof notificationId !== 'string') {
-                console.error('Invalid ID for markAsRead:', notificationId);
-                return;
-            }
-
-            const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-            if (!objectIdRegex.test(notificationId)) {
-                console.error('Invalid ID for markAsRead:', notificationId);
-                return;
-            }
-            
-            const response = await fetch(`http://localhost:3001/api/notifications/${notificationId}/read`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            console.log('Server response:', response.status);
-
-            if (response.ok) {
-                setNotifications(prev =>
-                    prev.map(n =>
-                        (n._id === notificationId || n.id === notificationId) 
-                            ? { ...n, isRead: true } 
-                            : n
-                    )
-                );
-            } else {
-                const errorText = await response.text();
-                console.error('Error in response:', errorText);
-            }
+            await api.patch(`/notifications/${notificationId}/read`);
+            setNotifications(prev =>
+                prev.map(n =>
+                    (n._id === notificationId || n.id === notificationId)
+                        ? { ...n, isRead: true }
+                        : n
+                )
+            );
         } catch (error) {
             console.error('Error marking as read:', error);
         }
@@ -171,14 +151,7 @@ export const SocketProvider = ({ children }) => {
 
     const markAllAsRead = async () => {
         try {
-            await fetch('http://localhost:3001/api/notifications/read-all', {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
+            await api.patch('/notifications/read-all');
             setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
         } catch (error) {
             console.error('Error clearing notifications:', error);
@@ -186,29 +159,24 @@ export const SocketProvider = ({ children }) => {
     };
 
     const deleteNotification = async (notificationId) => {
+        if (!isValidObjectId(notificationId)) {
+            console.error('Invalid ID for delete:', notificationId);
+            return;
+        }
         try {
-            if (!notificationId || notificationId === 'undefined' || notificationId === 'null') {
-                console.error('Invalid ID for delete:', notificationId);
-                return;
-            }
-
-            const objectIdRegex = /^[0-9a-fA-F]{24}$/;
-            if (!objectIdRegex.test(notificationId)) {
-                console.error('Invalid ID for delete:', notificationId);
-                return;
-            }
-
-            await fetch(`http://localhost:3001/api/notifications/${notificationId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
+            await api.delete(`/notifications/${notificationId}`);
             setNotifications(prev => prev.filter(n => n.id !== notificationId && n._id !== notificationId));
         } catch (error) {
             console.error('Error deleting notification:', error);
+        }
+    };
+
+    const deleteAllNotifications = async () => {
+        try {
+            await api.delete('/notifications/clear-all');
+            setNotifications([]);
+        } catch (error) {
+            console.error('Error deleting all notifications:', error);
         }
     };
 
@@ -219,7 +187,8 @@ export const SocketProvider = ({ children }) => {
         unreadCount: notifications.filter(n => !n.isRead).length,
         markAsRead,
         markAllAsRead,
-        deleteNotification
+        deleteNotification,
+        deleteAllNotifications
     };
 
     return (

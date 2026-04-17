@@ -4,7 +4,8 @@ import {
   Box, Typography, Button, Paper, TextField, Chip, Alert, Grid,
   LinearProgress, FormControl, InputLabel, Select, MenuItem, IconButton,
   Tooltip, CircularProgress, Stack, Divider, Switch, FormControlLabel,
-  useTheme, alpha, DialogTitle, DialogContent, DialogActions, styled
+  useTheme, alpha, DialogTitle, DialogContent, DialogActions, styled,
+  Stepper, Step, StepLabel, StepConnector, stepConnectorClasses
 } from '@mui/material';
 import {
   Add as AddIcon, PlayArrow as PlayIcon, Pause as PauseIcon, CloudUpload as UploadIcon,
@@ -18,9 +19,9 @@ import { toast } from 'react-toastify';
 import { useTranslation, Trans } from 'react-i18next';
 import api from '../services/api';
 import { useShowcaseContext } from '../contexts/ShowcaseContext';
-import { mockCampaigns } from '../utils/mockData';
+import { USE_MOCKS } from '../config/env';
+import { MOCK_CAMPAIGNS, MOCK_TEMPLATES } from '../mocks';
 import ShowcaseBlocker from '../components/Showcase/ShowcaseBlocker';
-
 import { StyledDialog } from '../components/ui/StyledDialog';
 import { GradientButton } from '../components/ui/GradientButton';
 
@@ -159,7 +160,9 @@ const CampaignCard = ({ campaign, onAction, actionIsLoading }) => {
 const CampaignFormDialog = ({ open, onClose, onSubmit, campaign, isLoading }) => {
   const { t } = useTranslation();
   const theme = useTheme();
-  const { control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm({
+  const [activeStep, setActiveStep] = useState(0);
+  
+  const { control, handleSubmit, reset, watch, setValue, trigger, formState: { errors } } = useForm({
     defaultValues: {
       name: '', description: '', channel: 'whatsapp_official', whatsappInstance: '',
       emailSubject: '', messageTemplate: '', delayBetweenMessages: 30, dailyLimit: 100,
@@ -170,9 +173,23 @@ const CampaignFormDialog = ({ open, onClose, onSubmit, campaign, isLoading }) =>
   const channel = watch('channel');
   const followUpEnabled = watch('followUp.enabled');
   
-  const { data: officialWhatsappInstances } = useQuery('officialWhatsappInstances', () => api.get('/whatsapp/').then(res => res.data), { enabled: open });
-  const { data: approvedConversationTemplates, isLoading: conversationTemplatesLoading } = useQuery('approvedConversationTemplates', () => api.get('/template-message').then(res => res.data.filter(t => t.status === 'approved' && t.templateType === 'conversation')), { enabled: open && channel === 'whatsapp_official' });
-  const { data: approvedFollowUpTemplates, isLoading: followUpTemplatesLoading } = useQuery('approvedFollowUpTemplates', () => api.get('/template-message').then(res => res.data.filter(t => t.status === 'approved' && t.templateType === 'follow_up')), { enabled: open && channel === 'whatsapp_official' });
+  const { data: officialWhatsappInstances } = useQuery('officialWhatsappInstances', async () => {
+    if (USE_MOCKS) return [{ _id: '1', instanceName: 'WhatsApp Cobrança', phoneNumber: '+55 11 99999-9999' }];
+    const res = await api.get('/whatsapp/');
+    return res.data;
+  }, { enabled: open });
+
+  const { data: approvedConversationTemplates, isLoading: conversationTemplatesLoading } = useQuery('approvedConversationTemplates', async () => {
+    if (USE_MOCKS) return MOCK_TEMPLATES.filter(t => t.status === 'approved' && t.templateType === 'conversation');
+    const res = await api.get('/template-message');
+    return res.data.filter(t => t.status === 'approved' && t.templateType === 'conversation');
+  }, { enabled: open && channel === 'whatsapp_official' });
+
+  const { data: approvedFollowUpTemplates, isLoading: followUpTemplatesLoading } = useQuery('approvedFollowUpTemplates', async () => {
+    if (USE_MOCKS) return MOCK_TEMPLATES.filter(t => t.status === 'approved' && t.templateType === 'follow_up');
+    const res = await api.get('/template-message');
+    return res.data.filter(t => t.status === 'approved' && t.templateType === 'follow_up');
+  }, { enabled: open && channel === 'whatsapp_official' });
   
   const generateTemplateMutation = { isLoading: false };
   const handleGenerateTemplate = () => {
@@ -182,6 +199,7 @@ const CampaignFormDialog = ({ open, onClose, onSubmit, campaign, isLoading }) =>
 
   useEffect(() => {
     if (open) {
+      setActiveStep(0);
       if (campaign) {
         reset({ ...campaign, messageTemplate: campaign.messageTemplate?._id || campaign.messageTemplate || '', followUp: { ...campaign.followUp, messageTemplate: campaign.followUp?.messageTemplate?._id || campaign.followUp?.messageTemplate || '' } });
       } else {
@@ -192,332 +210,227 @@ const CampaignFormDialog = ({ open, onClose, onSubmit, campaign, isLoading }) =>
   
   const isEditMode = !!campaign;
 
+  const steps = [
+    t('campaignsPage.formDialog.step1'),
+    t('campaignsPage.formDialog.step2'),
+    t('campaignsPage.formDialog.step3'),
+    t('campaignsPage.formDialog.step4')
+  ];
+
+  const handleNext = async () => {
+    // Validação basica baseada no step ativo antes de avançar
+    let isValid = false;
+    if (activeStep === 0) {
+      isValid = await trigger(['name']);
+    } else if (activeStep === 1) {
+      isValid = await trigger(['channel', 'whatsappInstance', 'emailSubject', 'messageTemplate']);
+    } else if (activeStep === 2) {
+      isValid = await trigger(['delayBetweenMessages', 'dailyLimit']);
+    }
+    if (isValid) {
+      setActiveStep((prev) => prev + 1);
+    }
+  };
+
+  const handleBack = () => setActiveStep((prev) => prev - 1);
+
   return (
     <StyledDialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <DialogTitle sx={{ color: theme.palette.text.primary }}>
-          {isEditMode ? t('campaignsPage.formDialog.editTitle') : t('campaignsPage.formDialog.newTitle')}
+        <DialogTitle sx={{ color: 'text.primary', pb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <CampaignIcon sx={{ color: 'primary.main', fontSize: 28 }} />
+            {isEditMode ? t('campaignsPage.formDialog.editTitle') : t('campaignsPage.formDialog.newTitle')}
+          </Box>
         </DialogTitle>
-        <DialogContent>
-            <Stack spacing={3} sx={{ pt: 2 }}>
-                <Typography variant="h6" fontSize="1rem" color={theme.palette.text.primary}>{t('campaignsPage.formDialog.step1')}</Typography>
-                <Controller name="name" control={control} rules={{ required: t('campaignsPage.formDialog.nameRequired') }} render={({ field }) => ( 
-                  <TextField 
-                    {...field} 
-                    label={t('campaignsPage.formDialog.nameLabel')} 
-                    error={!!errors.name} 
-                    helperText={errors.name?.message} 
-                    fullWidth 
-                    sx={{
-                      '& .MuiInputLabel-root': { color: theme.palette.text.primary },
-                      '& .MuiOutlinedInput-root': {
-                        '& fieldset': { borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)' },
-                        '&:hover fieldset': { borderColor: theme.palette.primary.main },
-                        '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
-                      },
-                      '& .MuiInputBase-input': { color: theme.palette.text.primary },
-                    }}
-                  /> 
-                )} />
-                <Controller name="description" control={control} render={({ field }) => ( 
-                  <TextField 
-                    {...field} 
-                    label={t('campaignsPage.formDialog.descriptionLabel')} 
-                    multiline rows={2} 
-                    fullWidth 
-                    sx={{
-                      '& .MuiInputLabel-root': { color: theme.palette.text.primary },
-                      '& .MuiOutlinedInput-root': {
-                        '& fieldset': { borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)' },
-                        '&:hover fieldset': { borderColor: theme.palette.primary.main },
-                        '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
-                      },
-                      '& .MuiInputBase-input': { color: theme.palette.text.primary },
-                    }}
-                  /> 
-                )} />
-                <Divider sx={{ my: 2, borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)' }} />
-                <Typography variant="h6" fontSize="1rem" color={theme.palette.text.primary}>{t('campaignsPage.formDialog.step2')}</Typography>
+        <DialogContent dividers sx={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+            
+            <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4, mt: 1 }}>
+              {steps.map((label, index) => (
+                <Step key={label}>
+                  <StepLabel StepIconProps={{
+                    sx: {
+                      color: 'rgba(255,255,255,0.1)',
+                      '&.Mui-active': { color: 'primary.main' },
+                      '&.Mui-completed': { color: 'secondary.main' }
+                    }
+                  }}>
+                    <Typography variant="caption" sx={{ color: activeStep === index ? 'primary.light' : 'text.secondary', fontWeight: activeStep === index ? 700 : 400 }}>
+                      {label}
+                    </Typography>
+                  </StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+
+            <Box sx={{ minHeight: '300px', pt: 1 }}>
                 
-                {!isEditMode && ( 
-                  <Controller name="channel" control={control} rules={{ required: t('campaignsPage.formDialog.channelRequired') }} render={({ field }) => ( 
-                    <FormControl fullWidth error={!!errors.channel}>
-                      <InputLabel sx={{ color: theme.palette.text.primary }}>{t('campaignsPage.formDialog.channelLabel')}</InputLabel>
-                      <Select 
-                        {...field} 
-                        label={t('campaignsPage.formDialog.channelLabel')}
-                        sx={{
-                          color: theme.palette.text.primary,
-                          '& .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)' },
-                          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main },
-                        }}
-                      >
-                        <MenuItem value="whatsapp_official">{t('campaignsPage.formDialog.whatsappOfficial')}</MenuItem>
-                        <MenuItem value="email">{t('campaignsPage.formDialog.email')}</MenuItem>
-                      </Select>
-                    </FormControl>
-                  )} /> 
-                )}
-                {channel === 'whatsapp_official' && !isEditMode && ( 
-                  <Controller name="whatsappInstance" control={control} rules={{ required: t('campaignsPage.formDialog.instanceRequired') }} render={({ field }) => ( 
-                    <FormControl fullWidth error={!!errors.whatsappInstance}>
-                      <InputLabel sx={{ color: theme.palette.text.primary }}>{t('campaignsPage.formDialog.instanceLabel')}</InputLabel>
-                      <Select 
-                        {...field} 
-                        label={t('campaignsPage.formDialog.instanceLabel')}
-                        sx={{
-                          color: theme.palette.text.primary,
-                          '& .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)' },
-                          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main },
-                        }}
-                      >
-                        {officialWhatsappInstances?.map((instance) => ( 
-                          <MenuItem key={instance._id} value={instance._id}>{instance.instanceName} ({instance.phoneNumber})</MenuItem> 
-                        ))}
-                      </Select>
-                    </FormControl> 
-                  )} /> 
-                )}
-                {channel === 'email' && ( 
-                  <Controller name="emailSubject" control={control} rules={{ required: t('campaignsPage.formDialog.subjectRequired') }} render={({ field }) => ( 
-                    <TextField 
-                      {...field} 
-                      label={t('campaignsPage.formDialog.subjectLabel')} 
-                      error={!!errors.emailSubject} 
-                      helperText={errors.emailSubject?.message} 
-                      fullWidth 
-                      sx={{
-                        '& .MuiInputLabel-root': { color: theme.palette.text.primary },
-                        '& .MuiOutlinedInput-root': {
-                          '& fieldset': { borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)' },
-                          '&:hover fieldset': { borderColor: theme.palette.primary.main },
-                          '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
-                        },
-                        '& .MuiInputBase-input': { color: theme.palette.text.primary },
-                      }}
-                    /> 
-                  )} /> 
-                )}
-                {channel === 'whatsapp_official' ? ( 
-                  <Controller name="messageTemplate" control={control} rules={{ required: t('campaignsPage.formDialog.templateRequired') }} render={({ field }) => ( 
-                    <FormControl fullWidth error={!!errors.messageTemplate}>
-                      <InputLabel sx={{ color: theme.palette.text.primary }}>{t('campaignsPage.formDialog.templateLabel')}</InputLabel>
-                      <Select 
-                        {...field} 
-                        label={t('campaignsPage.formDialog.templateLabel')} 
-                        disabled={conversationTemplatesLoading}
-                        sx={{
-                          color: theme.palette.text.primary,
-                          '& .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)' },
-                          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main },
-                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main },
-                        }}
-                      >
-                        <MenuItem value="" disabled><em style={{ color: theme.palette.text.secondary }}>{conversationTemplatesLoading ? t('campaignsPage.formDialog.loading') : t('campaignsPage.formDialog.selectTemplate')}</em></MenuItem>
-                        {approvedConversationTemplates?.map((template) => ( 
-                          <MenuItem key={template._id} value={template._id}>{template.name} ({template.category})</MenuItem> 
-                        ))}
-                      </Select>
-                    </FormControl> 
-                  )}/> 
-                ) : ( 
-                  <Controller name="messageTemplate" control={control} rules={{ required: t('campaignsPage.formDialog.messageBodyRequired') }} render={({ field }) => ( 
-                    <Box sx={{ position: 'relative' }}>
-                      <TextField 
-                        {...field} 
-                        label={t('campaignsPage.formDialog.messageBodyLabel')} 
-                        multiline rows={8} 
-                        error={!!errors.messageTemplate} 
-                        helperText={t('campaignsPage.formDialog.messageBodyHelper')} 
-                        fullWidth 
-                        InputLabelProps={{ shrink: true }}
-                        sx={{
-                          '& .MuiInputLabel-root': { color: theme.palette.text.primary },
-                          '& .MuiOutlinedInput-root': {
-                            '& fieldset': { borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)' },
-                            '&:hover fieldset': { borderColor: theme.palette.primary.main },
-                            '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
-                          },
-                          '& .MuiInputBase-input': { color: theme.palette.text.primary },
-                        }}
-                      />
-                      <Button onClick={handleGenerateTemplate} disabled={generateTemplateMutation.isLoading} size="small" variant="outlined" startIcon={generateTemplateMutation.isLoading ? <CircularProgress size={16} /> : <AutoAwesomeIcon />} sx={{ position: 'absolute', right: 14, top: 14 }} color='secondary'>{t('campaignsPage.formDialog.generateWithAiButton')}</Button>
-                    </Box> 
-                  )}/> 
-                )}
-                <Divider sx={{ my: 2, borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)' }} />
-                <Typography variant="h6" fontSize="1rem" color={theme.palette.text.primary}>{t('campaignsPage.formDialog.step3')}</Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <Controller name="delayBetweenMessages" control={control} render={({ field }) => 
-                      <TextField 
-                        {...field} 
-                        onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} 
-                        label={t('campaignsPage.formDialog.delayLabel')} 
-                        type="number" 
-                        fullWidth 
-                        sx={{
-                          '& .MuiInputLabel-root': { color: theme.palette.text.primary },
-                          '& .MuiOutlinedInput-root': {
-                            '& fieldset': { borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)' },
-                            '&:hover fieldset': { borderColor: theme.palette.primary.main },
-                            '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
-                          },
-                          '& .MuiInputBase-input': { color: theme.palette.text.primary },
-                        }}
-                      />
-                    }/>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Controller name="dailyLimit" control={control} render={({ field }) => 
-                      <TextField 
-                        {...field} 
-                        onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} 
-                        label={t('campaignsPage.formDialog.dailyLimitLabel')} 
-                        type="number" 
-                        fullWidth 
-                        sx={{
-                          '& .MuiInputLabel-root': { color: theme.palette.text.primary },
-                          '& .MuiOutlinedInput-root': {
-                            '& fieldset': { borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)' },
-                            '&:hover fieldset': { borderColor: theme.palette.primary.main },
-                            '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
-                          },
-                          '& .MuiInputBase-input': { color: theme.palette.text.primary },
-                        }}
-                      />
-                    }/>
-                  </Grid>
-                </Grid>
-                <Divider sx={{ my: 2, borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)' }} />
-                <Typography variant="h6" fontSize="1rem" color={theme.palette.text.primary}>{t('campaignsPage.formDialog.step4')}</Typography>
-                <Controller name="followUp.enabled" control={control} render={({ field }) => ( 
-                  <FormControlLabel 
-                    control={<Switch checked={field.value} {...field} />} 
-                    label={t('campaignsPage.formDialog.enableFollowUpLabel')}
-                    sx={{ color: theme.palette.text.primary }}
-                  />
-                )}/>
-                {followUpEnabled && ( 
-                  <Stack spacing={2} sx={{ mt: 1, p: 2, border: '1px solid', borderColor: theme.palette.divider, borderRadius: 1, backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.5)' }}>
-                    {channel === 'whatsapp_official' ? ( 
-                      <Controller name="followUp.messageTemplate" control={control} rules={{ required: followUpEnabled ? t('campaignsPage.formDialog.followUpTemplateRequired') : false }} render={({ field }) => ( 
-                        <FormControl fullWidth error={!!errors.followUp?.messageTemplate}>
-                          <InputLabel sx={{ color: theme.palette.text.primary }}>{t('campaignsPage.formDialog.followUpTemplateLabel')}</InputLabel>
-                          <Select 
-                            {...field} 
-                            label={t('campaignsPage.formDialog.followUpTemplateLabel')} 
-                            disabled={followUpTemplatesLoading}
-                            sx={{
-                              color: theme.palette.text.primary,
-                              '& .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)' },
-                              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main },
-                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main },
-                            }}
-                          >
-                            <MenuItem value="" disabled><em style={{ color: theme.palette.text.secondary }}>{followUpTemplatesLoading ? t('campaignsPage.formDialog.loading') : t('campaignsPage.formDialog.selectTemplate')}</em></MenuItem>
-                            {approvedFollowUpTemplates?.map((template) => ( 
-                              <MenuItem key={template._id} value={template._id}>{template.name} ({template.category})</MenuItem> 
+                {/* STEP 1 */}
+                <Box sx={{ display: activeStep === 0 ? 'block' : 'none' }}>
+                  <Stack spacing={3}>
+                    <Controller name="name" control={control} rules={{ required: t('campaignsPage.formDialog.nameRequired') }} render={({ field }) => (
+                      <TextField {...field} label={t('campaignsPage.formDialog.nameLabel')} error={!!errors.name} helperText={errors.name?.message} fullWidth sx={{ '& .MuiInputLabel-root': { color: 'text.secondary' }, '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover fieldset': { borderColor: 'primary.main' }, '&.Mui-focused fieldset': { borderColor: 'primary.main' } } }} />
+                    )} />
+                    <Controller name="description" control={control} render={({ field }) => (
+                      <TextField {...field} label={t('campaignsPage.formDialog.descriptionLabel')} multiline rows={3} fullWidth sx={{ '& .MuiInputLabel-root': { color: 'text.secondary' }, '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover fieldset': { borderColor: 'primary.main' } } }} />
+                    )} />
+                  </Stack>
+                </Box>
+
+                {/* STEP 2 */}
+                <Box sx={{ display: activeStep === 1 ? 'block' : 'none' }}>
+                  <Stack spacing={3}>
+                    {!isEditMode && (
+                      <Controller name="channel" control={control} rules={{ required: t('campaignsPage.formDialog.channelRequired') }} render={({ field }) => (
+                        <FormControl fullWidth error={!!errors.channel}>
+                          <InputLabel sx={{ color: 'text.secondary' }}>{t('campaignsPage.formDialog.channelLabel')}</InputLabel>
+                          <Select {...field} label={t('campaignsPage.formDialog.channelLabel')} sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' } }}>
+                            <MenuItem value="whatsapp_official">{t('campaignsPage.formDialog.whatsappOfficial')}</MenuItem>
+                            <MenuItem value="email">{t('campaignsPage.formDialog.email')}</MenuItem>
+                          </Select>
+                        </FormControl>
+                      )} />
+                    )}
+                    {channel === 'whatsapp_official' && !isEditMode && (
+                      <Controller name="whatsappInstance" control={control} rules={{ required: t('campaignsPage.formDialog.instanceRequired') }} render={({ field }) => (
+                        <FormControl fullWidth error={!!errors.whatsappInstance}>
+                          <InputLabel sx={{ color: 'text.secondary' }}>{t('campaignsPage.formDialog.instanceLabel')}</InputLabel>
+                          <Select {...field} label={t('campaignsPage.formDialog.instanceLabel')} sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' } }}>
+                            {officialWhatsappInstances?.map((instance) => (
+                              <MenuItem key={instance._id} value={instance._id}>{instance.instanceName} ({instance.phoneNumber})</MenuItem>
                             ))}
                           </Select>
-                        </FormControl> 
-                      )}/> 
-                    ) : ( 
-                      <Controller name="followUp.messageTemplate" control={control} rules={{ required: followUpEnabled ? t('campaignsPage.formDialog.followUpMessageRequired') : false }} render={({ field }) => ( 
-                        <TextField 
-                          {...field} 
-                          label={t('campaignsPage.formDialog.followUpMessageLabel')} 
-                          multiline rows={4} 
-                          fullWidth 
-                          error={!!errors.followUp?.messageTemplate} 
-                          helperText={t('campaignsPage.formDialog.followUpMessageHelper')} 
-                          sx={{
-                            '& .MuiInputLabel-root': { color: theme.palette.text.primary },
-                            '& .MuiOutlinedInput-root': {
-                              '& fieldset': { borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)' },
-                              '&:hover fieldset': { borderColor: theme.palette.primary.main },
-                              '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
-                            },
-                            '& .MuiInputBase-input': { color: theme.palette.text.primary },
-                          }}
-                        /> 
-                      )}/> 
+                        </FormControl>
+                      )} />
                     )}
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={4}>
-                        <Controller name="followUp.delay" control={control} render={({ field }) => 
-                          <TextField 
-                            {...field} 
-                            onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} 
-                            label={t('campaignsPage.formDialog.waitLabel')} 
-                            type="number" 
-                            fullWidth 
-                            sx={{
-                              '& .MuiInputLabel-root': { color: theme.palette.text.primary },
-                              '& .MuiOutlinedInput-root': {
-                                '& fieldset': { borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)' },
-                                '&:hover fieldset': { borderColor: theme.palette.primary.main },
-                                '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
-                              },
-                              '& .MuiInputBase-input': { color: theme.palette.text.primary },
-                            }}
-                          />
-                        } />
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <Controller name="followUp.delayUnit" control={control} render={({ field }) => ( 
-                          <FormControl fullWidth>
-                            <InputLabel sx={{ color: theme.palette.text.primary }}>{t('campaignsPage.formDialog.unitLabel')}</InputLabel>
-                            <Select 
-                              {...field} 
-                              label={t('campaignsPage.formDialog.unitLabel')}
-                              sx={{
-                                color: theme.palette.text.primary,
-                                '& .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)' },
-                                '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main },
-                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main },
-                              }}
-                            >
-                              <MenuItem value="hours">{t('campaignsPage.formDialog.hours')}</MenuItem>
-                              <MenuItem value="days">{t('campaignsPage.formDialog.days')}</MenuItem>
-                            </Select>
-                          </FormControl> 
-                        )} />
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <Controller name="followUp.maxAttempts" control={control} render={({ field }) => 
-                          <TextField 
-                            {...field} 
-                            onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} 
-                            label={t('campaignsPage.formDialog.attemptsLabel')} 
-                            type="number" 
-                            fullWidth 
-                            sx={{
-                              '& .MuiInputLabel-root': { color: theme.palette.text.primary },
-                              '& .MuiOutlinedInput-root': {
-                                '& fieldset': { borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)' },
-                                '&:hover fieldset': { borderColor: theme.palette.primary.main },
-                                '&.Mui-focused fieldset': { borderColor: theme.palette.primary.main },
-                              },
-                              '& .MuiInputBase-input': { color: theme.palette.text.primary },
-                            }}
-                          />
-                        } />
-                      </Grid>
+                    {channel === 'email' && (
+                      <Controller name="emailSubject" control={control} rules={{ required: t('campaignsPage.formDialog.subjectRequired') }} render={({ field }) => (
+                        <TextField {...field} label={t('campaignsPage.formDialog.subjectLabel')} error={!!errors.emailSubject} helperText={errors.emailSubject?.message} fullWidth sx={{ '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover fieldset': { borderColor: 'primary.main' } } }} />
+                      )} />
+                    )}
+                    {channel === 'whatsapp_official' ? (
+                      <Controller name="messageTemplate" control={control} rules={{ required: t('campaignsPage.formDialog.templateRequired') }} render={({ field }) => (
+                        <FormControl fullWidth error={!!errors.messageTemplate}>
+                          <InputLabel sx={{ color: 'text.secondary' }}>{t('campaignsPage.formDialog.templateLabel')}</InputLabel>
+                          <Select {...field} label={t('campaignsPage.formDialog.templateLabel')} disabled={conversationTemplatesLoading} sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' } }}>
+                            <MenuItem value="" disabled><em style={{ color: 'text.secondary' }}>{conversationTemplatesLoading ? t('campaignsPage.formDialog.loading') : t('campaignsPage.formDialog.selectTemplate')}</em></MenuItem>
+                            {approvedConversationTemplates?.map((template) => (
+                              <MenuItem key={template._id} value={template._id}>{template.name} ({template.category})</MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      )} />
+                    ) : (
+                      <Controller name="messageTemplate" control={control} rules={{ required: t('campaignsPage.formDialog.messageBodyRequired') }} render={({ field }) => (
+                        <Box sx={{ position: 'relative' }}>
+                          <TextField {...field} label={t('campaignsPage.formDialog.messageBodyLabel')} multiline rows={6} error={!!errors.messageTemplate} helperText={t('campaignsPage.formDialog.messageBodyHelper')} fullWidth InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover fieldset': { borderColor: 'primary.main' } } }} />
+                        </Box>
+                      )} />
+                    )}
+                  </Stack>
+                </Box>
+
+                {/* STEP 3 */}
+                <Box sx={{ display: activeStep === 2 ? 'block' : 'none' }}>
+                  <Grid container spacing={3} sx={{ pt: 1 }}>
+                    <Grid item xs={12} sm={6}>
+                      <Controller name="delayBetweenMessages" control={control} render={({ field }) =>
+                        <TextField {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} label={t('campaignsPage.formDialog.delayLabel')} type="number" fullWidth sx={{ '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover fieldset': { borderColor: 'primary.main' } } }} />
+                      }/>
                     </Grid>
-                  </Stack> 
-                )}
-            </Stack>
+                    <Grid item xs={12} sm={6}>
+                      <Controller name="dailyLimit" control={control} render={({ field }) =>
+                        <TextField {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} label={t('campaignsPage.formDialog.dailyLimitLabel')} type="number" fullWidth sx={{ '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' }, '&:hover fieldset': { borderColor: 'primary.main' } } }} />
+                      }/>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <Alert severity="info" sx={{ bgcolor: 'rgba(2, 136, 209, 0.05)', borderColor: 'rgba(2, 136, 209, 0.1)', color: 'text.secondary' }}>
+                            O limite diário protege sua credibilidade com a Meta (WhatsApp) e o disparador de e-mails, prevenindo bloqueios por spam. Recomendamos manter entre 50 e 200 mensagens diárias na fase de warmup.
+                        </Alert>
+                    </Grid>
+                  </Grid>
+                </Box>
+
+                {/* STEP 4 */}
+                <Box sx={{ display: activeStep === 3 ? 'block' : 'none' }}>
+                  <Controller name="followUp.enabled" control={control} render={({ field }) => (
+                    <FormControlLabel
+                      control={<Switch checked={field.value} {...field} color="secondary" />}
+                      label={t('campaignsPage.formDialog.enableFollowUpLabel')}
+                      sx={{ color: 'text.primary', mb: 2 }}
+                    />
+                  )}/>
+                  {followUpEnabled ? (
+                    <Stack spacing={3} sx={{ p: 3, borderRadius: 3, bgcolor: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.2)' }}>
+                      {channel === 'whatsapp_official' ? (
+                        <Controller name="followUp.messageTemplate" control={control} rules={{ required: followUpEnabled ? t('campaignsPage.formDialog.followUpTemplateRequired') : false }} render={({ field }) => (
+                          <FormControl fullWidth error={!!errors.followUp?.messageTemplate}>
+                            <InputLabel sx={{ color: 'text.secondary' }}>{t('campaignsPage.formDialog.followUpTemplateLabel')}</InputLabel>
+                            <Select {...field} label={t('campaignsPage.formDialog.followUpTemplateLabel')} disabled={followUpTemplatesLoading} sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.15)' } }}>
+                              <MenuItem value="" disabled><em>{followUpTemplatesLoading ? t('campaignsPage.formDialog.loading') : t('campaignsPage.formDialog.selectTemplate')}</em></MenuItem>
+                              {approvedFollowUpTemplates?.map((template) => (
+                                <MenuItem key={template._id} value={template._id}>{template.name} ({template.category})</MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        )} />
+                      ) : (
+                        <Controller name="followUp.messageTemplate" control={control} rules={{ required: followUpEnabled ? t('campaignsPage.formDialog.followUpMessageRequired') : false }} render={({ field }) => (
+                          <TextField {...field} label={t('campaignsPage.formDialog.followUpMessageLabel')} multiline rows={3} fullWidth error={!!errors.followUp?.messageTemplate} helperText={t('campaignsPage.formDialog.followUpMessageHelper')} sx={{ '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' } } }} />
+                        )} />
+                      )}
+                      
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={4}>
+                          <Controller name="followUp.delay" control={control} render={({ field }) =>
+                            <TextField {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} label={t('campaignsPage.formDialog.waitLabel')} type="number" fullWidth sx={{ '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' } } }} />
+                          } />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <Controller name="followUp.delayUnit" control={control} render={({ field }) => (
+                            <FormControl fullWidth>
+                              <InputLabel sx={{ color: 'text.secondary' }}>{t('campaignsPage.formDialog.unitLabel')}</InputLabel>
+                              <Select {...field} label={t('campaignsPage.formDialog.unitLabel')} sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.15)' } }}>
+                                <MenuItem value="hours">{t('campaignsPage.formDialog.hours')}</MenuItem>
+                                <MenuItem value="days">{t('campaignsPage.formDialog.days')}</MenuItem>
+                              </Select>
+                            </FormControl>
+                          )} />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <Controller name="followUp.maxAttempts" control={control} render={({ field }) =>
+                            <TextField {...field} onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)} label={t('campaignsPage.formDialog.attemptsLabel')} type="number" fullWidth sx={{ '& .MuiOutlinedInput-root': { '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' } } }} />
+                          } />
+                        </Grid>
+                      </Grid>
+                    </Stack>
+                  ) : (
+                    <Alert severity="info" variant="outlined" sx={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+                        Ative o Follow-up caso queira que o sistema retorne automaticamente sobre a mesma oferta caso não haja resposta do lead.
+                    </Alert>
+                  )}
+                </Box>
+            </Box>
         </DialogContent>
-        <DialogActions sx={{ p: '16px 24px' }}>
-          <Button onClick={onClose} disabled={isLoading} color="inherit" sx={{ color: theme.palette.text.secondary }}>
+        <DialogActions sx={{ p: '16px 24px', justifyContent: 'space-between' }}>
+          <Button onClick={onClose} disabled={isLoading} color="inherit" sx={{ color: 'text.secondary' }}>
             {t('common.cancel')}
           </Button>
-          <GradientButton type="submit" disabled={isLoading}>
-            {isLoading ? <CircularProgress size={24} color="inherit" /> : (isEditMode ? t('campaignsPage.formDialog.saveChanges') : t('campaignsPage.formDialog.createCampaign'))}
-          </GradientButton>
+          
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button disabled={activeStep === 0 || isLoading} onClick={handleBack} variant="outlined" sx={{ borderColor: 'rgba(255,255,255,0.1)', color: 'text.secondary' }}>
+                Anterior
+            </Button>
+            {activeStep === steps.length - 1 ? (
+                <GradientButton type="submit" disabled={isLoading}>
+                    {isLoading ? <CircularProgress size={24} color="inherit" /> : (isEditMode ? t('campaignsPage.formDialog.saveChanges') : t('campaignsPage.formDialog.createCampaign'))}
+                </GradientButton>
+            ) : (
+                <Button variant="contained" onClick={handleNext} disabled={isLoading} sx={{ background: 'linear-gradient(45deg, #6366f1, #a855f7)', color: 'white' }}>
+                    Próximo
+                </Button>
+            )}
+          </Box>
         </DialogActions>
       </form>
     </StyledDialog>
@@ -615,9 +528,9 @@ export default function Campaigns() {
   const queryClient = useQueryClient();
   const { isGuestMode } = useShowcaseContext();
 
-  const { data: apiCampaigns, isLoading: apiIsLoading } = useQuery('campaigns', () => api.get('/campaigns').then(res => res.data), { refetchInterval: 10000, enabled: !isGuestMode });
-  const campaigns = isGuestMode ? mockCampaigns.campaigns : apiCampaigns?.campaigns;
-  const isLoading = isGuestMode ? false : apiIsLoading;
+  const { data: apiCampaigns, isLoading: apiIsLoading } = useQuery('campaigns', () => api.get('/campaigns').then(res => res.data), { refetchInterval: 10000, enabled: !USE_MOCKS });
+  const campaigns = USE_MOCKS ? MOCK_CAMPAIGNS : apiCampaigns?.campaigns;
+  const isLoading = USE_MOCKS ? false : apiIsLoading;
   
   const handleOpenDialog = (dialog, campaign = null) => {
     setSelectedCampaign(campaign);

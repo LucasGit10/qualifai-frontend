@@ -4,26 +4,22 @@ const FacebookLoginButton = () => {
   const [isSdkLoaded, setIsSdkLoaded] = useState(false);
 
   useEffect(() => {
-    // Se o SDK já foi carregado, não faz nada
     if (document.getElementById('facebook-jssdk')) {
       setIsSdkLoaded(true);
       return;
     }
 
-    // Define a função que o SDK chamará quando estiver pronto
     window.fbAsyncInit = function() {
       window.FB.init({
-        appId      : '1720465665330010', // Substitua pelo ID do seu App
+        appId      : '1720465665330010',
         cookie     : true,
         xfbml      : true,
-        version    : 'v20.0' // Use a versão mais recente
+        version    : 'v20.0'
       });
-      
-      // Atualiza o estado para indicar que o SDK está pronto
+
       setIsSdkLoaded(true); 
     };
 
-    // Injeta o script do SDK na página
     (function(d, s, id){
        var js, fjs = d.getElementsByTagName(s)[0];
        if (d.getElementById(id)) {return;}
@@ -32,19 +28,18 @@ const FacebookLoginButton = () => {
        fjs.parentNode.insertBefore(js, fjs);
      }(document, 'script', 'facebook-jssdk'));
 
-  }, []); // Garante que o efeito rode apenas uma vez
+  }, []);
 
   const handleLoginClick = () => {
-    if (!isSdkLoaded) return; // Segurança extra
+    if (!isSdkLoaded) return;
 
     window.FB.login(function(response) {
       if (response.authResponse) {
         console.log('Login bem-sucedido!', response);
-        // Aqui você pode usar a resposta, ex: response.authResponse.accessToken
       } else {
         console.log('Login cancelado ou falhou.');
       }
-    }, {scope: 'email,public_profile'}); // Permissões que você precisa
+    }, {scope: 'email,public_profile'});
   };
 
   return (

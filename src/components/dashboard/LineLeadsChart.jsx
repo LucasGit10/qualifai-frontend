@@ -47,7 +47,7 @@ const CustomTooltip = ({ active, payload, label }) => {
             boxShadow: `0 0 8px ${theme.palette.secondary.main}50`
           }} />
           <Typography variant="body2" sx={{ color: theme.palette.text.primary, fontSize: '0.85rem' }}>
-            {t('dashboard.charts.leads')}: <strong style={{fontSize: '1.1rem'}}>{payload[0].value}</strong>
+            {t('dashboard.charts.devedores')}: <strong style={{fontSize: '1.1rem'}}>{payload[0].value}</strong>
           </Typography>
         </Box>
       </Box>
@@ -206,7 +206,7 @@ export default function LineLeadsChart({ data }) {
           <Line
             type="monotone"
             dataKey="leads"
-            name={t('dashboard.charts.newLeadsLegend')}
+            name={t('dashboard.charts.newDevedoresLegend')}
             stroke="url(#leadsGradient)"
             strokeWidth={4}
             dot={false}
@@ -252,7 +252,7 @@ export default function LineLeadsChart({ data }) {
               fontSize: '0.85rem'
             }}
           >
-            📊 Acompanhe seus leads aqui. A linha aparecerá assim que você tiver dados.
+            📊 Acompanhe seus devedores aqui. A linha aparecerá assim que você tiver dados.
           </Typography>
         </Box>
       )}

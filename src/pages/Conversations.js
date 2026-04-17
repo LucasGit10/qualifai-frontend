@@ -23,7 +23,8 @@ import api from '../services/api';
 import { toast } from 'react-toastify';
 import ConversationDialog from '../components/ConversationPage/ConversationDialog';
 import { useShowcaseContext } from '../contexts/ShowcaseContext';
-import { mockConversations } from '../utils/mockData';
+import { MOCK_CONVERSATIONS } from '../mocks';
+import { USE_MOCKS } from '../config/env';
 import socketService from '../services/socket';
 import { useAuthStore } from '../stores/authStore';
 
@@ -219,17 +220,20 @@ export default function Conversations({ channel }) {
 
   const { data: apiConversationsData, isLoading: apiIsLoading, refetch } = useQuery(
     ['conversations', page, channel], 
-    () => {
+    async () => {
+      if (USE_MOCKS) return MOCK_CONVERSATIONS;
       const params = new URLSearchParams({ page });
       if (channel) {
         params.append('channel', channel);
       }
-      return api.get(`/conversations?${params.toString()}`).then(res => res.data);
+      const res = await api.get(`/conversations?${params.toString()}`);
+      return res.data;
     },
+    { enabled: true }
   );
 
-  const conversationsData = isGuestMode ? mockConversations : apiConversationsData;
-  const isLoading = isGuestMode ? false : apiIsLoading;
+  const conversationsData = apiConversationsData;
+  const isLoading = apiIsLoading;
 
   const { data: conversationDetail, isLoading: isLoadingDetail } = useQuery(
     ['conversation', selectedConversation],

@@ -6,6 +6,8 @@ import { ptBR } from 'date-fns/locale';
 import { toast } from 'react-toastify';
 import { Groups as GroupsIcon, PersonAdd as PersonAddIcon, Delete as DeleteIcon, Visibility, VisibilityOff, CalendarMonth as CalendarMonthIcon, Warning as WarningIcon } from '@mui/icons-material';
 import api from '../services/api';
+import { USE_MOCKS } from '../config/env';
+import { MOCK_TEAM_MEMBERS } from '../mocks';
 import { StyledDialog } from '../components/ui/StyledDialog';
 import { GradientButton } from '../components/ui/GradientButton';
 
@@ -99,7 +101,17 @@ export default function TeamManagement() {
     const [page, setPage] = useState(1);
     
     const USERS_PER_PAGE = 6;
-    const { data, isLoading, isError } = useQuery('managedUsers', fetchManagedUsers);
+    const { data, isLoading, isError } = useQuery('managedUsers', async () => {
+        if (USE_MOCKS) {
+            return {
+                users: MOCK_TEAM_MEMBERS,
+                limit: 10,
+                currentCount: MOCK_TEAM_MEMBERS.length,
+                isAdminView: false
+            };
+        }
+        return fetchManagedUsers();
+    });
     
     const users = data?.users || [];
     const limit = data?.limit || 0;

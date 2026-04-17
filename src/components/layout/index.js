@@ -49,6 +49,10 @@ export default function Layout({ toggleColorMode }) {
   const { itensMenu, canAccess: hookCanAccess } = useMenuItems(user, null, plan); 
   
   const itensMenuCompletos = useMemo(() => {
+    const isAdmin = user?.role === 'admin';
+    
+    if (!isAdmin) return itensMenu;
+
     const instagramConversationsItem = {
       tKey: 'layout.menuItems.instagramConversations',
       texto: t('layout.menuItems.instagramConversations', 'Conversas Instagram'),
@@ -58,10 +62,15 @@ export default function Layout({ toggleColorMode }) {
 
     const menuComInstagram = [...itensMenu];
     const conversationsIndex = menuComInstagram.findIndex(item => item.tKey === 'layout.menuItems.conversations');
-    menuComInstagram.splice(conversationsIndex + 1, 0, instagramConversationsItem);
+    
+    if (conversationsIndex !== -1) {
+      menuComInstagram.splice(conversationsIndex + 1, 0, instagramConversationsItem);
+    } else {
+      menuComInstagram.push(instagramConversationsItem);
+    }
 
     return menuComInstagram;
-  }, [itensMenu, t]);
+  }, [itensMenu, t, user?.role]);
   const showcaseContextValue = useMemo(() => {
     const isGuestMode = !isAuthenticated || plan === 'guest';
     

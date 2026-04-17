@@ -45,6 +45,27 @@ const CustomTooltip = ({ active, payload }) => {
   return null;
 };
 
+const EmptySourceMessage = () => {
+  const { t } = useTranslation();
+  const theme = useTheme();
+
+  return (
+    <Box sx={{
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      textAlign: 'center',
+      p: 2,
+    }}>
+      <Typography variant="body2" sx={{ color: theme.palette.text.secondary, opacity: 0.7 }}>
+        {t('dashboard.charts.noData')}
+      </Typography>
+    </Box>
+  );
+};
+
 export default function LeadsBySourceChart({ data }) {
   const { t } = useTranslation();
   const theme = useTheme();
@@ -61,6 +82,10 @@ export default function LeadsBySourceChart({ data }) {
     fill: PIE_COLORS[index % PIE_COLORS.length],
     total: total
   })) || [];
+
+  if (!data || data.length === 0 || total === 0) {
+    return <EmptySourceMessage />;
+  }
 
   return (
     <Box

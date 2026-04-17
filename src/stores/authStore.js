@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import api from '../services/api';
+import { USE_MOCKS } from '../config/env';
 import userPreferencesService from '../services/userPreferencesService';
 
 export const useAuthStore = create(
@@ -11,6 +12,21 @@ export const useAuthStore = create(
       isAuthenticated: false,
       
       login: async (email, password) => {
+        if (USE_MOCKS) {
+          const mockUser = {
+            _id: 'mock-admin-id',
+            name: 'Dev Admin (Mock)',
+            email: email || 'admin@qualifai.tech',
+            role: 'admin',
+            plan: 'pro'
+          };
+          const mockToken = 'mock-jwt-token-for-development';
+          
+          set({ user: mockUser, token: mockToken, isAuthenticated: true });
+          api.defaults.headers.common['Authorization'] = `Bearer ${mockToken}`;
+          return { success: true };
+        }
+
         try {
           const response = await api.post('/auth/login', { email, password });
           const { user, token } = response.data;
@@ -18,7 +34,6 @@ export const useAuthStore = create(
           set({ user, token, isAuthenticated: true });
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
-          // ✅ ADICIONAR: Criar preferências padrão (sem alterar lógica existente)
           try {
             await userPreferencesService.createDefaultPreferences(user._id);
           } catch (error) {
@@ -42,7 +57,6 @@ export const useAuthStore = create(
           set({ user, token, isAuthenticated: true });
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
-          // ✅ ADICIONAR: Criar preferências padrão (sem alterar lógica existente)
           try {
             await userPreferencesService.createDefaultPreferences(user._id);
           } catch (error) {
@@ -75,12 +89,46 @@ export const useAuthStore = create(
         token: state.token, 
         isAuthenticated: state.isAuthenticated 
       }),
+      onRehydrateStorage: () => (hydratedState, error) => {
+        if (USE_MOCKS && !error) {
+          const mockUser = {
+            _id: 'mock-admin-id',
+            name: 'Dev Admin (Mock)',
+            email: 'admin@qualifai.tech',
+            role: 'admin',
+            plan: 'pro',
+          };
+          const mockToken = 'mock-jwt-token-for-development';
+          useAuthStore.setState({
+            user: mockUser,
+            token: mockToken,
+            isAuthenticated: true,
+          });
+          api.defaults.headers.common['Authorization'] = `Bearer ${mockToken}`;
+        }
+      },
     }
   )
 );
 
-// Configurar token no axios se existir
-const token = useAuthStore.getState().token;
+const token = USE_MOCKS
+  ? 'mock-jwt-token-for-development'
+  : useAuthStore.getState().token;
+
 if (token) {
   api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+
+if (USE_MOCKS) {
+  useAuthStore.setState({
+    user: {
+      _id: 'mock-admin-id',
+      name: 'Dev Admin (Mock)',
+      email: 'admin@qualifai.tech',
+      role: 'admin',
+      plan: 'pro',
+    },
+    token: 'mock-jwt-token-for-development',
+    isAuthenticated: true,
+  });
 }

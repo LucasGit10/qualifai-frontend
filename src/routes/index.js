@@ -8,9 +8,10 @@ import ToggleInstagramConversation from 'components/ConversationPage/ToggleInsta
 import ErrorBoundary from 'components/ErrorBoundary';
 import ManagerRoute from 'components/ManagerRoute';
 import ProtectedRoute from 'components/ProtectedRoute';
-import Layout from 'components/layout';
+import Layout from 'components/layout/index';
 import AITrainingPage from 'pages/AITrainingPage';
 import Admin from 'pages/Admin';
+import Debts from 'pages/Debts';
 import BlogEditor from 'pages/BlogEditor';
 import CalendarPage from 'pages/CalendarPage';
 import Campaigns from 'pages/Campaigns';
@@ -94,6 +95,7 @@ export const createRouter = (isAuthenticated, toggleColorMode) => createBrowserR
             children: [
               { path: "dashboard", element: <Dashboard /> },
               { path: "leads", element: <Leads /> },
+              { path: "debts", element: <Debts /> },
               { path: "conversations-whats", element: <Conversations /> },
               { path: "conversations", element: <ToggleConversation /> },
               { path: "settings", element: <Settings /> },
