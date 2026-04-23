@@ -40,72 +40,7 @@ const fmt = (v) =>
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-const MOCK_DATA = {
-  stats: {
-    totalLeads: 1247,
-    activeConversations: 28,
-    qualifiedLeads: 89,
-    escalatedConversations: 12,
-    conversionRate: 7.2,
-    whatsappApiCost: '124,50',
-    financial: {
-      totalRecovered: '145.230,50',
-      commissions: '14.523,05'
-    },
-    leadsOverTime: Array.from({ length: 30 }, (_, i) => ({
-      _id: format(subDays(new Date(), 29 - i), 'yyyy-MM-dd'),
-      count: Math.floor(Math.random() * 50) + 20
-    })),
-    leadsByStatus: [
-      { _id: 'novo', count: 450 },
-      { _id: 'contatado', count: 320 },
-      { _id: 'em_negociacao', count: 180 },
-      { _id: 'acordado', count: 89 },
-      { _id: 'quitado', count: 64 },
-      { _id: 'judicial', count: 22 },
-    ],
-    leadsBySource: [
-      { _id: 'whatsapp', count: 420 },
-      { _id: 'email', count: 380 },
-      { _id: 'telefone', count: 210 },
-      { _id: 'form', count: 150 },
-      { _id: 'outros', count: 87 }
-    ],
-    conversationsByChannel: [
-      { _id: 'whatsapp', count: 680 },
-      { _id: 'email', count: 320 },
-      { _id: 'telefone', count: 150 },
-      { _id: 'chat', count: 97 }
-    ]
-  },
-  activities: {
-    activities: [
-      { id: 1, type: 'lead', title: 'Novo Devedor Adicionado', description: 'João Silva via Importação CSV', timestamp: new Date().toISOString() },
-      { id: 2, type: 'conversation', title: 'Conversa Ativa', description: 'Maria Santos no WhatsApp', timestamp: subDays(new Date(), 1).toISOString() },
-      { id: 3, type: 'lead', title: 'Acordo Firmado', description: 'Pedro Oliveira — R$ 4.200,00', timestamp: subDays(new Date(), 2).toISOString() },
-      { id: 4, type: 'conversation', title: 'Enviado para Jurídico', description: 'Ana Costa — Contrato #2891', timestamp: subDays(new Date(), 3).toISOString() },
-      { id: 5, type: 'lead', title: 'Novo Devedor Adicionado', description: 'Carlos Ribeiro via Form', timestamp: subDays(new Date(), 4).toISOString() }
-    ]
-  },
-  instances: [
-    { _id: '1', instanceName: 'WhatsApp Cobrança', messagesSent: 1247, messagesReceived: 980 },
-    { _id: '2', instanceName: 'WhatsApp Jurídico', messagesSent: 856, messagesReceived: 720 }
-  ],
-  campaigns: {
-    campaigns: [
-      { _id: '1', name: 'Campanha Jun/2025', status: 'active' },
-      { _id: '2', name: 'Segunda Via Boleto', status: 'running' },
-      { _id: '3', name: 'Negativados Q1', status: 'completed' }
-    ]
-  },
-  conversations: {
-    conversations: Array.from({ length: 45 }, (_, i) => ({
-      id: i + 1,
-      status: i < 28 ? 'active' : 'closed',
-      channel: i % 3 === 0 ? 'instagram' : 'whatsapp'
-    }))
-  }
-};
+
 
 export default function Dashboard() {
   const theme = useTheme();
@@ -171,10 +106,6 @@ export default function Dashboard() {
   const { data: statsData, isLoading: isLoadingStats } = useQuery(
     'dashboard-stats',
     async () => {
-      if (USE_MOCKS) {
-        await delay(800);
-        return MOCK_DATA.stats;
-      }
       return api.get('/dashboard/stats').then(res => res.data);
     },
     { enabled: isAuthenticated, keepPreviousData: true }
@@ -183,10 +114,6 @@ export default function Dashboard() {
   const { data: activitiesData, isLoading: isLoadingActivities } = useQuery(
     'dashboard-activities',
     async () => {
-      if (USE_MOCKS) {
-        await delay(1000);
-        return MOCK_DATA.activities;
-      }
       return api.get('/dashboard/activities').then(res => res.data);
     },
     { enabled: isAuthenticated, keepPreviousData: true }
@@ -195,10 +122,6 @@ export default function Dashboard() {
   const { data: instancesData, isLoading: isLoadingInstances } = useQuery(
     'whatsapp-instances',
     async () => {
-      if (USE_MOCKS) {
-        await delay(1200);
-        return MOCK_DATA.instances;
-      }
       return api.get('/whatsapp').then(res => res.data);
     },
     { enabled: isAuthenticated }
@@ -207,10 +130,6 @@ export default function Dashboard() {
   const { data: campaignsData } = useQuery(
     'dashboard-campaigns',
     async () => {
-      if (USE_MOCKS) {
-        await delay(900);
-        return MOCK_DATA.campaigns;
-      }
       return api.get('/campaigns').then(res => res.data);
     },
     { enabled: isAuthenticated, staleTime: 5 * 60 * 1000 }
@@ -219,10 +138,6 @@ export default function Dashboard() {
   const { data: conversationsData, isLoading: isLoadingConversations } = useQuery(
     'conversations-data',
     async () => {
-      if (USE_MOCKS) {
-        await delay(1100);
-        return MOCK_DATA.conversations;
-      }
       return api.get('/conversations').then(res => res.data);
     },
     { enabled: isAuthenticated }
@@ -450,7 +365,7 @@ export default function Dashboard() {
               key={campaign._id} 
               campaignId={campaign._id} 
               campaignName={campaign.name} 
-              useMockData={true} // Forçando true caso o componente filho exija
+              useMockData={false} // Desativado mock para usar dados reais
             />
           ))}
         </Grid>
