@@ -19,6 +19,7 @@ jobs:
           host: ${{ secrets.DO_FRONTEND_IP }}
           username: root
           key: ${{ secrets.DO_SSH_KEY }}
+          command_timeout: 30m
           script: |
             mkdir -p /app
             cd /app
