@@ -306,8 +306,9 @@
       "ativo": "Ativo",
       "quitado": "Quitado",
       "judicial": "Judicial",
-      "nao_respondeu": "Sem Resposta",
-      "naoRespondeu": "Sem Resposta",
+      "sem_resposta": "Não respondeu",
+      "semResposta": "Não respondeu",
+      "semresposta": "Não respondeu",
       "dispensou_ligacao": "Recusou Contato",
       "dispensouLigacao": "Recusou Contato"
     },

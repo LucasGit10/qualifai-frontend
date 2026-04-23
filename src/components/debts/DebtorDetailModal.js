@@ -141,7 +141,23 @@ function ChargesTable({ charges, isFuture, onPay, isPaying }) {
               }}
             >
               <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.78rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>
-                {c.contrato || '—'}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {c.contrato || '—'}
+                  {c.tags?.includes('novo') && (
+                    <Chip 
+                      label="NOVO" 
+                      size="small" 
+                      sx={{ 
+                        height: 16, 
+                        fontSize: '0.6rem', 
+                        fontWeight: 900, 
+                        bgcolor: alpha('#10b981', 0.15), 
+                        color: '#10b981', 
+                        border: '1px solid currentColor' 
+                      }} 
+                    />
+                  )}
+                </Box>
               </TableCell>
               <TableCell sx={{ fontSize: '0.78rem', fontWeight: 600 }}>{c.apto || '—'}</TableCell>
               <TableCell>

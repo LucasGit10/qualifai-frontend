@@ -112,25 +112,25 @@ const TemplateSelectionModal = ({ open, onClose, onConfirm, leadsToContact, isLo
 };
 
 const MobileLeadCard = ({ lead, statusColor, onOpenMenu, t, transparentPaperStyle }) => (
-  <Card sx={{ ...transparentPaperStyle, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-      <Typography variant="h6" component="div" fontWeight="bold">
+  <Card sx={{ ...transparentPaperStyle, p: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', height: '100%' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 0 }}>
+      <Typography variant="subtitle2" component="div" fontWeight="bold" noWrap sx={{ fontSize: '0.85rem' }}>
         {lead.name}
       </Typography>
       <Chip
         label={t(`dashboard.funnelLabels.${lead.status.toLowerCase()}`, lead.status)}
-        sx={{ backgroundColor: statusColor, color: 'white' }}
+        sx={{ backgroundColor: statusColor, color: 'white', height: 20, fontSize: '0.65rem' }}
         size="small"
       />
-      <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, pt: 1 }}>
-        <EmailIcon fontSize="small" /> {lead.email || 'N/A'}
+      <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pt: 0.5, fontSize: '0.65rem' }}>
+        <EmailIcon sx={{ fontSize: 12 }} /> {lead.email || 'N/A'}
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <BusinessIcon fontSize="small" /> {lead.company || 'N/A'}
+      <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.65rem' }}>
+        <BusinessIcon sx={{ fontSize: 12 }} /> {lead.company || 'N/A'}
       </Typography>
     </Box>
-    <IconButton onClick={(event) => onOpenMenu(event, lead)}>
-      <MoreVertIcon />
+    <IconButton size="small" onClick={(event) => onOpenMenu(event, lead)}>
+      <MoreVertIcon fontSize="small" />
     </IconButton>
   </Card>
 );
@@ -176,12 +176,12 @@ export default function PaginaLeads() {
   const [debtDialogOpen, setDebtDialogOpen] = useState(false);
   const [selectedLeadForDebt, setSelectedLeadForDebt] = useState(null);
 
-  const [showNonRespondedStatus, setShowNonRespondedStatus] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('');
+  const [showSemRespostaStatus, setShowSemRespostaStatus] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: isMobile ? 10 : 25 });
   const [textFilter, setTextFilter] = useState(location.state?.leadName || '');
   const [debouncedTextFilter, setDebouncedTextFilter] = useState(location.state?.leadName || '');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [sourceFilter, setSourceFilter] = useState('');
 
   const queryClient = useQueryClient();
   const { isGuestMode } = useShowcaseContext();
@@ -206,8 +206,8 @@ export default function PaginaLeads() {
 
   const baseStatuses = statusEnumData && Array.isArray(statusEnumData) && statusEnumData.length > 0
     ? statusEnumData
-    : ['novo', 'contatado', 'em_negociacao', 'acordado', 'ativo', 'quitado', 'judicial'];
-  const availableStatuses = showNonRespondedStatus ? [...baseStatuses, 'nao_respondeu'] : baseStatuses;
+    : ['novo', 'contatado', 'em_negociacao', 'acordado', 'quitado'];
+  const availableStatuses = showSemRespostaStatus ? [...baseStatuses, 'sem_resposta'] : baseStatuses;
 
   const { data: apiData, isLoading: apiIsLoading } = useQuery(['leads', paginationModel, debouncedTextFilter, statusFilter, sourceFilter], () => {
     const params = new URLSearchParams({ page: paginationModel.page + 1, limit: paginationModel.pageSize, sort: '-createdAt' });
@@ -221,7 +221,7 @@ export default function PaginaLeads() {
   const isLoading = USE_MOCKS ? false : apiIsLoading;
 
   const statusCountsMap = useMemo(() => (data?.leads || []).reduce((map, lead) => { if (lead.status) { map[lead.status] = (map[lead.status] || 0) + 1; } return map; }, {}), [data?.leads]);
-  const nonRespondedCount = useMemo(() => !showNonRespondedStatus || !data?.leads ? 0 : (statusCountsMap['nao_respondeu'] || 0), [data?.leads, showNonRespondedStatus, statusCountsMap]);
+  const semRespostaCount = useMemo(() => !showSemRespostaStatus || !data?.leads ? 0 : (statusCountsMap['sem_resposta'] || 0), [data?.leads, showSemRespostaStatus, statusCountsMap]);
 
   const { data: whatsAppProviderData, isLoading: isLoadingProvider } = useQuery('whatsappProvider', () => api.get('/whatsapp-ai/whatsapp-provider').then(res => res.data), { enabled: !isGuestMode, staleTime: Infinity, retry: false });
 
@@ -302,13 +302,13 @@ export default function PaginaLeads() {
   const handleStatusCardClick = (status) => { setStatusFilter(prevStatus => prevStatus === status ? '' : status); };
   const handleOpenDebtDialog = (lead) => { setSelectedLeadForDebt(lead); setDebtDialogOpen(true); };
   const handleCloseDebtDialog = () => { setDebtDialogOpen(false); setSelectedLeadForDebt(null); };
-  const handleToggleNonRespondedStatus = () => { setShowNonRespondedStatus(prev => !prev); if (statusFilter === 'nao_respondeu') { setStatusFilter(''); } };
+  const handleToggleSemRespostaStatus = () => { setShowSemRespostaStatus(prev => !prev); if (statusFilter === 'sem_resposta') { setStatusFilter(''); } };
   
   const handlePageChange = (event, value) => {
     setPaginationModel(prev => ({ ...prev, page: value - 1 }));
   };
 
-  const statusColorsByIndex = useMemo(() => { if (!availableStatuses || availableStatuses.length === 0) { return {}; } const totalStatuses = availableStatuses.length; return availableStatuses.reduce((acc, status, index) => { if (status === 'nao_respondeu') { acc[status] = '#ff6b6b'; } else { const hue = (index * (360 / totalStatuses)) % 360; acc[status] = `hsl(${hue}, 80%, 60%)`; } return acc; }, {}); }, [availableStatuses]);
+  const statusColorsByIndex = useMemo(() => { if (!availableStatuses || availableStatuses.length === 0) { return {}; } const totalStatuses = availableStatuses.length; return availableStatuses.reduce((acc, status, index) => { if (status === 'sem_resposta') { acc[status] = '#ff6b6b'; } else { const hue = (index * (360 / totalStatuses)) % 360; acc[status] = `hsl(${hue}, 80%, 60%)`; } return acc; }, {}); }, [availableStatuses]);
 
   const columns = useMemo(() => [
     { field: 'name', headerName: t('leadsPage.table.name'), minWidth: 120, flex: 1 },
@@ -360,14 +360,14 @@ export default function PaginaLeads() {
 
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
         <FormControlLabel
-          control={<Switch checked={showNonRespondedStatus} onChange={handleToggleNonRespondedStatus} color="primary" />}
-          label={<Typography variant="body2">Mostrar status "Não Respondeu"</Typography>}
+          control={<Switch checked={showSemRespostaStatus} onChange={handleToggleSemRespostaStatus} color="primary" />}
+          label={<Typography variant="body2">Mostrar status "Não respondeu"</Typography>}
         />
       </Box>
 
       <Grid container spacing={{ xs: 2, sm: 3 }} mb={3} id="tour-leads-status-cards">
         {availableStatuses.map((status) => {
-          const count = status === 'nao_respondeu' ? nonRespondedCount : (statusCountsMap[status] || 0);
+          const count = status === 'sem_resposta' ? semRespostaCount : (statusCountsMap[status] || 0);
           const statusColor = statusColorsByIndex[status];
           const isActive = statusFilter === status;
           return (<Grid item xs={12} sm={6} lg={Math.max(2, 12 / availableStatuses.length)} key={status}><Card sx={{ ...transparentPaperStyle, borderLeft: `5px solid ${statusColor}`, cursor: 'pointer', transition: 'all 0.3s ease', backgroundColor: isActive ? statusColor : transparentPaperStyle.backgroundColor, boxShadow: isActive ? `0 6px 20px -5px ${statusColor}` : 'none', transform: isActive ? 'translateY(-3px)' : 'none', '&:hover': { transform: 'translateY(-2px)', backgroundColor: isActive ? statusColor : alpha(statusColor, 0.1) } }} onClick={() => handleStatusCardClick(status)}><CardContent><Typography variant="h6" fontWeight="bold" sx={{ color: isActive ? 'common.white' : statusColor }}>{t(`dashboard.funnelLabels.${status.toLowerCase().replace(/_/g, '')}`, status)}</Typography><Typography variant="h3" fontWeight="light" color={isActive ? 'common.white' : 'text.primary'}>{isLoadingStatusEnum || isLoading ? <CircularProgress size={20} color="inherit" /> : count}</Typography></CardContent></Card></Grid>)
@@ -404,26 +404,33 @@ export default function PaginaLeads() {
       <Box id="tour-leads-list">
         {isMobile ? (
           <>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Grid container spacing={2}>
               {isLoading ? (
-                Array.from(new Array(5)).map((_, index) => <MobileLeadCardSkeleton key={index} transparentPaperStyle={transparentPaperStyle} />)
+                Array.from(new Array(6)).map((_, index) => (
+                  <Grid item xs={12} sm={6} md={3} key={index}>
+                    <MobileLeadCardSkeleton transparentPaperStyle={transparentPaperStyle} />
+                  </Grid>
+                ))
               ) : !data?.leads || data.leads.length === 0 ? (
-                <Paper sx={{ ...transparentPaperStyle, p: 4, textAlign: 'center' }}>
-                  <Typography color="text.secondary">{t('common.noData')}</Typography>
-                </Paper>
+                <Grid item xs={12}>
+                  <Paper sx={{ ...transparentPaperStyle, p: 4, textAlign: 'center' }}>
+                    <Typography color="text.secondary">{t('common.noData')}</Typography>
+                  </Paper>
+                </Grid>
               ) : (
                 data.leads.map((lead) => (
-                  <MobileLeadCard
-                    key={lead._id}
-                    lead={lead}
-                    statusColor={statusColorsByIndex[lead.status]}
-                    onOpenMenu={handleOpenRowMenu}
-                    t={t}
-                    transparentPaperStyle={transparentPaperStyle}
-                  />
+                  <Grid item xs={12} sm={6} md={3} key={lead._id}>
+                    <MobileLeadCard
+                      lead={lead}
+                      statusColor={statusColorsByIndex[lead.status]}
+                      onOpenMenu={handleOpenRowMenu}
+                      t={t}
+                      transparentPaperStyle={transparentPaperStyle}
+                    />
+                  </Grid>
                 ))
               )}
-            </Box>
+            </Grid>
             {pageCount > 1 && (
               <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
                 <Pagination

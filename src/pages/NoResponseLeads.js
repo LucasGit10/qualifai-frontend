@@ -172,7 +172,7 @@ export default function NoResponseLeads() {
         page: paginationModel.page + 1,
         limit: paginationModel.pageSize,
         sort: '-createdAt',
-        status: 'nao_respondeu'
+        status: 'sem_resposta'
       });
       if (debouncedTextFilter) params.append('search', debouncedTextFilter);
       const res = await api.get(`/leads?${params.toString()}`);
@@ -197,7 +197,7 @@ export default function NoResponseLeads() {
     onError: (error) => { toast.error(error.response?.data?.message || t('leadsPage.toasts.deleteError')); }
   });
 
-  const deleteAllNoResponseMutation = useMutation(() => api.post('/leads/delete-by-status', { status: 'nao_respondeu' }), {
+  const deleteAllNoResponseMutation = useMutation(() => api.post('/leads/delete-by-status', { status: 'sem_resposta' }), {
     onSuccess: (response) => {
       queryClient.invalidateQueries('noResponseLeads');
       toast.success(response.data.message || 'Todos os leads que não responderam foram deletados.');
@@ -291,7 +291,7 @@ export default function NoResponseLeads() {
       >
         <Box>
           <Typography variant="h4" fontWeight="bold" sx={{ color: 'text.primary' }}>
-            Leads que Não Responderam
+            Leads que Não respondeu
           </Typography>
           <Typography variant="body1" color="text.secondary">
             Revise, contate ou remova leads inativos.
@@ -351,7 +351,7 @@ export default function NoResponseLeads() {
               Nenhum lead encontrado
             </Typography>
             <Typography color="text.secondary">
-              Não há leads com o status "Não Respondeu" no momento.
+              Não há leads com o status "Não respondeu" no momento.
             </Typography>
           </Paper>
         ) : (

@@ -37,8 +37,6 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTo
 import api from '../services/api';
 import { useAuthStore } from '../stores/authStore';
 import { useSocket } from '../contexts/SocketContext';
-import { USE_MOCKS } from '../config/env';
-import { groupChargesByDebtor } from '../mocks/debtorsMocks';
 import DebtorDetailModal from '../components/debts/DebtorDetailModal';
 
 // ─── Helpers de formatação ────────────────────────────────────────────────────
@@ -46,34 +44,7 @@ const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','N
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtNum = (v) => new Intl.NumberFormat('pt-BR').format(v || 0);
 
-// ─── Mock de meses ─────────────────────────────────────────────────────────────
-const buildMockMonths = () => {
-  const today = new Date();
-  return Array.from({ length: 6 }, (_, i) => {
-    const d = subMonths(today, i);
-    const mes = d.getMonth() + 1;
-    const ano = d.getFullYear();
-    const total = Math.floor(Math.random() * 15) + 5;
-    return {
-      ano, mes,
-      totalRegistros: total,
-      totalValor: Math.floor(Math.random() * 120000) + 20000,
-      totalPrincipal: Math.floor(Math.random() * 90000) + 15000,
-      totalJuros: Math.floor(Math.random() * 8000) + 1000,
-      totalMulta: Math.floor(Math.random() * 4000) + 500,
-      registros: Array.from({ length: total }, (_, j) => ({
-        _id: `r-${ano}-${mes}-${j}`,
-        cliente: ['João Carlos Mendes','Maria Aparecida Costa','Carlos Eduardo Ribeiro','Ana Paula Ferreira','Roberto Alves Nogueira'][j % 5],
-        contrato: `${String(1000 + j + i * 20).padStart(4,'0')}-${j % 9}`,
-        cpfCnpj: '772.580.451-04',
-        total: Math.floor(Math.random() * 15000) + 500,
-        atraso: Math.floor(Math.random() * 365),
-        vencimento: subMonths(today, i).toISOString(),
-        empreendimento: ['Marca Registrada','Gran Toro'][j % 2],
-      })),
-    };
-  });
-};
+
 
 // ─── Chip de atraso ─────────────────────────────────────────────────────────
 const AtrasoChip = ({ dias }) => {
@@ -118,7 +89,23 @@ function MonthTable({ registros, search }) {
             <TableRow key={r._id || i} hover sx={{ '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.04) } }}>
               <TableCell sx={{ fontWeight:600, fontSize:'0.82rem' }}>
                 <Box>
-                  <Typography variant="inherit" sx={{ display:'block' }}>{r.cliente || r.razao || '—'}</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="inherit" sx={{ display:'block' }}>{r.cliente || r.razao || '—'}</Typography>
+                    {r.tags?.includes('novo') && (
+                      <Chip 
+                        label="NOVO" 
+                        size="small" 
+                        sx={{ 
+                          height: 16, 
+                          fontSize: '0.6rem', 
+                          fontWeight: 900, 
+                          bgcolor: alpha('#10b981', 0.15), 
+                          color: '#10b981', 
+                          border: '1px solid currentColor' 
+                        }} 
+                      />
+                    )}
+                  </Box>
                   <Typography variant="caption" color="text.secondary" sx={{ fontSize:'0.65rem' }}>{r.empreendimento}</Typography>
                 </Box>
               </TableCell>
@@ -490,6 +477,9 @@ function DebtorCard({ debtor, onViewDetails }) {
         WebkitBackdropFilter: 'blur(16px)',
         boxShadow: `0 4px 20px ${alpha('#000', 0.12)}, inset 0 1px 0 ${alpha('#fff',0.06)}`,
         transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         '&:hover': {
           transform: 'translateY(-4px)',
           boxShadow: `0 12px 40px ${alpha(avatarColor, 0.2)}, inset 0 1px 0 ${alpha('#fff',0.1)}`,
@@ -497,12 +487,16 @@ function DebtorCard({ debtor, onViewDetails }) {
         },
       }}
     >
-      <CardContent sx={{ p: 2.5 }}>
+      <style>{`
+        ::-webkit-scrollbar { display: none !important; }
+        * { -ms-overflow-style: none !important; scrollbar-width: none !important; }
+      `}</style>
+      <CardContent sx={{ p: 1.5 }}>
         {/* Top row: avatar + nome + badge */}
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1.5 }}>
           <Avatar
             sx={{
-              width: 44, height: 44, fontSize: '0.95rem', fontWeight: 800, flexShrink: 0,
+              width: 36, height: 36, fontSize: '0.85rem', fontWeight: 800, flexShrink: 0,
               background: `linear-gradient(135deg, ${avatarColor}, ${alpha(avatarColor, 0.6)})`,
               boxShadow: `0 4px 12px ${alpha(avatarColor, 0.35)}`,
             }}
@@ -510,23 +504,21 @@ function DebtorCard({ debtor, onViewDetails }) {
             {initials}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography fontWeight={700} noWrap sx={{ fontSize: '0.95rem', lineHeight: 1.3 }}>
+            <Typography fontWeight={700} noWrap sx={{ fontSize: '0.82rem', lineHeight: 1.2 }}>
               {debtor.cliente}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace', display: 'block', mb: 0.5 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace', display: 'block', mb: 0.2, fontSize: '0.6rem' }}>
               {debtor.cpfCnpj}
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
               {(() => {
                 const status = debtor.status?.toLowerCase() || 'novo';
                 const statusMap = {
-                  'novo': { color: theme.palette.info.main, label: 'NOVO DEVEDOR' },
+                  'novo': { color: theme.palette.info.main, label: 'NOVO' },
                   'contatado': { color: theme.palette.warning.main, label: 'CONTATADO' },
-                  'em_negociacao': { color: '#9c27b0', label: 'EM NEGOCIAÇÃO' },
+                  'em_negociacao': { color: '#9c27b0', label: 'NEGOCIANDO' },
                   'acordado': { color: theme.palette.secondary.main, label: 'ACORDADO' },
-                  'ativo': { color: '#00bcd4', label: 'ATIVO' },
                   'quitado': { color: theme.palette.success.main, label: 'QUITADO' },
-                  'judicial': { color: theme.palette.error.main, label: 'JUDICIAL' },
                 };
                 const config = statusMap[status] || { color: theme.palette.grey[500], label: status.toUpperCase() };
 
@@ -535,7 +527,8 @@ function DebtorCard({ debtor, onViewDetails }) {
                     label={config.label}
                     size="small"
                     sx={{ 
-                      fontSize: '0.65rem', 
+                      height: 18,
+                      fontSize: '0.55rem', 
                       fontWeight: 800, 
                       bgcolor: alpha(config.color, 0.1), 
                       color: config.color, 
@@ -547,11 +540,43 @@ function DebtorCard({ debtor, onViewDetails }) {
               <Chip
                 label={debtor.empreendimento}
                 size="small"
-                sx={{ fontSize: '0.65rem', fontWeight: 600, bgcolor: alpha(avatarColor, 0.12), color: avatarColor, border: `1px solid ${alpha(avatarColor, 0.25)}` }}
+                sx={{ height: 18, fontSize: '0.55rem', fontWeight: 600, bgcolor: alpha(avatarColor, 0.12), color: avatarColor, border: `1px solid ${alpha(avatarColor, 0.25)}` }}
               />
             </Box>
           </Box>
         </Box>
+
+        {/* Lista de Contatos (Novidade) */}
+        {debtor.contacts && debtor.contacts.length > 0 && (
+          <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            {debtor.contacts.slice(0, 3).map((ct, idx) => (
+              <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {ct.type === 'phone' ? (
+                  <Badge overlap="circular" variant="dot" color="success" sx={{ '& .MuiBadge-badge': { width: 6, height: 6, minWidth: 6, bottom: 2, right: 2 } }}>
+                    <CircularProgress size={14} thickness={10} value={100} sx={{ color: alpha('#10b981', 0.3) }} />
+                  </Badge>
+                ) : (
+                  <ViewIcon sx={{ fontSize: 12, opacity: 0.5 }} />
+                )}
+                <Typography variant="caption" sx={{ 
+                  fontFamily: 'monospace', 
+                  fontSize: '0.72rem', 
+                  color: 'text.secondary',
+                  textOverflow: 'ellipsis',
+                  overflow: 'hidden',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {ct.value} {ct.label && <span style={{ opacity: 0.5, fontSize: '0.6rem' }}>({ct.label})</span>}
+                </Typography>
+              </Box>
+            ))}
+            {debtor.contacts.length > 3 && (
+              <Typography variant="caption" color="primary.main" sx={{ fontSize: '0.65rem', fontWeight: 700, mt: 0.5 }}>
+                + {debtor.contacts.length - 3} contatos
+              </Typography>
+            )}
+          </Box>
+        )}
 
         {/* Stats financeiros */}
         <Box
@@ -634,9 +659,7 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
     { value: 'contatado', label: 'Contatado' },
     { value: 'em_negociacao', label: 'Em Negociação' },
     { value: 'acordado', label: 'Acordo Feito' },
-    { value: 'ativo', label: 'Ativo' },
     { value: 'quitado', label: 'Quitado' },
-    { value: 'judicial', label: 'Judicial' },
   ];
 
   const filtered = useMemo(() => {
@@ -751,9 +774,9 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
       )}
 
       {/* Grid de cards pginado */}
-      <Grid container spacing={2.5}>
+      <Grid container spacing={2}>
         {paginatedDebtors.map((debtor) => (
-          <Grid item xs={12} sm={6} md={4} key={debtor.cpfCnpj}>
+          <Grid item xs={12} sm={6} md={3} key={debtor.cpfCnpj}>
             <DebtorCard debtor={debtor} onViewDetails={onViewDetails} />
           </Grid>
         ))}
@@ -787,8 +810,8 @@ function ChargesTab({ importOpen, setImportOpen }) {
         const { data } = await api.get(`/spreadsheets/by-month?tipo=${tipo}&ano=${anoFiltro}`);
         return data;
       } catch (err) {
-        console.warn("API de meses falhou, usando mock para layout:", err);
-        return buildMockMonths();
+        console.error("Erro ao buscar dados mensais:", err);
+        return [];
       }
     },
     { staleTime: 60000, keepPreviousData: true }
@@ -807,7 +830,7 @@ function ChargesTab({ importOpen, setImportOpen }) {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {[
           { label:'Total de Registros',     value: fmtNum(totalRegistros), color: theme.palette.primary.main,  icon: <TableChartIcon />,  sub: `Ano ${anoFiltro}` },
-          { label:'Valor Total da Carteira', value: fmt(1565450.39),        color: '#6366f1',                   icon: <MoneyIcon />,       sub: `Acumulado ${anoFiltro}` },
+          { label:'Valor Total da Carteira', value: fmt(totalValor),         color: '#6366f1',                   icon: <MoneyIcon />,       sub: `Acumulado ${anoFiltro}` },
           { label:'Total de Juros',          value: fmt(totalJuros),        color: '#f59e0b',                   icon: <TrendingUpIcon />,  sub: 'Juros de mora' },
           { label:'Total de Multas',         value: fmt(totalMulta),        color: '#ef4444',                   icon: <GavelIcon />,       sub: 'Multas acumuladas' },
           { label:'Meses com Registros',     value: months.length,          color: '#10b981',                   icon: <CalendarIcon />,    sub: `Ano ${anoFiltro}` },
@@ -911,8 +934,8 @@ export default function Debts() {
         const { data } = await api.get('/spreadsheets/debtors');
         return data; 
       } catch (err) {
-        console.warn("API de devedores falhou, usando mock para layout:", err);
-        return groupChargesByDebtor(); 
+        console.error("Erro ao buscar resumo de devedores:", err);
+        return [];
       }
     },
     { staleTime: 30000 }
