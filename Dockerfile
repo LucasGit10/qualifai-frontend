@@ -1,18 +1,15 @@
-# Build stage / Development stage
-FROM node:18-alpine
-
+# Estágio 1: Build do React
+FROM node:18-alpine as build-stage
 WORKDIR /app
-
 COPY package*.json ./
-
-# Install ALL dependencies (including devDependencies for react-scripts start)
 RUN npm install
-
-# In local dev, files will be synced via docker volume, but we copy them anyway for building if needed.
 COPY . .
+RUN npm run build
 
-# Expose port 3000 for local development
-EXPOSE 3000
-
-# Start local dev server
-CMD ["npm", "start"]
+# Estágio 2: Servidor Nginx de Alta Performance
+FROM nginx:stable-alpine
+COPY --from=build-stage /app/build /usr/share/nginx/html
+# Copia sua configuração personalizada do Nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
