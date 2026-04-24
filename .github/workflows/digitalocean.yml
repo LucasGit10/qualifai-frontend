@@ -73,18 +73,28 @@ jobs:
             
             echo "${{ secrets.FRONTEND_ENV }}" > .env
             
+            # --- CRIA O ARQUIVO DE PRODUÇÃO NA HORA (Evita erro de arquivo faltando) ---
+            cat <<EOF > docker-compose.prod.yml
+            version: '3.8'
+            services:
+              frontend:
+                image: ghcr.io/${{ needs.build-and-push.outputs.image_name }}:latest
+                container_name: sdr-frontend
+                restart: unless-stopped
+                ports:
+                  - "80:80"
+                env_file:
+                  - .env
+            EOF
+            
             # --- LIMPEZA PARA EVITAR CONFLITOS ---
             echo "Limpando containers antigos..."
-            # Para qualquer container que esteja usando a porta 80 (evita port is already allocated)
             docker ps -q --filter "publish=80" | xargs -r docker stop
-            # Remove containers antigos pelos nomes conhecidos
             docker rm -f qualifai-frontend sdr-frontend || true
-            # Limpa imagens órfãs para economizar espaço no disco (droplet de 1GB enche rápido)
             docker image prune -f
             
             # --- SOBE A VERSÃO NOVA ---
             echo "Subindo versão nova via GHCR..."
-            export IMAGE_NAME=${{ needs.build-and-push.outputs.image_name }}
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
             
