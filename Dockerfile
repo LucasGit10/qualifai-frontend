@@ -2,8 +2,11 @@
 FROM node:18-alpine as build-stage
 WORKDIR /app
 COPY package*.json ./
-RUN npm install
+# npm ci é mais rápido e garante instalações consistentes
+RUN npm ci --quiet
 COPY . .
+# Desabilitar source maps economiza MUITA memória e tempo de build no 1GB RAM
+ENV GENERATE_SOURCEMAP=false
 RUN npm run build
 
 # Estágio 2: Servidor Nginx de Alta Performance
