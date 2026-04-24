@@ -2,8 +2,8 @@
 FROM node:18-alpine as build-stage
 WORKDIR /app
 COPY package*.json ./
-# npm ci é mais rápido e garante instalações consistentes
-RUN npm ci --quiet
+# npm install é usado aqui porque o package-lock.json pode estar dessincronizado
+RUN npm install --quiet
 COPY . .
 # Desabilitar source maps economiza MUITA memória e tempo de build no 1GB RAM
 ENV GENERATE_SOURCEMAP=false
