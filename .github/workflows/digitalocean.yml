@@ -63,7 +63,7 @@ jobs:
             mkdir -p /app
             cd /app
             
-            # Atualiza o código apenas para ter os arquivos de configuração (env, docker-compose)
+            # Atualiza o código apenas para ter os arquivos de configuração
             if [ ! -d ".git" ]; then
               git clone --single-branch --branch feature-billing https://github.com/${{ github.repository }}.git .
             else
@@ -73,11 +73,20 @@ jobs:
             
             echo "${{ secrets.FRONTEND_ENV }}" > .env
             
-            # Login no GHCR no servidor (necessário se o repo for privado)
-            # Se for público, não precisa. Se for privado, você precisará configurar um PAT no servidor uma vez.
-            # echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # --- LIMPEZA PARA EVITAR CONFLITOS ---
+            echo "Limpando containers antigos..."
+            # Para qualquer container que esteja usando a porta 80 (evita port is already allocated)
+            docker ps -q --filter "publish=80" | xargs -r docker stop
+            # Remove containers antigos pelos nomes conhecidos
+            docker rm -f qualifai-frontend sdr-frontend || true
+            # Limpa imagens órfãs para economizar espaço no disco (droplet de 1GB enche rápido)
+            docker image prune -f
             
-            # Puxa a imagem nova e sobe usando o arquivo de produção
+            # --- SOBE A VERSÃO NOVA ---
+            echo "Subindo versão nova via GHCR..."
             export IMAGE_NAME=${{ needs.build-and-push.outputs.image_name }}
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
+            
+            # Verifica se subiu
+            docker ps
