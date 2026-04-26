@@ -63,19 +63,13 @@ jobs:
             mkdir -p /app
             cd /app
             
-            # Atualiza o código apenas para ter os arquivos de configuração
-            if [ ! -d ".git" ]; then
-              git clone --single-branch --branch feature-billing https://github.com/${{ github.repository }}.git .
-            else
-              git fetch origin feature-billing
-              git reset --hard origin/feature-billing
-            fi
+            # Login no GHCR no Droplet (Necessário para imagens privadas)
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             echo "${{ secrets.FRONTEND_ENV }}" > .env
             
-            # --- CRIA O ARQUIVO DE PRODUÇÃO NA HORA (Evita erro de arquivo faltando) ---
+            # --- CRIA O ARQUIVO DE PRODUÇÃO NA HORA ---
             cat <<EOF > docker-compose.prod.yml
-            version: '3.8'
             services:
               frontend:
                 image: ghcr.io/${{ needs.build-and-push.outputs.image_name }}:latest
@@ -87,16 +81,16 @@ jobs:
                   - .env
             EOF
             
-            # --- LIMPEZA PARA EVITAR CONFLITOS ---
-            echo "Limpando containers antigos..."
-            docker ps -q --filter "publish=80" | xargs -r docker stop
-            docker rm -f qualifai-frontend sdr-frontend || true
-            docker image prune -f
-            
-            # --- SOBE A VERSÃO NOVA ---
-            echo "Subindo versão nova via GHCR..."
+            # --- SOBE A VERSÃO NOVA COM PULL ---
+            echo "Fazendo pull da imagem nova..."
             docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d
+            
+            echo "Subindo container..."
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            
+            # --- LIMPEZA DE IMAGENS ANTIGAS ---
+            echo "Limpando imagens antigas..."
+            docker image prune -f
             
             # Verifica se subiu
             docker ps
