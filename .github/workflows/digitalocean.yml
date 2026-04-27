@@ -38,14 +38,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Criar arquivo .env para o Build
+        run: |
+          echo "${{ secrets.FRONTEND_ENV }}" > .env
+
       - name: Build e Push da imagem Docker
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
           tags: ghcr.io/${{ env.IMAGE_NAME }}:latest
-          build-args: |
-            REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}
+          # O arquivo .env criado acima será copiado para dentro da imagem pelo comando 'COPY . .' no Dockerfile
           # Cache para acelerar builds futuros
           cache-from: type=gha
           cache-to: type=gha,mode=max
