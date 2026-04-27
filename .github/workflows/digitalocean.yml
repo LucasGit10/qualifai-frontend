@@ -44,6 +44,8 @@ jobs:
           context: .
           push: true
           tags: ghcr.io/${{ env.IMAGE_NAME }}:latest
+          build-args: |
+            REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}
           # Cache para acelerar builds futuros
           cache-from: type=gha
           cache-to: type=gha,mode=max
