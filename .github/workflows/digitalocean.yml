@@ -60,11 +60,17 @@ jobs:
           key: ${{ secrets.DO_SSH_KEY }}
           command_timeout: 60m
           script: |
+            set -e # Para o script se qualquer comando falhar
+            
             mkdir -p /app
             cd /app
             
-            # Login no GHCR no Droplet (Necessário para imagens privadas)
+            # Login no GHCR
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Limpeza preventiva para liberar RAM e Disco antes do pull
+            echo "Limpando recursos para liberar memória..."
+            docker system prune -f
             
             echo "${{ secrets.FRONTEND_ENV }}" > .env
             
@@ -87,10 +93,6 @@ jobs:
             
             echo "Subindo container..."
             docker compose -f docker-compose.prod.yml up -d --remove-orphans
-            
-            # --- LIMPEZA DE IMAGENS ANTIGAS ---
-            echo "Limpando imagens antigas..."
-            docker image prune -f
             
             # Verifica se subiu
             docker ps
