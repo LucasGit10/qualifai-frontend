@@ -207,7 +207,7 @@ export default function PaginaLeads() {
   const baseStatuses = statusEnumData && Array.isArray(statusEnumData) && statusEnumData.length > 0
     ? statusEnumData
     : ['novo', 'contatado', 'em_negociacao', 'acordado', 'quitado'];
-  const availableStatuses = showSemRespostaStatus ? [...baseStatuses, 'sem_resposta'] : baseStatuses;
+  const availableStatuses = showSemRespostaStatus ? [...baseStatuses, 'sem_resposta', 'arquivado'] : baseStatuses;
 
   const { data: apiData, isLoading: apiIsLoading } = useQuery(['leads', paginationModel, debouncedTextFilter, statusFilter, sourceFilter], () => {
     const params = new URLSearchParams({ page: paginationModel.page + 1, limit: paginationModel.pageSize, sort: '-createdAt' });
@@ -308,7 +308,21 @@ export default function PaginaLeads() {
     setPaginationModel(prev => ({ ...prev, page: value - 1 }));
   };
 
-  const statusColorsByIndex = useMemo(() => { if (!availableStatuses || availableStatuses.length === 0) { return {}; } const totalStatuses = availableStatuses.length; return availableStatuses.reduce((acc, status, index) => { if (status === 'sem_resposta') { acc[status] = '#ff6b6b'; } else { const hue = (index * (360 / totalStatuses)) % 360; acc[status] = `hsl(${hue}, 80%, 60%)`; } return acc; }, {}); }, [availableStatuses]);
+  const statusColorsByIndex = useMemo(() => {
+    if (!availableStatuses || availableStatuses.length === 0) { return {}; }
+    const totalStatuses = availableStatuses.length;
+    return availableStatuses.reduce((acc, status, index) => {
+      if (status === 'sem_resposta') {
+        acc[status] = '#ff6b6b';
+      } else if (status === 'arquivado') {
+        acc[status] = '#95a5a6';
+      } else {
+        const hue = (index * (360 / totalStatuses)) % 360;
+        acc[status] = `hsl(${hue}, 80%, 60%)`;
+      }
+      return acc;
+    }, {});
+  }, [availableStatuses]);
 
   const columns = useMemo(() => [
     { field: 'name', headerName: t('leadsPage.table.name'), minWidth: 120, flex: 1 },
@@ -361,7 +375,7 @@ export default function PaginaLeads() {
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
         <FormControlLabel
           control={<Switch checked={showSemRespostaStatus} onChange={handleToggleSemRespostaStatus} color="primary" />}
-          label={<Typography variant="body2">Mostrar status "Não respondeu"</Typography>}
+          label={<Typography variant="body2">Mostrar Leads Arquivados / Sem Resposta</Typography>}
         />
       </Box>
 
