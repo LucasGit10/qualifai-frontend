@@ -280,6 +280,7 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
       
       if (onImportSuccess) onImportSuccess();
       queryClient.invalidateQueries(['debts-by-month']);
+      queryClient.invalidateQueries(['debtors-summary']);
       onClose();
     } catch (err) {
       const errMsg = err.response?.data?.message || 'Falha ao importar o arquivo. Verifique a estrutura da planilha.';
@@ -1025,6 +1026,7 @@ export default function Debts() {
       toast.success('✅ Base de dados limpa com sucesso!');
       refetch();
       queryClient.invalidateQueries(['debts-by-month']);
+      queryClient.invalidateQueries(['debtors-summary']);
       setResetDialogOpen(false);
     } catch (err) {
       toast.error('Falha ao limpar base de dados.');
