@@ -276,7 +276,7 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
         }
       });
       
-      toast.success(`Importação feita! Criados: ${data.created} | Atualizados: ${data.updated} | Novos: ${data.newDebtors || 0} | Saíram: ${data.exitedDebtors || 0}`);
+      toast.success(`Importação feita! Novas dívidas: ${data.created} | Atualizadas: ${data.updated} | Duplicadas ignoradas: ${data.skippedDuplicates || 0} | Novos devedores: ${data.newDebtors || 0} | Saíram: ${data.exitedDebtors || 0}`);
       
       if (onImportSuccess) onImportSuccess();
       queryClient.invalidateQueries(['debts-by-month']);
