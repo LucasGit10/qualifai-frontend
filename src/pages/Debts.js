@@ -29,6 +29,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   DeleteSweep as DeleteSweepIcon,
+  Download as DownloadIcon,
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { format, subMonths, parseISO } from 'date-fns';
@@ -275,7 +276,7 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
         }
       });
       
-      toast.success(`✅ Importação Feita! Criados: ${data.created} | Atualizados: ${data.updated}`);
+      toast.success(`Importação feita! Criados: ${data.created} | Atualizados: ${data.updated} | Novos: ${data.newDebtors || 0} | Saíram: ${data.exitedDebtors || 0}`);
       
       if (onImportSuccess) onImportSuccess();
       queryClient.invalidateQueries(['debts-by-month']);
@@ -457,12 +458,29 @@ function KpiCard({ label, value, icon, color, sub }) {
 }
 
 // ─── Card de Devedor ──────────────────────────────────────────────────────────
-function DebtorCard({ debtor, onViewDetails }) {
+function DebtorCard({ debtor, onViewDetails, onReportStatusChange }) {
   const theme = useTheme();
   const AVATAR_COLORS = ['#6366f1','#8b5cf6','#ec4899','#0ea5e9','#10b981'];
   const avatarColor = AVATAR_COLORS[debtor.cpfCnpj?.charCodeAt(0) % AVATAR_COLORS.length || 0];
   const initials = debtor.cliente?.split(' ').slice(0,2).map(n => n[0]).join('').toUpperCase() || '??';
   const hasOverdue = debtor.qtdVencidas > 0;
+  const [manualStatus, setManualStatus] = useState(debtor.manualReportStatus || '');
+  const movementConfig = {
+    novo: { label: 'Novo na importação', color: '#10b981' },
+    mantido: { label: 'Permanece', color: theme.palette.info.main },
+    saiu: { label: 'Saiu da importação', color: '#ef4444' },
+  }[debtor.importStatus || 'mantido'];
+
+  React.useEffect(() => {
+    setManualStatus(debtor.manualReportStatus || '');
+  }, [debtor.manualReportStatus]);
+
+  const saveManualStatus = () => {
+    const next = manualStatus.trim();
+    if (next !== (debtor.manualReportStatus || '')) {
+      onReportStatusChange?.(debtor._id, next);
+    }
+  };
 
   return (
     <Card
@@ -542,6 +560,11 @@ function DebtorCard({ debtor, onViewDetails }) {
                 size="small"
                 sx={{ height: 18, fontSize: '0.55rem', fontWeight: 600, bgcolor: alpha(avatarColor, 0.12), color: avatarColor, border: `1px solid ${alpha(avatarColor, 0.25)}` }}
               />
+              <Chip
+                label={movementConfig.label}
+                size="small"
+                sx={{ height: 18, fontSize: '0.55rem', fontWeight: 800, bgcolor: alpha(movementConfig.color, 0.12), color: movementConfig.color, border: `1px solid ${alpha(movementConfig.color, 0.3)}` }}
+              />
             </Box>
           </Box>
         </Box>
@@ -577,6 +600,23 @@ function DebtorCard({ debtor, onViewDetails }) {
             )}
           </Box>
         )}
+
+        <TextField
+          size="small"
+          label="Status para relatório"
+          value={manualStatus}
+          onChange={(e) => setManualStatus(e.target.value)}
+          onBlur={saveManualStatus}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              e.currentTarget.blur();
+            }
+          }}
+          placeholder="Digite o status"
+          fullWidth
+          sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 1.5 }, '& .MuiInputBase-input': { fontSize: '0.78rem' } }}
+        />
 
         {/* Stats financeiros */}
         <Box
@@ -646,11 +686,24 @@ function DebtorCard({ debtor, onViewDetails }) {
 // ─── Aba de Devedores ─────────────────────────────────────────────────────────
 function DebtorsTab({ debtorsData, onViewDetails }) {
   const theme = useTheme();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos'); // Filtro de status padrão
+  const [movementFilter, setMovementFilter] = useState('todos');
   
   const debtors = debtorsData || [];
-  const today = new Date();
+  const reportStatusMutation = useMutation(
+    ({ leadId, manualReportStatus }) => api.put(`/spreadsheets/debtors/${leadId}/report-status`, { manualReportStatus }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['debtors-summary']);
+        toast.success('Status do relatório salvo.');
+      },
+      onError: (err) => {
+        toast.error(err.response?.data?.message || 'Erro ao salvar status do relatório.');
+      }
+    }
+  );
 
   // Opções de status disponíveis
   const statusOptions = [
@@ -674,10 +727,11 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
 
       // Filtro de status
       const matchStatus = statusFilter === 'todos' || d.status === statusFilter;
+      const matchMovement = movementFilter === 'todos' || (d.importStatus || 'mantido') === movementFilter;
 
-      return matchSearch && matchStatus;
+      return matchSearch && matchStatus && matchMovement;
     });
-  }, [debtors, search, statusFilter]);
+  }, [debtors, search, statusFilter, movementFilter]);
 
   const [page, setPage] = useState(1);
   const itemsPerPage = 12;
@@ -685,7 +739,7 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
   // Reseta a página quando as buscas mudam
   React.useEffect(() => {
     setPage(1);
-  }, [search, statusFilter]);
+  }, [search, statusFilter, movementFilter]);
 
   const paginatedDebtors = useMemo(() => {
     return filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage);
@@ -695,6 +749,8 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
   const totalMontante = debtors.reduce((a, d) => a + (d.totalGeral || 0), 0);
   const totalVencido = debtors.reduce((a, d) => a + d.totalVencido, 0);
   const totalFuturo = debtors.reduce((a, d) => a + d.totalFuturo, 0);
+  const totalNovosImportacao = debtors.filter(d => d.importStatus === 'novo').length;
+  const totalSairamImportacao = debtors.filter(d => d.importStatus === 'saiu').length;
 
   return (
     <Box>
@@ -705,8 +761,9 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
           { label: 'Montante Total',        value: fmt(totalMontante),       color: '#6366f1',                  icon: <MoneyIcon />,     sub: 'Geral (vencido + futuro)' },
           { label: 'Total Vencido',         value: fmt(totalVencido),        color: '#ef4444',                  icon: <ErrorIcon />,     sub: 'Em atraso / vencido' },
           { label: 'Lançamentos Futuros',   value: fmt(totalFuturo),         color: '#10b981',                  icon: <ScheduleIcon />,  sub: 'A vencer (2026–2027+)' },
+          { label: 'Novos / Sairam',         value: `${totalNovosImportacao} / ${totalSairamImportacao}`, color: '#f59e0b', icon: <PeopleIcon />, sub: 'Ultima importacao' },
         ].map(k => (
-          <Grid item xs={12} sm={6} md={3} key={k.label}>
+          <Grid item xs={12} sm={6} md={2.4} key={k.label}>
             <KpiCard {...k} />
           </Grid>
         ))}
@@ -730,6 +787,19 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
             {statusOptions.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
             ))}
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 170 }}>
+          <Select
+            value={movementFilter}
+            onChange={e => setMovementFilter(e.target.value)}
+            sx={{ borderRadius: 1.5, background: alpha(theme.palette.background.paper, 0.4) }}
+          >
+            <MenuItem value="todos">Todos os movimentos</MenuItem>
+            <MenuItem value="novo">Novos na importação</MenuItem>
+            <MenuItem value="mantido">Permanecem</MenuItem>
+            <MenuItem value="saiu">Saíram da importação</MenuItem>
           </Select>
         </FormControl>
 
@@ -777,7 +847,11 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
       <Grid container spacing={2}>
         {paginatedDebtors.map((debtor) => (
           <Grid item xs={12} sm={6} md={3} key={debtor.cpfCnpj}>
-            <DebtorCard debtor={debtor} onViewDetails={onViewDetails} />
+            <DebtorCard
+              debtor={debtor}
+              onViewDetails={onViewDetails}
+              onReportStatusChange={(leadId, manualReportStatus) => reportStatusMutation.mutate({ leadId, manualReportStatus })}
+            />
           </Grid>
         ))}
         {filtered.length === 0 && (
@@ -926,6 +1000,7 @@ export default function Debts() {
   const [selectedDebtor, setSelectedDebtor] = useState(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isExportingList, setIsExportingList] = useState(false);
 
   const { data: debtors = [], isLoading, refetch } = useQuery(
     ['debtors-summary'],
@@ -956,6 +1031,26 @@ export default function Debts() {
       console.error(err);
     } finally {
       setIsResetting(false);
+    }
+  };
+
+  const handleExportList = async () => {
+    setIsExportingList(true);
+    try {
+      const res = await api.get('/spreadsheets/export/debtors?type=listagem', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Relatorio_Devedores_${format(new Date(), 'ddMMyyyy')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Relatório gerado com sucesso!');
+    } catch (err) {
+      toast.error('Erro ao gerar o relatório de devedores.');
+    } finally {
+      setIsExportingList(false);
     }
   };
 
@@ -1006,6 +1101,15 @@ export default function Debts() {
             sx={{ borderRadius: 2, fontWeight: 700, borderColor: alpha(theme.palette.primary.main, 0.5) }}
           >
             Sincronizar
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={handleExportList}
+            disabled={isExportingList || debtors.length === 0}
+            startIcon={isExportingList ? <CircularProgress size={16} /> : <DownloadIcon />}
+            sx={{ borderRadius: 2, fontWeight: 700, borderColor: alpha(theme.palette.success.main, 0.5) }}
+          >
+            Baixar Relatório
           </Button>
           <Button
             variant="contained"

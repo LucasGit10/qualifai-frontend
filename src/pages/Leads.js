@@ -54,22 +54,28 @@ const TemplateSelectionModal = ({ open, onClose, onConfirm, leadsToContact, isLo
   const theme = useTheme();
   const [selectedInstanceId, setSelectedInstanceId] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [mediaUrl, setMediaUrl] = useState('');
 
   const { data: instances, isLoading: isLoadingInstances } = useQuery('whatsappInstances', () => api.get('/whatsapp/').then(res => res.data), { enabled: open });
   const { data: templates, isLoading: isLoadingTemplates } = useQuery('messageTemplates', () => api.get('/template-message').then(res => res.data), { enabled: open });
+
+  const selectedTemplate = templates?.find(t => t._id === selectedTemplateId);
+  const hasMediaHeader = selectedTemplate?.components?.some(c => c.type === 'HEADER' && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(c.format));
+  const mediaFormat = selectedTemplate?.components?.find(c => c.type === 'HEADER' && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(c.format))?.format;
 
   const handleConfirm = () => {
     if (!selectedInstanceId || !selectedTemplateId) {
       toast.warn(t('leadsPage.toasts.selectInstanceAndTemplate'));
       return;
     }
-    onConfirm({ instanceId: selectedInstanceId, templateId: selectedTemplateId, leads: leadsToContact });
+    onConfirm({ instanceId: selectedInstanceId, templateId: selectedTemplateId, leads: leadsToContact, mediaUrl });
   };
 
   useEffect(() => {
     if (!open) {
       setSelectedInstanceId('');
       setSelectedTemplateId('');
+      setMediaUrl('');
     }
   }, [open]);
 
@@ -101,6 +107,19 @@ const TemplateSelectionModal = ({ open, onClose, onConfirm, leadsToContact, isLo
               {templates?.map(template => (<MenuItem key={template._id} value={template._id}>{template.name}</MenuItem>))}
             </Select>
           </FormControl>
+
+          {hasMediaHeader && (
+            <TextField
+              fullWidth
+              label={`URL do(a) ${mediaFormat || 'Mídia'}`}
+              placeholder="https://exemplo.com/imagem.jpg"
+              value={mediaUrl}
+              onChange={(e) => setMediaUrl(e.target.value)}
+              helperText={`Este template exige um(a) ${mediaFormat}. Insira o link público do arquivo.`}
+              variant="outlined"
+              sx={selectStyles}
+            />
+          )}
         </Box>
       </DialogContent>
       <DialogActions>
@@ -288,7 +307,7 @@ export default function PaginaLeads() {
   };
   const handleStartSingleConversation = async (lead) => { if (!lead.phone || !lead.phone.trim()) { toast.warn(t('leadsPage.toasts.noPhoneError')); return; } const provider = whatsAppProviderData?.provider; if (provider === 'zapi') { try { const statusResponse = await api.get('/zapi/status'); if (!statusResponse.data?.success || !statusResponse.data.status?.connected) { toast.warn(t('leadsPage.toasts.zapiNotConnected')); return; } startZapiConversationMutation.mutate({ leadId: lead._id }); } catch (error) { toast.error(t('leadsPage.toasts.providerError')); } } else if (provider === 'whatsapp') { setLeadsToContact([lead]); setTemplateModalOpen(true); } else { toast.error(isLoadingProvider ? t('leadsPage.toasts.checkingProvider') : t('leadsPage.toasts.providerConfigError')); } };
   const handleStartMultipleConversations = async () => { const selectedLeads = data?.leads.filter(lead => selectionModel.includes(lead._id)) || []; const leadsWithoutPhone = selectedLeads.filter(lead => !lead.phone || !lead.phone.trim()); if (leadsWithoutPhone.length > 0) { toast.warn(t('leadsPage.toasts.batchNoPhoneError', { count: leadsWithoutPhone.length })); return; } const provider = whatsAppProviderData?.provider; if (provider === 'zapi') { try { const statusResponse = await api.get('/zapi/status'); if (!statusResponse.data?.success || !statusResponse.data.status?.connected) { toast.warn(t('leadsPage.toasts.zapiNotConnected')); return; } startMultipleZapiConversationsMutation.mutate({ leadIds: selectionModel }); } catch (error) { toast.error(t('leadsPage.toasts.providerError')); } } else if (provider === 'whatsapp') { setLeadsToContact(selectedLeads); setTemplateModalOpen(true); } else { toast.error(isLoadingProvider ? t('leadsPage.toasts.checkingProvider') : t('leadsPage.toasts.providerConfigError')); } };
-  const handleTemplateModalConfirm = ({ instanceId, templateId, leads }) => { if (leads.length === 1) { startWhatsappConversationMutation.mutate({ instanceId, templateId, leadId: leads[0]._id }); } else { startMultipleWhatsappConversationsMutation.mutate({ instanceId, templateId, leadIds: leads.map(lead => lead._id) }); } };
+  const handleTemplateModalConfirm = ({ instanceId, templateId, leads, mediaUrl }) => { if (leads.length === 1) { startWhatsappConversationMutation.mutate({ instanceId, templateId, leadId: leads[0]._id, mediaUrl }); } else { startMultipleWhatsappConversationsMutation.mutate({ instanceId, templateId, leadIds: leads.map(lead => lead._id), mediaUrl }); } };
   const handleDeleteLead = (id) => { if (window.confirm(t('leadsPage.dialogs.confirmDelete'))) { deleteLeadMutation.mutate(id); } };
   const handleDeleteSelected = () => { if (selectionModel.length === 0) return; if (window.confirm(t('leadsPage.dialogs.confirmDeleteMultiple', { count: selectionModel.length }))) { deleteMultipleLeadsMutation.mutate(selectionModel); } };
   const handleOpenEmailDialog = (lead) => { setSelectedLeadForEmail(lead); resetEmailForm({ subject: '', body: '' }); setEmailDialogOpen(true); };
