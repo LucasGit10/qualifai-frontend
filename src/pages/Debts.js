@@ -260,8 +260,34 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      
-      // Envia o arquivo â€” backend responde 202 imediatamente e processa em background
+
+      // ── Registra o listener ANTES de enviar o arquivo para evitar race condition ──
+      // O backend pode emitir 'spreadsheet-done' muito rápido após o upload
+      let resolveSocket, rejectSocket;
+      const donePromise = socket
+        ? new Promise((resolve, reject) => {
+            resolveSocket = resolve;
+            rejectSocket = reject;
+            const timeout = setTimeout(() => {
+              socket.off('spreadsheet-done', handler);
+              reject(new Error('Timeout: importação demorou mais de 10 minutos.'));
+            }, 10 * 60 * 1000);
+
+            const handler = (result) => {
+              clearTimeout(timeout);
+              socket.off('spreadsheet-done', handler);
+              if (result.success === false) {
+                reject(new Error(result.error || 'Erro no processamento em background.'));
+              } else {
+                resolve(result);
+              }
+            };
+
+            socket.on('spreadsheet-done', handler);
+          })
+        : null;
+
+      // Envia o arquivo — backend responde 202 imediatamente e processa em background
       const { data: initData } = await api.post('/spreadsheets/import/generic', formData, {
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -274,40 +300,28 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
         }
       });
 
-      // Aguarda o evento 'spreadsheet-done' do socket (até 10 minutos)
-      const data = await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          socket?.off('spreadsheet-done', handler);
-          reject(new Error('Timeout: importação demorou mais de 10 minutos.'));
-        }, 10 * 60 * 1000);
+      // Aguarda evento do socket (já registrado antes do upload) ou usa fallback
+      let data;
+      if (donePromise) {
+        data = await donePromise;
+      } else {
+        // Sem socket: espera 5s e usa dados do 202
+        await new Promise(r => setTimeout(r, 5000));
+        data = initData;
+      }
 
-        const handler = (result) => {
-          clearTimeout(timeout);
-          socket?.off('spreadsheet-done', handler);
-          if (result.success === false) {
-            reject(new Error(result.error || 'Erro no processamento em background.'));
-          } else {
-            resolve(result);
-          }
-        };
+      const fmtCurrency = (v) => v != null ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-';
+      const erroInfo = (data?.errors ?? 0) > 0 ? ` | \u26a0\ufe0f Erros: ${data.errors}` : '';
+      const somaInfo = data?.somaCarteira != null
+        ? ` | \u{1F4B0} Carteira total: ${fmtCurrency(data.somaCarteira)} (${data.countCarteira} reg)`
+        : (data?.somaImportada != null ? ` | \u{1F4B0} Batch: ${fmtCurrency(data.somaImportada)} (${data.countImportado} reg)` : '');
 
-        if (socket) {
-          socket.on('spreadsheet-done', handler);
-        } else {
-          // Fallback: se não há socket, usa os dados do 202 e espera 3s
-          clearTimeout(timeout);
-          setTimeout(() => resolve(initData), 3000);
-        }
-      });
+      toast.success(`\u2705 Importação feita! Novas: ${data?.created ?? '?'} | Atualizadas: ${data?.updated ?? '?'} | Saíram: ${data?.exitedDebtors ?? 0}${erroInfo}${somaInfo}`, { autoClose: 12000 });
 
-      const fmt = (v) => v?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) ?? '-';
-      const erroInfo = data.errors > 0 ? ` | âš ï¸ Linhas com erro: ${data.errors}` : '';
-      const somaInfo = data.somaImportada != null ? ` | ðŸ’° Soma importada: ${fmt(data.somaImportada)} (${data.countImportado} reg)` : '';
-      toast.success(`âœ… Importação feita! Novas: ${data.created} | Atualizadas: ${data.updated} | Saíram: ${data.exitedDebtors || 0}${erroInfo}${somaInfo}`, { autoClose: 10000 });
-      
       if (onImportSuccess) onImportSuccess();
       queryClient.invalidateQueries(['debts-by-month']);
       queryClient.invalidateQueries(['debtors-summary']);
+      queryClient.invalidateQueries(['carteira-totals']);
       onClose();
     } catch (err) {
       const errMsg = err.response?.data?.message || err.message || 'Falha ao importar o arquivo. Verifique a estrutura da planilha.';
@@ -720,6 +734,20 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
   const [movementFilter, setMovementFilter] = useState('todos');
   
   const debtors = debtorsData || [];
+
+  // Busca totais reais diretamente do banco (inclui registros com lead=null)
+  const { data: carteiraTotals } = useQuery(
+    ['carteira-totals'],
+    async () => {
+      try {
+        const { data } = await api.get('/spreadsheets/totals');
+        return data;
+      } catch (e) {
+        return null;
+      }
+    },
+    { staleTime: 30000 }
+  );
   const reportStatusMutation = useMutation(
     ({ leadId, manualReportStatus }) => api.put(`/spreadsheets/debtors/${leadId}/report-status`, { manualReportStatus }),
     {
@@ -773,12 +801,16 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
     return filtered.slice((page - 1) * itemsPerPage, page * itemsPerPage);
   }, [filtered, page]);
 
-  const totalPrincipal = debtors.reduce((a, d) => a + (d.totalPrincipalGeral || 0), 0);
-  const totalMontante = debtors.reduce((a, d) => a + (d.totalGeral || 0), 0);
-  const totalVencido = debtors.reduce((a, d) => a + d.totalVencido, 0);
-  const totalFuturo = debtors.reduce((a, d) => a + d.totalFuturo, 0);
+  // Usa totais do endpoint /totals (inclui lead=null) ou fallback p/ soma local
+  const totalPrincipal = carteiraTotals ? carteiraTotals.somaPrincipal : debtors.reduce((a, d) => a + (d.totalPrincipalGeral || 0), 0);
+  const totalMontante  = carteiraTotals ? carteiraTotals.somaTotal     : debtors.reduce((a, d) => a + (d.totalGeral || 0), 0);
+  const totalVencido   = carteiraTotals ? carteiraTotals.somaVencido   : debtors.reduce((a, d) => a + d.totalVencido, 0);
+  const totalFuturo    = carteiraTotals ? carteiraTotals.somaFuturo    : debtors.reduce((a, d) => a + d.totalFuturo, 0);
   const totalNovosImportacao = debtors.filter(d => d.importStatus === 'novo').length;
   const totalSairamImportacao = debtors.filter(d => d.importStatus === 'saiu').length;
+  // Alerta se há registros sem lead (valor oculto nos cards)
+  const nullLeadCount = carteiraTotals ? carteiraTotals.nullLeadCount : 0;
+  const nullLeadSoma  = carteiraTotals ? carteiraTotals.nullLeadSoma  : 0;
 
   return (
     <Box>
