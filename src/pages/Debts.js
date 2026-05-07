@@ -1002,6 +1002,7 @@ export default function Debts() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isExportingList, setIsExportingList] = useState(false);
+  const [isFixingDuplicates, setIsFixingDuplicates] = useState(false);
 
   const { data: debtors = [], isLoading, refetch } = useQuery(
     ['debtors-summary'],
@@ -1033,6 +1034,28 @@ export default function Debts() {
       console.error(err);
     } finally {
       setIsResetting(false);
+    }
+  };
+
+  const handleFixDuplicates = async () => {
+    setIsFixingDuplicates(true);
+    try {
+      // Primeiro diagnostica
+      const { data: diag } = await api.get('/spreadsheets/diagnose-duplicates');
+      if (diag.groups === 0) {
+        toast.success('✅ Nenhuma duplicata encontrada! Os totais estão corretos.');
+        return;
+      }
+      // Depois corrige
+      const { data: fix } = await api.post('/spreadsheets/fix-duplicates');
+      toast.success(`✅ ${fix.message}`);
+      refetch();
+      queryClient.invalidateQueries(['debts-by-month']);
+      queryClient.invalidateQueries(['debtors-summary']);
+    } catch (err) {
+      toast.error('Erro ao corrigir duplicatas: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setIsFixingDuplicates(false);
     }
   };
 
@@ -1095,6 +1118,15 @@ export default function Debts() {
             sx={{ borderRadius: 2, fontWeight: 700, borderColor: alpha(theme.palette.error.main, 0.4) }}
           >
             Limpar Base
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={handleFixDuplicates}
+            disabled={isFixingDuplicates || debtors.length === 0}
+            startIcon={isFixingDuplicates ? <CircularProgress size={16} /> : <CheckCircleIcon />}
+            sx={{ borderRadius: 2, fontWeight: 700, borderColor: alpha('#f59e0b', 0.5), color: '#f59e0b', '&:hover': { borderColor: '#f59e0b', bgcolor: alpha('#f59e0b', 0.08) } }}
+          >
+            {isFixingDuplicates ? 'Verificando...' : 'Corrigir Duplicatas'}
           </Button>
           <Button
             variant="outlined"
