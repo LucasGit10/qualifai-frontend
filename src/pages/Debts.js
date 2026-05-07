@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import {
   Box, Typography, Button, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -40,14 +40,14 @@ import { useAuthStore } from '../stores/authStore';
 import { useSocket } from '../contexts/SocketContext';
 import DebtorDetailModal from '../components/debts/DebtorDetailModal';
 
-// ─── Helpers de formatação ────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers de formataÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtNum = (v) => new Intl.NumberFormat('pt-BR').format(v || 0);
 
 
 
-// ─── Chip de atraso ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Chip de atraso â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const AtrasoChip = ({ dias }) => {
   if (!dias || dias <= 0) return <Chip label="Em dia" size="small" sx={{ bgcolor: alpha('#4caf50',0.15), color:'#4caf50', fontWeight:700, fontSize:'0.7rem' }} />;
   if (dias <= 30)  return <Chip label={`${dias}d`} size="small" sx={{ bgcolor: alpha('#ff9800',0.15), color:'#ff9800', fontWeight:700, fontSize:'0.7rem' }} />;
@@ -55,7 +55,7 @@ const AtrasoChip = ({ dias }) => {
   return <Chip label={`${dias}d`} size="small" sx={{ bgcolor: alpha('#9c27b0',0.2), color:'#ce93d8', fontWeight:700, fontSize:'0.7rem' }} />;
 };
 
-// ─── Tabela interna do accordion ──────────────────────────────────────────────
+// â”€â”€â”€ Tabela interna do accordion â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function MonthTable({ registros, search }) {
   const theme = useTheme();
   const filtered = useMemo(() => {
@@ -91,7 +91,7 @@ function MonthTable({ registros, search }) {
               <TableCell sx={{ fontWeight:600, fontSize:'0.82rem' }}>
                 <Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="inherit" sx={{ display:'block' }}>{r.cliente || r.razao || '—'}</Typography>
+                    <Typography variant="inherit" sx={{ display:'block' }}>{r.cliente || r.razao || 'â€”'}</Typography>
                     {r.tags?.includes('novo') && (
                       <Chip 
                         label="NOVO" 
@@ -110,8 +110,8 @@ function MonthTable({ registros, search }) {
                   <Typography variant="caption" color="text.secondary" sx={{ fontSize:'0.65rem' }}>{r.empreendimento}</Typography>
                 </Box>
               </TableCell>
-              <TableCell sx={{ fontSize:'0.78rem', fontWeight: 600 }}>{r.apto ? `${r.torre || ''} ${r.apto}`.trim() : '—'}</TableCell>
-              <TableCell sx={{ fontFamily:'monospace', fontSize:'0.78rem', color:'text.secondary' }}>{r.contrato || '—'}</TableCell>
+              <TableCell sx={{ fontSize:'0.78rem', fontWeight: 600 }}>{r.apto ? `${r.torre || ''} ${r.apto}`.trim() : 'â€”'}</TableCell>
+              <TableCell sx={{ fontFamily:'monospace', fontSize:'0.78rem', color:'text.secondary' }}>{r.contrato || 'â€”'}</TableCell>
               <TableCell sx={{ fontSize:'0.72rem' }}>
                 <Stack direction="row" spacing={0.5}>
                   {r.esp && <Chip label={r.esp} size="small" sx={{ height: 16, fontSize: '0.6rem', bgcolor: alpha(theme.palette.info.main, 0.1), color: 'info.main', border: 'none' }} />}
@@ -119,7 +119,7 @@ function MonthTable({ registros, search }) {
                 </Stack>
               </TableCell>
               <TableCell sx={{ fontSize:'0.78rem', color:'text.secondary' }}>
-                {r.vencimento ? format(new Date(r.vencimento), 'dd/MM/yyyy') : '—'}
+                {r.vencimento ? format(new Date(r.vencimento), 'dd/MM/yyyy') : 'â€”'}
               </TableCell>
               <TableCell><AtrasoChip dias={r.atraso} /></TableCell>
               <TableCell sx={{ fontWeight:700, fontSize:'0.82rem', color:'primary.main' }}>
@@ -133,7 +133,7 @@ function MonthTable({ registros, search }) {
   );
 }
 
-// ─── Accordion de um mês ──────────────────────────────────────────────────────
+// â”€â”€â”€ Accordion de um mÃªs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function MonthAccordion({ data, globalSearch, defaultExpanded }) {
   const theme = useTheme();
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -216,14 +216,14 @@ function MonthAccordion({ data, globalSearch, defaultExpanded }) {
   );
 }
 
-// ─── Dialog de importação ─────────────────────────────────────────────────────
+// â”€â”€â”€ Dialog de importaÃ§Ã£o â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ImportDialog({ open, onClose, onImportSuccess }) {
   const theme = useTheme();
   const queryClient = useQueryClient();
   const { socket } = useSocket(); // NOVO
   const [file, setFile] = useState(null);
   
-  // Estados para animação de extração
+  // Estados para animaÃ§Ã£o de extraÃ§Ã£o
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionStep, setExtractionStep] = useState('');
   const [extractionProgress, setExtractionProgress] = useState(0);
@@ -240,7 +240,7 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
           setExtractionStep(`Extraindo devedores: ${data.current} de ${data.total} (${data.percent}%)`);
         } else if (data.status === 'finalizado') {
           setExtractionProgress(100);
-          setExtractionStep('Extração finalizada! Sincronizando dados...');
+          setExtractionStep('ExtraÃ§Ã£o finalizada! Sincronizando dados...');
         }
       };
 
@@ -261,32 +261,56 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
       const formData = new FormData();
       formData.append('file', file);
       
-      // Chama a Rota Real de Back-end com monitoramento de upload
-      const { data } = await api.post('/spreadsheets/import/generic', formData, {
+      // Envia o arquivo â€” backend responde 202 imediatamente e processa em background
+      const { data: initData } = await api.post('/spreadsheets/import/generic', formData, {
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          // Dividimos os 100% da barra: 50% upload, 50% extração (ou apenas mostra o upload até 100)
-          // Mas como o socket vai assumir depois do upload, vamos usar a barra pra ambos
           if (percentCompleted < 100) {
-            setExtractionProgress(percentCompleted / 2); // Upload representa os primeiros 50%
+            setExtractionProgress(percentCompleted / 2);
             setExtractionStep(`Enviando arquivo: ${percentCompleted}%`);
           } else {
-            setExtractionStep('Arquivo recebido. Iniciando extração dos dados...');
+            setExtractionStep('Arquivo recebido. Processando em background...');
           }
         }
       });
-      
+
+      // Aguarda o evento 'spreadsheet-done' do socket (atÃ© 10 minutos)
+      const data = await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          socket?.off('spreadsheet-done', handler);
+          reject(new Error('Timeout: importaÃ§Ã£o demorou mais de 10 minutos.'));
+        }, 10 * 60 * 1000);
+
+        const handler = (result) => {
+          clearTimeout(timeout);
+          socket?.off('spreadsheet-done', handler);
+          if (result.success === false) {
+            reject(new Error(result.error || 'Erro no processamento em background.'));
+          } else {
+            resolve(result);
+          }
+        };
+
+        if (socket) {
+          socket.on('spreadsheet-done', handler);
+        } else {
+          // Fallback: se nÃ£o hÃ¡ socket, usa os dados do 202 e espera 3s
+          clearTimeout(timeout);
+          setTimeout(() => resolve(initData), 3000);
+        }
+      });
+
       const fmt = (v) => v?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) ?? '-';
-      const erroInfo = data.errors > 0 ? ` | ⚠️ Linhas com erro: ${data.errors}` : '';
-      const somaInfo = data.somaImportada != null ? ` | 💰 Soma importada: ${fmt(data.somaImportada)} (${data.countImportado} reg)` : '';
-      toast.success(`✅ Importação feita! Novas: ${data.created} | Atualizadas: ${data.updated} | Saíram: ${data.exitedDebtors || 0}${erroInfo}${somaInfo}`, { autoClose: 10000 });
+      const erroInfo = data.errors > 0 ? ` | âš ï¸ Linhas com erro: ${data.errors}` : '';
+      const somaInfo = data.somaImportada != null ? ` | ðŸ’° Soma importada: ${fmt(data.somaImportada)} (${data.countImportado} reg)` : '';
+      toast.success(`âœ… ImportaÃ§Ã£o feita! Novas: ${data.created} | Atualizadas: ${data.updated} | SaÃ­ram: ${data.exitedDebtors || 0}${erroInfo}${somaInfo}`, { autoClose: 10000 });
       
       if (onImportSuccess) onImportSuccess();
       queryClient.invalidateQueries(['debts-by-month']);
       queryClient.invalidateQueries(['debtors-summary']);
       onClose();
     } catch (err) {
-      const errMsg = err.response?.data?.message || 'Falha ao importar o arquivo. Verifique a estrutura da planilha.';
+      const errMsg = err.response?.data?.message || err.message || 'Falha ao importar o arquivo. Verifique a estrutura da planilha.';
       toast.error(errMsg);
       console.error("Erro no import:", err);
     } finally {
@@ -297,7 +321,7 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
   };
 
   const handleClose = () => {
-    if (isExtracting) return; // bloqueia fechamento durante extração
+    if (isExtracting) return; // bloqueia fechamento durante extraÃ§Ã£o
     setFile(null);
     onClose();
   };
@@ -316,10 +340,10 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
           background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
           WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
         }}>
-          {isExtracting ? 'Processando Planilha' : '📁 Importar Planilha de Cobrança'}
+          {isExtracting ? 'Processando Planilha' : 'ðŸ“ Importar Planilha de CobranÃ§a'}
         </Typography>
         {!isExtracting && (
-          <Typography variant="caption" color="text.secondary">Faça upload do extrato de cobranças e inadimplência</Typography>
+          <Typography variant="caption" color="text.secondary">FaÃ§a upload do extrato de cobranÃ§as e inadimplÃªncia</Typography>
         )}
       </DialogTitle>
 
@@ -340,7 +364,7 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
                 }} 
               />
               <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'primary.main', fontWeight: 700 }}>
-                {Math.round(extractionProgress)}% concluído
+                {Math.round(extractionProgress)}% concluÃ­do
               </Typography>
             </Box>
             <Typography variant="body1" fontWeight={600} sx={{ color: 'text.secondary' }}>
@@ -350,10 +374,10 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
         ) : (
           <>
             <Box sx={{ mb: 3, p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.info.main, 0.05), border: `1px solid ${alpha(theme.palette.info.main,0.2)}` }}>
-              <Typography variant="caption" color="info.main" fontWeight={700}>Formato Único de Importação</Typography>
+              <Typography variant="caption" color="info.main" fontWeight={700}>Formato Ãšnico de ImportaÃ§Ã£o</Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                 Campos suportados: Cliente, CPF/CNPJ, Contrato, Vencimento, Principal, Juros, Multa, Total, Empreendimento.
-                Lançamentos vencidos e com vencimento futuro (ex: 2026/2027) serão extraídos e agrupados automaticamente.
+                LanÃ§amentos vencidos e com vencimento futuro (ex: 2026/2027) serÃ£o extraÃ­dos e agrupados automaticamente.
               </Typography>
             </Box>
 
@@ -406,7 +430,7 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
   );
 }
 
-// ─── Gráfico mensal ─────────────────────────────────────────────────────────
+// â”€â”€â”€ GrÃ¡fico mensal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function MonthlyChart({ months }) {
   const data = [...months].reverse().map(m => ({
     name: `${MESES_PT[m.mes - 1]}/${String(m.ano).slice(2)}`,
@@ -430,7 +454,7 @@ function MonthlyChart({ months }) {
   );
 }
 
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ KPI Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function KpiCard({ label, value, icon, color, sub }) {
   const theme = useTheme();
   return (
@@ -461,7 +485,7 @@ function KpiCard({ label, value, icon, color, sub }) {
   );
 }
 
-// ─── Card de Devedor ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Card de Devedor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function DebtorCard({ debtor, onViewDetails, onReportStatusChange }) {
   const theme = useTheme();
   const AVATAR_COLORS = ['#6366f1','#8b5cf6','#ec4899','#0ea5e9','#10b981'];
@@ -470,9 +494,9 @@ function DebtorCard({ debtor, onViewDetails, onReportStatusChange }) {
   const hasOverdue = debtor.qtdVencidas > 0;
   const [manualStatus, setManualStatus] = useState(debtor.manualReportStatus || '');
   const movementConfig = {
-    novo: { label: 'Novo na importação', color: '#10b981' },
+    novo: { label: 'Novo na importaÃ§Ã£o', color: '#10b981' },
     mantido: { label: 'Permanece', color: theme.palette.info.main },
-    saiu: { label: 'Saiu da importação', color: '#ef4444' },
+    saiu: { label: 'Saiu da importaÃ§Ã£o', color: '#ef4444' },
   }[debtor.importStatus || 'mantido'];
 
   React.useEffect(() => {
@@ -607,7 +631,7 @@ function DebtorCard({ debtor, onViewDetails, onReportStatusChange }) {
 
         <TextField
           size="small"
-          label="Status para relatório"
+          label="Status para relatÃ³rio"
           value={manualStatus}
           onChange={(e) => setManualStatus(e.target.value)}
           onBlur={saveManualStatus}
@@ -658,13 +682,13 @@ function DebtorCard({ debtor, onViewDetails, onReportStatusChange }) {
           )}
         </Box>
 
-        {/* Rodapé: contrato + botão */}
+        {/* RodapÃ©: contrato + botÃ£o */}
         <Divider sx={{ mb: 1.5, borderColor: alpha(theme.palette.divider, 0.4) }} />
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box>
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
               Contrato <strong style={{ color: '#fff' }}>{debtor.contrato}</strong>
-              {debtor.apto ? ` · Apto ${debtor.apto}` : ''}
+              {debtor.apto ? ` Â· Apto ${debtor.apto}` : ''}
             </Typography>
           </Box>
           <Button
@@ -679,7 +703,7 @@ function DebtorCard({ debtor, onViewDetails, onReportStatusChange }) {
               '&:hover': { boxShadow: `0 6px 20px ${alpha(avatarColor, 0.5)}` },
             }}
           >
-            Ver Lançamentos
+            Ver LanÃ§amentos
           </Button>
         </Box>
       </CardContent>
@@ -687,12 +711,12 @@ function DebtorCard({ debtor, onViewDetails, onReportStatusChange }) {
   );
 }
 
-// ─── Aba de Devedores ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Aba de Devedores â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function DebtorsTab({ debtorsData, onViewDetails }) {
   const theme = useTheme();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('todos'); // Filtro de status padrão
+  const [statusFilter, setStatusFilter] = useState('todos'); // Filtro de status padrÃ£o
   const [movementFilter, setMovementFilter] = useState('todos');
   
   const debtors = debtorsData || [];
@@ -701,20 +725,20 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['debtors-summary']);
-        toast.success('Status do relatório salvo.');
+        toast.success('Status do relatÃ³rio salvo.');
       },
       onError: (err) => {
-        toast.error(err.response?.data?.message || 'Erro ao salvar status do relatório.');
+        toast.error(err.response?.data?.message || 'Erro ao salvar status do relatÃ³rio.');
       }
     }
   );
 
-  // Opções de status disponíveis
+  // OpÃ§Ãµes de status disponÃ­veis
   const statusOptions = [
     { value: 'todos', label: 'Todos os Status' },
     { value: 'novo', label: 'Novo Devedor' },
     { value: 'contatado', label: 'Contatado' },
-    { value: 'em_negociacao', label: 'Em Negociação' },
+    { value: 'em_negociacao', label: 'Em NegociaÃ§Ã£o' },
     { value: 'acordado', label: 'Acordo Feito' },
     { value: 'quitado', label: 'Quitado' },
   ];
@@ -740,7 +764,7 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
   const [page, setPage] = useState(1);
   const itemsPerPage = 12;
 
-  // Reseta a página quando as buscas mudam
+  // Reseta a pÃ¡gina quando as buscas mudam
   React.useEffect(() => {
     setPage(1);
   }, [search, statusFilter, movementFilter]);
@@ -761,10 +785,10 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
       {/* KPIs da aba */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {[
-          { label: 'Total Principal',       value: fmt(totalPrincipal),      color: theme.palette.primary.main, icon: <AccountBalanceIcon />, sub: 'Apenas dívida original' },
+          { label: 'Total Principal',       value: fmt(totalPrincipal),      color: theme.palette.primary.main, icon: <AccountBalanceIcon />, sub: 'Apenas dÃ­vida original' },
           { label: 'Montante Total',        value: fmt(totalMontante),       color: '#6366f1',                  icon: <MoneyIcon />,     sub: 'Geral (vencido + futuro)' },
           { label: 'Total Vencido',         value: fmt(totalVencido),        color: '#ef4444',                  icon: <ErrorIcon />,     sub: 'Em atraso / vencido' },
-          { label: 'Lançamentos Futuros',   value: fmt(totalFuturo),         color: '#10b981',                  icon: <ScheduleIcon />,  sub: 'A vencer (2026–2027+)' },
+          { label: 'LanÃ§amentos Futuros',   value: fmt(totalFuturo),         color: '#10b981',                  icon: <ScheduleIcon />,  sub: 'A vencer (2026â€“2027+)' },
           { label: 'Novos / Sairam',         value: `${totalNovosImportacao} / ${totalSairamImportacao}`, color: '#f59e0b', icon: <PeopleIcon />, sub: 'Ultima importacao' },
         ].map(k => (
           <Grid item xs={12} sm={6} md={2.4} key={k.label}>
@@ -801,9 +825,9 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
             sx={{ borderRadius: 1.5, background: alpha(theme.palette.background.paper, 0.4) }}
           >
             <MenuItem value="todos">Todos os movimentos</MenuItem>
-            <MenuItem value="novo">Novos na importação</MenuItem>
+            <MenuItem value="novo">Novos na importaÃ§Ã£o</MenuItem>
             <MenuItem value="mantido">Permanecem</MenuItem>
-            <MenuItem value="saiu">Saíram da importação</MenuItem>
+            <MenuItem value="saiu">SaÃ­ram da importaÃ§Ã£o</MenuItem>
           </Select>
         </FormControl>
 
@@ -821,7 +845,7 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
       </Paper>
 
       {/* Grid de cards */}
-      {/* Paginação (Topo) */}
+      {/* PaginaÃ§Ã£o (Topo) */}
       {filtered.length > itemsPerPage && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
           <Pagination
@@ -873,7 +897,7 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
   );
 }
 
-// ─── Aba de Cobranças (accordion por mês) ─────────────────────────────────────
+// â”€â”€â”€ Aba de CobranÃ§as (accordion por mÃªs) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function ChargesTab({ importOpen, setImportOpen }) {
   const theme = useTheme();
   const [tipo, setTipo] = useState('inadimplencia');
@@ -919,7 +943,7 @@ function ChargesTab({ importOpen, setImportOpen }) {
         ))}
       </Grid>
 
-      {/* Filtros da Cobrança */}
+      {/* Filtros da CobranÃ§a */}
       <Paper elevation={0} sx={{
         p: 2, mb: 3, borderRadius: 2.5,
         background: alpha(theme.palette.background.paper, 0.6),
@@ -942,12 +966,12 @@ function ChargesTab({ importOpen, setImportOpen }) {
           sx={{ flex: 1, minWidth: 220, '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
         />
         <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <Tooltip title="Accordion por mês">
+          <Tooltip title="Accordion por mÃªs">
             <IconButton size="small" onClick={() => setViewMode('accordion')} color={viewMode==='accordion'?'primary':'default'} sx={{ border:`1px solid ${alpha(theme.palette.divider,0.8)}` }}>
               <TableChartIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Gráfico mensal">
+          <Tooltip title="GrÃ¡fico mensal">
             <IconButton size="small" onClick={() => setViewMode('chart')} color={viewMode==='chart'?'primary':'default'} sx={{ border:`1px solid ${alpha(theme.palette.divider,0.8)}` }}>
               <BarChartIcon fontSize="small" />
             </IconButton>
@@ -965,7 +989,7 @@ function ChargesTab({ importOpen, setImportOpen }) {
       {viewMode === 'chart' && months.length > 0 && (
         <Paper elevation={0} sx={{ p:3, mb:3, borderRadius:2.5, background: alpha(theme.palette.background.paper, 0.6), backdropFilter:'blur(16px)', border:`1px solid ${alpha(theme.palette.divider,0.5)}` }}>
           <Typography variant="subtitle1" fontWeight={700} gutterBottom>
-            Evolução Mensal da Carteira
+            EvoluÃ§Ã£o Mensal da Carteira
           </Typography>
           <MonthlyChart months={months} />
         </Paper>
@@ -978,7 +1002,7 @@ function ChargesTab({ importOpen, setImportOpen }) {
               <CalendarIcon sx={{ fontSize:48, color:'text.secondary', opacity:0.3, mb:2 }} />
               <Typography variant="h6" color="text.secondary" gutterBottom>Nenhum registro encontrado</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb:3 }}>
-                Importe uma planilha para visualizar os registros organizados por mês de vencimento.
+                Importe uma planilha para visualizar os registros organizados por mÃªs de vencimento.
               </Typography>
               <Button variant="contained" startIcon={<UploadIcon />} onClick={() => setImportOpen(true)}
                 sx={{ borderRadius:2, background:`linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})` }}>
@@ -996,7 +1020,7 @@ function ChargesTab({ importOpen, setImportOpen }) {
   );
 }
 
-// ─── Página principal ─────────────────────────────────────────────────────────
+// â”€â”€â”€ PÃ¡gina principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function Debts() {
   const theme = useTheme();
   const queryClient = useQueryClient();
@@ -1026,7 +1050,7 @@ export default function Debts() {
       console.log('--- [FRONTEND] Iniciando limpeza ---');
       const res = await api.delete('/spreadsheets/clear');
       console.log('--- [FRONTEND] Resposta API:', res.data);
-      toast.success('✅ Base de dados limpa com sucesso!');
+      toast.success('âœ… Base de dados limpa com sucesso!');
       refetch();
       queryClient.invalidateQueries(['debts-by-month']);
       queryClient.invalidateQueries(['debtors-summary']);
@@ -1051,9 +1075,9 @@ export default function Debts() {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-      toast.success('Relatório gerado com sucesso!');
+      toast.success('RelatÃ³rio gerado com sucesso!');
     } catch (err) {
-      toast.error('Erro ao gerar o relatório de devedores.');
+      toast.error('Erro ao gerar o relatÃ³rio de devedores.');
     } finally {
       setIsExportingList(false);
     }
@@ -1067,7 +1091,7 @@ export default function Debts() {
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, minHeight: '100vh' }}>
 
-      {/* ─── Header ─── */}
+      {/* â”€â”€â”€ Header â”€â”€â”€ */}
       <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', mb: 3, flexWrap:'wrap', gap:2 }}>
         <Box sx={{ display:'flex', alignItems:'center', gap:2 }}>
           <Box sx={{
@@ -1082,10 +1106,10 @@ export default function Debts() {
               background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
               WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
             }}>
-              Gestão de Devedores
+              GestÃ£o de Devedores
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {isLoading ? 'Carregando dados reais...' : 'Visão geral sincronizada com o banco de dados.'}
+              {isLoading ? 'Carregando dados reais...' : 'VisÃ£o geral sincronizada com o banco de dados.'}
             </Typography>
           </Box>
         </Box>
@@ -1114,7 +1138,7 @@ export default function Debts() {
             startIcon={isExportingList ? <CircularProgress size={16} /> : <DownloadIcon />}
             sx={{ borderRadius: 2, fontWeight: 700, borderColor: alpha(theme.palette.success.main, 0.5) }}
           >
-            Baixar Relatório
+            Baixar RelatÃ³rio
           </Button>
           <Button
             variant="contained"
@@ -1122,16 +1146,16 @@ export default function Debts() {
             onClick={() => setImportOpen(true)}
             sx={{ borderRadius:2, fontWeight:700, background:`linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})` }}
           >
-            Importar Cobranças
+            Importar CobranÃ§as
           </Button>
         </Box>
       </Box>
 
-      {/* ─── Conteúdo único ─── */}
+      {/* â”€â”€â”€ ConteÃºdo Ãºnico â”€â”€â”€ */}
       {isLoading ? (
         <Box sx={{ py: 10, textAlign: 'center' }}>
           <CircularProgress />
-          <Typography sx={{ mt: 2 }} color="text.secondary">Extraindo informações de devedores...</Typography>
+          <Typography sx={{ mt: 2 }} color="text.secondary">Extraindo informaÃ§Ãµes de devedores...</Typography>
         </Box>
       ) : (
         <DebtorsTab 
@@ -1140,7 +1164,7 @@ export default function Debts() {
         />
       )}
 
-      {/* ─── Modais ─── */}
+      {/* â”€â”€â”€ Modais â”€â”€â”€ */}
       <ImportDialog open={importOpen} onClose={() => setImportOpen(false)} onImportSuccess={() => refetch()} />
       <DebtorDetailModal
         open={!!selectedDebtor}
@@ -1148,7 +1172,7 @@ export default function Debts() {
         debtor={currentSelectedDebtor}
       />
 
-      {/* Confirmação de Reset */}
+      {/* ConfirmaÃ§Ã£o de Reset */}
       <Dialog 
         open={resetDialogOpen} 
         onClose={() => !isResetting && setResetDialogOpen(false)}
@@ -1157,8 +1181,8 @@ export default function Debts() {
         <DialogTitle sx={{ fontWeight: 800, color: 'error.main' }}>Limpar Base de Dados?</DialogTitle>
         <DialogContent>
           <Typography variant="body1" sx={{ color: 'text.secondary' }}>
-            Tem certeza que deseja <strong>apagar permanentemente</strong> todos os devedores e cobranças importados?
-            Esta ação não pode ser desfeita.
+            Tem certeza que deseja <strong>apagar permanentemente</strong> todos os devedores e cobranÃ§as importados?
+            Esta aÃ§Ã£o nÃ£o pode ser desfeita.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 2, gap: 1 }}>
