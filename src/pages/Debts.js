@@ -254,79 +254,74 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
   const handleImport = async () => {
     if (!file) return;
     setIsExtracting(true);
-    setExtractionProgress(0);
-    setExtractionStep('Enviando arquivo para o servidor...');
+    setExtractionProgress(5);
+    setExtractionStep('Enviando arquivo...');
 
     try {
       const formData = new FormData();
       formData.append('file', file);
 
-      // ── Registra o listener ANTES de enviar o arquivo para evitar race condition ──
-      // O backend pode emitir 'spreadsheet-done' muito rápido após o upload
-      let resolveSocket, rejectSocket;
-      const donePromise = socket
-        ? new Promise((resolve, reject) => {
-            resolveSocket = resolve;
-            rejectSocket = reject;
-            const timeout = setTimeout(() => {
-              socket.off('spreadsheet-done', handler);
-              reject(new Error('Timeout: importação demorou mais de 10 minutos.'));
-            }, 10 * 60 * 1000);
-
-            const handler = (result) => {
-              clearTimeout(timeout);
-              socket.off('spreadsheet-done', handler);
-              if (result.success === false) {
-                reject(new Error(result.error || 'Erro no processamento em background.'));
-              } else {
-                resolve(result);
-              }
-            };
-
-            socket.on('spreadsheet-done', handler);
-          })
-        : null;
-
-      // Envia o arquivo — backend responde 202 imediatamente e processa em background
-      const { data: initData } = await api.post('/spreadsheets/import/generic', formData, {
+      // Envia o arquivo — backend responde 202 IMEDIATAMENTE
+      await api.post('/spreadsheets/import/generic', formData, {
         onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          if (percentCompleted < 100) {
-            setExtractionProgress(percentCompleted / 2);
-            setExtractionStep(`Enviando arquivo: ${percentCompleted}%`);
-          } else {
-            setExtractionStep('Arquivo recebido. Processando em background...');
-          }
+          const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setExtractionProgress(Math.min(50, pct / 2));
+          setExtractionStep('Enviando: ' + pct + '%');
         }
       });
 
-      // Aguarda evento do socket (já registrado antes do upload) ou usa fallback
-      let data;
-      if (donePromise) {
-        data = await donePromise;
+      // ── Fecha o modal IMEDIATAMENTE ──────────────────────────────────
+      // Não espera o socket — o backend processa em background
+      toast.info('⏳ Importação iniciada! Processando em background...', { autoClose: 4000 });
+      onClose();
+
+      // ── Escuta o resultado em background (fora do modal) ─────────────
+      if (socket) {
+        const cleanup = () => socket.off('spreadsheet-done', handler);
+        const timeoutId = setTimeout(() => {
+          cleanup();
+          toast.warning('⚠️ Import: sem confirmação em 10 min. Verifique os dados.', { autoClose: 8000 });
+          queryClient.invalidateQueries(['debtors-summary']);
+          queryClient.invalidateQueries(['debts-by-month']);
+          queryClient.invalidateQueries(['carteira-totals']);
+        }, 10 * 60 * 1000);
+
+        const handler = (result) => {
+          clearTimeout(timeoutId);
+          cleanup();
+          if (result.success === false) {
+            toast.error('❌ Erro na importação: ' + (result.error || 'Falha desconhecida'));
+          } else {
+            const fmtCurrency = (v) => v != null ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-';
+            const somaInfo = result.somaCarteira != null
+              ? ' | Carteira: ' + fmtCurrency(result.somaCarteira) + ' (total c/ juros) | Principal: ' + fmtCurrency(result.somaPrincipal)
+              : '';
+            const erroInfo = (result.errors || 0) > 0 ? ' | ⚠️ Erros: ' + result.errors : '';
+            toast.success(
+              '✅ Import OK! Novas: ' + (result.created || 0) + ' | Atualizadas: ' + (result.updated || 0) + ' | Saíram: ' + (result.exitedDebtors || 0) + erroInfo + somaInfo,
+              { autoClose: 15000 }
+            );
+          }
+          if (onImportSuccess) onImportSuccess();
+          queryClient.invalidateQueries(['debtors-summary']);
+          queryClient.invalidateQueries(['debts-by-month']);
+          queryClient.invalidateQueries(['carteira-totals']);
+        };
+
+        socket.on('spreadsheet-done', handler);
       } else {
-        // Sem socket: espera 5s e usa dados do 202
-        await new Promise(r => setTimeout(r, 5000));
-        data = initData;
+        // Sem socket: atualiza os dados após 8 segundos (tempo para processar)
+        setTimeout(() => {
+          if (onImportSuccess) onImportSuccess();
+          queryClient.invalidateQueries(['debtors-summary']);
+          queryClient.invalidateQueries(['debts-by-month']);
+          queryClient.invalidateQueries(['carteira-totals']);
+        }, 8000);
       }
 
-      const fmtCurrency = (v) => v != null ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-';
-      const erroInfo = (data?.errors ?? 0) > 0 ? ` | \u26a0\ufe0f Erros: ${data.errors}` : '';
-      const somaInfo = data?.somaCarteira != null
-        ? ` | \u{1F4B0} Carteira total: ${fmtCurrency(data.somaCarteira)} (${data.countCarteira} reg)`
-        : (data?.somaImportada != null ? ` | \u{1F4B0} Batch: ${fmtCurrency(data.somaImportada)} (${data.countImportado} reg)` : '');
-
-      toast.success(`\u2705 Importação feita! Novas: ${data?.created ?? '?'} | Atualizadas: ${data?.updated ?? '?'} | Saíram: ${data?.exitedDebtors ?? 0}${erroInfo}${somaInfo}`, { autoClose: 12000 });
-
-      if (onImportSuccess) onImportSuccess();
-      queryClient.invalidateQueries(['debts-by-month']);
-      queryClient.invalidateQueries(['debtors-summary']);
-      queryClient.invalidateQueries(['carteira-totals']);
-      onClose();
     } catch (err) {
-      const errMsg = err.response?.data?.message || err.message || 'Falha ao importar o arquivo. Verifique a estrutura da planilha.';
+      const errMsg = err.response?.data?.message || err.message || 'Falha ao enviar o arquivo.';
       toast.error(errMsg);
-      console.error("Erro no import:", err);
     } finally {
       setIsExtracting(false);
       setExtractionProgress(0);
