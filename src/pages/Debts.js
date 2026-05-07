@@ -4,7 +4,7 @@ import {
   Box, Typography, Button, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
   useTheme, Grid, Card, CardContent, Divider, Chip, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip, alpha, TextField,
-  InputAdornment, Select, MenuItem, FormControl, InputLabel, Badge, Tab, Tabs,
+  InputAdornment, Select, MenuItem, FormControl, InputLabel, Badge, Tab, Tabs, Alert,
   LinearProgress, Collapse, Stack, Avatar, Pagination, CircularProgress
 } from '@mui/material';
 import {
@@ -809,6 +809,37 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
 
   return (
     <Box>
+      {/* Alerta de registros invisíveis (lead=null) */}
+      {nullLeadCount > 0 && (
+        <Alert 
+          severity="warning" 
+          sx={{ mb: 3, alignItems: 'center', borderRadius: 2 }}
+          action={
+            <Button 
+              color="inherit" 
+              size="small" 
+              variant="outlined"
+              onClick={async () => {
+                const toastId = toast.loading('Corrigindo vínculos perdidos...');
+                try {
+                  const res = await api.post('/spreadsheets/fix-null-leads');
+                  toast.update(toastId, { render: `✅ ${res.data.fixed} corrigidos. ${res.data.failed} falharam.`, type: 'success', isLoading: false, autoClose: 5000 });
+                  queryClient.invalidateQueries(['carteira-totals']);
+                  queryClient.invalidateQueries(['debtors-summary']);
+                } catch (e) {
+                  toast.update(toastId, { render: 'Erro ao corrigir: ' + (e.response?.data?.message || e.message), type: 'error', isLoading: false, autoClose: 5000 });
+                }
+              }}
+            >
+              CORRIGIR AGORA
+            </Button>
+          }
+        >
+          <strong>Atenção:</strong> Encontramos {nullLeadCount} dívidas (R$ {fmt(nullLeadSoma)}) no banco de dados sem cliente vinculado. 
+          Esses valores não aparecem na lista abaixo, mas afetam os totais. Clique em CORRIGIR AGORA para vincular.
+        </Alert>
+      )}
+
       {/* KPIs da aba */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {[
