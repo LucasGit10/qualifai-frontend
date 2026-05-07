@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import {
   Box, Typography, Button, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -1063,6 +1063,19 @@ export default function Debts() {
     }
   };
 
+  const handleFixNullLeads = async () => {
+    try {
+      const { data } = await api.post('/spreadsheets/fix-null-leads');
+      const fmt = (v) => v?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) ?? '-';
+      toast.success(`Corrigidos: ${data.fixed} | Valor recuperado: ${fmt(data.totalValorRecuperado)} | Total no banco: ${fmt(data.totalNoBank)}`, { autoClose: 12000 });
+      refetch();
+      queryClient.invalidateQueries(['debts-by-month']);
+      queryClient.invalidateQueries(['debtors-summary']);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Erro ao corrigir leads nulos.');
+    }
+  };
+
   const handleExportList = async () => {
     setIsExportingList(true);
     try {
@@ -1122,6 +1135,14 @@ export default function Debts() {
             sx={{ borderRadius: 2, fontWeight: 700, borderColor: alpha(theme.palette.error.main, 0.4) }}
           >
             Limpar Base
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={handleFixNullLeads}
+            startIcon={<RefreshIcon />}
+            sx={{ borderRadius: 2, fontWeight: 700, borderColor: alpha('#f59e0b', 0.6), color: '#f59e0b' }}
+          >
+            Corrigir Leads
           </Button>
           <Button
             variant="outlined"
