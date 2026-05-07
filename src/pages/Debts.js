@@ -276,7 +276,10 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
         }
       });
       
-      toast.success(`Importação feita! Novas dívidas: ${data.created} | Atualizadas: ${data.updated} | Duplicadas ignoradas: ${data.skippedDuplicates || 0} | Novos devedores: ${data.newDebtors || 0} | Saíram: ${data.exitedDebtors || 0}`);
+      const fmt = (v) => v?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) ?? '-';
+      const erroInfo = data.errors > 0 ? ` | ⚠️ Linhas com erro: ${data.errors}` : '';
+      const somaInfo = data.somaImportada != null ? ` | 💰 Soma importada: ${fmt(data.somaImportada)} (${data.countImportado} reg)` : '';
+      toast.success(`✅ Importação feita! Novas: ${data.created} | Atualizadas: ${data.updated} | Saíram: ${data.exitedDebtors || 0}${erroInfo}${somaInfo}`, { autoClose: 10000 });
       
       if (onImportSuccess) onImportSuccess();
       queryClient.invalidateQueries(['debts-by-month']);
