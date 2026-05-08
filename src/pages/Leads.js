@@ -12,7 +12,8 @@ import {
   Add as AddIcon, Chat as ChatIcon, Edit as EditIcon, Delete as DeleteIcon, Sync as SyncIcon,
   Email as EmailIcon, GetApp as GetAppIcon, Search as SearchIcon, AddCircleOutline as AddCircleOutlineIcon,
   FileUpload as FileUploadIcon, Send as SendIcon, MoreVert as MoreVertIcon, Close as CloseIcon, FilterList as FilterListIcon,
-  Business as BusinessIcon, RequestQuote as RequestQuoteIcon
+  Business as BusinessIcon, RequestQuote as RequestQuoteIcon, Image as ImageIcon, VideoLibrary as VideoLibraryIcon,
+  Description as DescriptionIcon
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useForm, Controller } from 'react-hook-form';
@@ -61,6 +62,18 @@ const TemplateSelectionModal = ({ open, onClose, onConfirm, leadsToContact, isLo
 
   const selectedTemplate = templates?.find(t => t._id === selectedTemplateId);
   const hasMediaHeader = selectedTemplate?.components?.some(c => c.type === 'HEADER' && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(c.format));
+  const getMediaIcon = (format) => {
+    switch (format) {
+      case 'IMAGE':
+        return <ImageIcon sx={{ fontSize: 18 }} />;
+      case 'VIDEO':
+        return <VideoLibraryIcon sx={{ fontSize: 18 }} />;
+      case 'DOCUMENT':
+        return <DescriptionIcon sx={{ fontSize: 18 }} />;
+      default:
+        return null;
+    }
+  };
   const mediaFormat = selectedTemplate?.components?.find(c => c.type === 'HEADER' && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(c.format))?.format;
 
   const handleConfirm = () => {
@@ -104,21 +117,50 @@ const TemplateSelectionModal = ({ open, onClose, onConfirm, leadsToContact, isLo
             <InputLabel>{t('leadsPage.templateModal.templateLabel')}</InputLabel>
             <Select value={selectedTemplateId} label={t('leadsPage.templateModal.templateLabel')} onChange={(e) => setSelectedTemplateId(e.target.value)} sx={selectStyles}>
               {isLoadingTemplates && <MenuItem value=""><em>{t('leadsPage.templateModal.loading')}</em></MenuItem>}
-              {templates?.map(template => (<MenuItem key={template._id} value={template._id}>{template.name}</MenuItem>))}
+              {templates?.map(template => {
+                const header = template.components?.find(c => c.type === 'HEADER' && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(c.format));
+                return (
+                  <MenuItem key={template._id} value={template._id}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: 1.5 }}>
+                      <Typography variant="body2" noWrap sx={{ flex: 1 }}>
+                        {template.name}
+                      </Typography>
+                      {header && (
+                        <Chip
+                          size="small"
+                          icon={getMediaIcon(header.format)}
+                          label={header.format}
+                          variant="outlined"
+                          sx={{ flexShrink: 0 }}
+                        />
+                      )}
+                    </Box>
+                  </MenuItem>
+                );
+              })}
             </Select>
           </FormControl>
 
           {hasMediaHeader && (
-            <TextField
-              fullWidth
-              label={`URL do(a) ${mediaFormat || 'Mídia'}`}
-              placeholder="https://exemplo.com/imagem.jpg"
-              value={mediaUrl}
-              onChange={(e) => setMediaUrl(e.target.value)}
-              helperText={`Este template exige um(a) ${mediaFormat}. Insira o link público do arquivo.`}
-              variant="outlined"
-              sx={selectStyles}
-            />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Chip
+                icon={getMediaIcon(mediaFormat)}
+                label={`Este template usa HEADER de ${mediaFormat}`}
+                color="primary"
+                variant="outlined"
+                sx={{ alignSelf: 'flex-start' }}
+              />
+              <TextField
+                fullWidth
+                label={`URL do(a) ${mediaFormat || 'M?dia'}`}
+                placeholder="https://exemplo.com/imagem.jpg"
+                value={mediaUrl}
+                onChange={(e) => setMediaUrl(e.target.value)}
+                helperText={`Este template exige um(a) ${mediaFormat}. Insira o link p?blico do arquivo.`}
+                variant="outlined"
+                sx={selectStyles}
+              />
+            </Box>
           )}
         </Box>
       </DialogContent>

@@ -340,9 +340,9 @@ export const TemplateFormDialog = ({ open, onClose, onSubmit, template, isLoadin
                               <MenuItem value="NONE">{t('templatesPage.formDialog.headerNone')}</MenuItem>
                               <MenuItem value="TEXT">{t('templatesPage.formDialog.headerText')}</MenuItem>
                               
-                              {/* <MenuItem value="IMAGE">{t('templatesPage.formDialog.headerImage', 'Imagem')}</MenuItem>
-                              <MenuItem value="VIDEO">{t('templatesPage.formDialog.headerVideo', 'Vídeo')}</MenuItem>
-                              <MenuItem value="DOCUMENT">{t('templatesPage.formDialog.headerDocument', 'Documento')}</MenuItem> */}
+                              <MenuItem value="IMAGE">{t('templatesPage.formDialog.headerImage', 'Imagem')}</MenuItem>
+                              <MenuItem value="VIDEO">{t('templatesPage.formDialog.headerVideo', 'V?deo')}</MenuItem>
+                              <MenuItem value="DOCUMENT">{t('templatesPage.formDialog.headerDocument', 'Documento')}</MenuItem>
 
                             </Select>
                           </FormControl>
