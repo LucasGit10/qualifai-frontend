@@ -63,6 +63,7 @@ export const SocketProvider = ({ children }) => {
 
             // Entra na sala individual do usuário para receber notificações privadas
             newSocket.emit('join-room', user._id);
+            newSocket.emit('join-room', `user-${user._id}`);
 
             newSocket.emit('test_connection', {
                 userId: user._id,

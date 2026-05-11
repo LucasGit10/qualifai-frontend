@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { 
   Box, Typography, TextField, List, ListItemText, CircularProgress, Divider, alpha, 
-  InputAdornment, Tooltip, useTheme, keyframes, Button, DialogTitle, DialogContent, 
+  InputAdornment, Tooltip, useTheme, keyframes, Button, DialogTitle, DialogContent, Badge,
   DialogActions, IconButton, Chip, ListItemAvatar, Avatar, ListItemButton
 } from '@mui/material';
 import { 
@@ -15,6 +15,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useTranslation, Trans } from 'react-i18next';
 import { toast } from 'react-toastify';
+import { useSocket } from 'contexts/SocketContext';
 
 // ALTERAÇÃO: Importando nossos componentes de UI
 import { StyledDialog } from '../ui/StyledDialog';
@@ -39,6 +40,9 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
   const lastMessage = conversation.messages[conversation.messages.length - 1];
   const hasNotes = conversation.notes && conversation.notes.length > 0;
   const isAiActive = conversation.aiEnabled !== false;
+  const unreadCount = conversation.unreadCount || 0;
+  const readCount = conversation.readCount || 0;
+  const hasUnread = unreadCount > 0;
 
   // ALTERAÇÃO: Estilos de status adaptados para o fundo de vidro
   const getStatusStyles = () => {
@@ -70,8 +74,8 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
         transition: 'background-color 0.2s, opacity 0.3s',
         ...getStatusStyles(),
         backgroundColor: theme.palette.mode === 'dark' 
-          ? (isSelected ? alpha(theme.palette.primary.main, 0.25) : 'rgba(255, 255, 255, 0.05)')
-          : (isSelected ? alpha(theme.palette.primary.main, 0.15) : 'rgba(255, 255, 255, 0.8)'),
+          ? (isSelected ? alpha(theme.palette.primary.main, 0.25) : hasUnread ? alpha(theme.palette.info.main, 0.16) : 'rgba(255, 255, 255, 0.05)')
+          : (isSelected ? alpha(theme.palette.primary.main, 0.15) : hasUnread ? alpha(theme.palette.info.main, 0.12) : 'rgba(255, 255, 255, 0.8)'),
         '&:hover': {
           backgroundColor: theme.palette.mode === 'dark' 
             ? 'rgba(255, 255, 255, 0.1)' 
@@ -90,16 +94,23 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
       }}
     >
       <ListItemAvatar sx={{ mt: 0.5 }}>
-        <Avatar sx={{ background: theme.palette.custom?.gradients?.button }}>
-            {conversation.lead?.name ? conversation.lead.name.charAt(0).toUpperCase() : '?'}
-        </Avatar>
+        <Badge
+          color="error"
+          overlap="circular"
+          badgeContent={hasUnread ? unreadCount : null}
+          max={99}
+        >
+          <Avatar sx={{ background: theme.palette.custom?.gradients?.button }}>
+              {conversation.lead?.name ? conversation.lead.name.charAt(0).toUpperCase() : '?'}
+          </Avatar>
+        </Badge>
       </ListItemAvatar>
       <ListItemText
         disableTypography
         primary={
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={0.5}>
             <Box display="flex" alignItems="center" gap={0.5} sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle1" noWrap fontWeight="bold" color={theme.palette.text.primary}>
+              <Typography variant="subtitle1" noWrap fontWeight={hasUnread ? 800 : 'bold'} color={theme.palette.text.primary}>
                 {conversation.lead?.name || 'Lead Desconhecido'}
               </Typography>
               <Tooltip title={isAiActive ? "IA Ativa" : "IA Desativada"}>
@@ -150,7 +161,13 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
               <Typography variant="body2" color={theme.palette.text.secondary} noWrap sx={{ flex: 1 }}>
                 {lastMessage?.content || 'Nenhuma mensagem ainda'}
               </Typography>
-              <Box display="flex" gap={1} ml={1}>
+              <Box display="flex" gap={1} ml={1} alignItems="center">
+                {hasUnread && (
+                  <Chip label={`${unreadCount} nova${unreadCount > 1 ? 's' : ''}`} size="small" color="error" />
+                )}
+                {readCount > 0 && (
+                  <Chip label={`${readCount} lida${readCount > 1 ? 's' : ''}`} size="small" color="success" variant="outlined" />
+                )}
                 {hasNotes && <Tooltip title="Possui notas"><NoteIcon sx={{ fontSize: 16, color: 'warning.main' }} /></Tooltip>}
                 <Tooltip title="Excluir Conversa">
                   <IconButton edge="end" size="small" aria-label="delete" onClick={(e) => onDelete(conversation._id, e)}>
@@ -170,6 +187,7 @@ export default function ConversationList({ channel, selectedConversationId, onSe
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const theme = useTheme();
+  const { socket } = useSocket();
   const [filter, setFilter] = useState('');
   const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
   const { data, isLoading, refetch } = useQuery(
@@ -182,6 +200,23 @@ export default function ConversationList({ channel, selectedConversationId, onSe
       return api.get(`/conversations?${params.toString()}`).then(res => res.data);
     }
   );
+  const totalUnread = data?.totalUnread || 0;
+
+  useEffect(() => {
+    if (!socket) return undefined;
+
+    const handleConversationEvent = () => {
+      queryClient.invalidateQueries(['conversationsList', channel]);
+    };
+
+    socket.on('conversation_updated', handleConversationEvent);
+    socket.on('conversation_escalated', handleConversationEvent);
+
+    return () => {
+      socket.off('conversation_updated', handleConversationEvent);
+      socket.off('conversation_escalated', handleConversationEvent);
+    };
+  }, [socket, queryClient, channel]);
 
   const deleteAllConversationsMutation = useMutation(
     () => api.delete('/conversations/actions/delete-all'),
@@ -213,9 +248,12 @@ export default function ConversationList({ channel, selectedConversationId, onSe
           borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
           backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)',
         }}>
-          <Typography variant="h6" fontWeight="bold" gutterBottom color={theme.palette.text.primary}>
-            Conversas
-          </Typography>
+          <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
+            <Typography variant="h6" fontWeight="bold" gutterBottom color={theme.palette.text.primary}>
+              Conversas
+            </Typography>
+            {totalUnread > 0 && <Chip label={`${totalUnread} novas`} size="small" color="error" />}
+          </Box>
           <TextField 
             fullWidth 
             variant="outlined" 

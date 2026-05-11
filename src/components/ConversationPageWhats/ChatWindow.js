@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import { 
     Box, Typography, CircularProgress, useTheme, IconButton, Avatar, Paper, 
     TextField, InputAdornment, Select, MenuItem, FormControl, InputLabel, 
-    FormControlLabel, Switch, Tooltip, Button, DialogActions, DialogContent, DialogTitle, Chip, alpha
+    FormControlLabel, Switch, Tooltip, Button, DialogActions, DialogContent, DialogTitle, Chip
 } from '@mui/material';
 import { 
     ArrowBack as ArrowBackIcon, Send as SendIcon, Description as DescriptionIcon, 
@@ -84,6 +84,22 @@ export default function ChatWindow({ conversationId, onClose, onDelete }) {
     () => api.get(`/conversations/${conversationId}`).then(res => res.data),
     { enabled: !!conversationId, refetchInterval: 3000 } // Aumenta a frequência de atualização do chat aberto
   );
+
+  const { mutate: markAsRead, isLoading: isMarkingAsRead } = useMutation(
+    () => api.put(`/conversations/${conversationId}/read`),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('conversationsList');
+        queryClient.invalidateQueries(['conversation', conversationId]);
+      },
+    }
+  );
+
+  useEffect(() => {
+    if (conversationId && data?.conversation?.unreadCount > 0 && !isMarkingAsRead) {
+      markAsRead();
+    }
+  }, [conversationId, data?.conversation?.unreadCount, isMarkingAsRead, markAsRead]);
 
   const sendMessageMutation = useMutation(
     async ({ messagePayload, provider }) => {

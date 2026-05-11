@@ -214,8 +214,16 @@ export default function Conversations({ channel }) {
         queryClient.invalidateQueries(['conversations', page]);
         if (selectedConversation) queryClient.invalidateQueries(['conversation', selectedConversation]);
     };
+    const handleConversationUpdate = () => {
+        queryClient.invalidateQueries(['conversations', page]);
+        if (selectedConversation) queryClient.invalidateQueries(['conversation', selectedConversation]);
+    };
     socketService.on('conversation_escalated', handleEscalation);
-    return () => socketService.off('conversation_escalated', handleEscalation);
+    socketService.on('conversation_updated', handleConversationUpdate);
+    return () => {
+      socketService.off('conversation_escalated', handleEscalation);
+      socketService.off('conversation_updated', handleConversationUpdate);
+    };
   }, [queryClient, selectedConversation, isGuestMode, user]);
 
   const { data: apiConversationsData, isLoading: apiIsLoading, refetch } = useQuery(
@@ -234,6 +242,7 @@ export default function Conversations({ channel }) {
 
   const conversationsData = apiConversationsData;
   const isLoading = apiIsLoading;
+  const totalUnread = conversationsData?.totalUnread || 0;
 
   const { data: conversationDetail, isLoading: isLoadingDetail } = useQuery(
     ['conversation', selectedConversation],
@@ -369,6 +378,16 @@ export default function Conversations({ channel }) {
     }
   );
 
+  const markConversationReadMutation = useMutation(
+    (conversationId) => api.put(`/conversations/${conversationId}/read`),
+    {
+      onSuccess: (_data, conversationId) => {
+        queryClient.invalidateQueries(['conversations', page]);
+        queryClient.invalidateQueries(['conversation', conversationId]);
+      }
+    }
+  );
+
   const handleToggleAI = (event) => {
     if (!selectedConversation) return;
     const enabled = event.target.checked;
@@ -379,6 +398,7 @@ export default function Conversations({ channel }) {
     if (isGuestMode) { openModal(); return; }
     setSelectedConversation(conversationId);
     setDialogOpen(true);
+    markConversationReadMutation.mutate(conversationId);
   };
 
   const handleCloseDialog = () => {
@@ -524,6 +544,14 @@ export default function Conversations({ channel }) {
             {isRefreshing ? <CircularProgress size={24} color="inherit" /> : <RefreshIcon />}
           </IconButton>
         </Tooltip>
+        {totalUnread > 0 && (
+          <Chip
+            label={`${totalUnread} novas`}
+            color="error"
+            variant="filled"
+            sx={{ fontWeight: 700 }}
+          />
+        )}
         <Tooltip title="Apagar todas as conversas">
           <span>
             <Button
@@ -736,6 +764,24 @@ export default function Conversations({ channel }) {
                             backgroundColor: theme.palette.error.main,
                            } : {}}
                         />
+
+                        {(conversation.unreadCount || 0) > 0 && (
+                          <Chip
+                            label={`${conversation.unreadCount} nova${conversation.unreadCount > 1 ? 's' : ''}`}
+                            size="small"
+                            color="error"
+                            sx={{ fontWeight: 700 }}
+                          />
+                        )}
+
+                        {(conversation.readCount || 0) > 0 && (
+                          <Chip
+                            label={`${conversation.readCount} lida${conversation.readCount > 1 ? 's' : ''}`}
+                            size="small"
+                            color="success"
+                            variant="outlined"
+                          />
+                        )}
 
                         {isAIActive(conversation) ? (
                             <Box sx={{
