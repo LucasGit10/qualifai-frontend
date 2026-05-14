@@ -257,6 +257,7 @@ export default function ConversationList({ channel, teamMemberId, selectedConver
     }
   );
 
+  // eslint-disable-next-line no-unused-vars
   const assignLegacyToMasterMutation = useMutation(
     () => api.post('/conversations/actions/assign-legacy-to-master'),
     {
@@ -320,15 +321,6 @@ export default function ConversationList({ channel, teamMemberId, selectedConver
             >
               Atualizar
             </Button>
-            {!teamMemberId && (
-              <Button
-                size="small"
-                onClick={() => assignLegacyToMasterMutation.mutate()}
-                disabled={assignLegacyToMasterMutation.isLoading}
-              >
-                {assignLegacyToMasterMutation.isLoading ? 'Migrando...' : 'Migrar antigas'}
-              </Button>
-            )}
             <Button 
               size="small" 
               color="error" 
@@ -357,6 +349,23 @@ export default function ConversationList({ channel, teamMemberId, selectedConver
             overflowY: 'auto', 
             p: 0,
             backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.5)',
+            scrollbarWidth: 'thin',
+            scrollbarColor: `${alpha(theme.palette.primary.main, 0.65)} transparent`,
+            '&::-webkit-scrollbar': {
+              width: 9,
+            },
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.05 : 0.07),
+              borderRadius: 999,
+            },
+            '&::-webkit-scrollbar-thumb': {
+              borderRadius: 999,
+              background: `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.75)}, ${alpha(theme.palette.secondary.main, 0.6)})`,
+              border: `2px solid ${alpha(theme.palette.background.paper, 0.65)}`,
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+            },
           }}>
             {filteredConversations.map((conv) => (
               <React.Fragment key={conv._id}>

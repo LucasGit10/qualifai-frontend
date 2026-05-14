@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query';
 import {
   Avatar, Box, IconButton, Paper, TextField, Typography, Tooltip, useTheme, alpha,
   Grid, Pagination, Chip, Badge, Button, CircularProgress, DialogActions,
-  DialogContent, DialogTitle, Skeleton, Dialog
+  DialogContent, DialogTitle, Skeleton, Dialog, GlobalStyles
 } from '@mui/material';
 import ChatIcon from '@mui/icons-material/Chat';
 import PersonIcon from '@mui/icons-material/Person';
@@ -267,6 +267,7 @@ export default function Conversations({ channel, teamMemberId }) {
 	    }
 	  );
 
+	  // eslint-disable-next-line no-unused-vars
 	  const assignLegacyToMasterMutation = useMutation(
 	    () => api.post('/conversations/actions/assign-legacy-to-master'),
 	    {
@@ -526,6 +527,26 @@ export default function Conversations({ channel, teamMemberId }) {
       minHeight: '100vh',
       backgroundColor: 'background.default',
     }}>
+      <GlobalStyles styles={{
+        'body::-webkit-scrollbar': { width: 10 },
+        'body::-webkit-scrollbar-track': {
+          background: theme.palette.mode === 'dark'
+            ? alpha(theme.palette.common.white, 0.04)
+            : alpha(theme.palette.primary.main, 0.06),
+        },
+        'body::-webkit-scrollbar-thumb': {
+          background: `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.75)}, ${alpha(theme.palette.secondary.main, 0.65)})`,
+          borderRadius: 999,
+          border: `2px solid ${theme.palette.background.default}`,
+        },
+        'body::-webkit-scrollbar-thumb:hover': {
+          background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+        },
+        body: {
+          scrollbarColor: `${alpha(theme.palette.primary.main, 0.75)} ${alpha(theme.palette.primary.main, 0.08)}`,
+          scrollbarWidth: 'thin',
+        },
+      }} />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
         <TextField
           label="Filtrar por nome, empresa ou conteúdo da conversa..."
@@ -568,23 +589,6 @@ export default function Conversations({ channel, teamMemberId }) {
 	            variant="filled"
 	            sx={{ fontWeight: 700 }}
 	          />
-	        )}
-	        {!teamMemberId && (
-	          <Tooltip title="Associar conversas antigas sem dono ao usuario mestre">
-	            <span>
-	              <Button
-	                onClick={() => {
-	                  if (isGuestMode) { openModal(); return; }
-	                  assignLegacyToMasterMutation.mutate();
-	                }}
-	                color="primary"
-	                variant="outlined"
-	                disabled={assignLegacyToMasterMutation.isLoading || isGuestMode}
-	              >
-	                {assignLegacyToMasterMutation.isLoading ? 'Migrando...' : 'Migrar antigas para mestre'}
-	              </Button>
-	            </span>
-	          </Tooltip>
 	        )}
 	        <Tooltip title="Apagar todas as conversas">
           <span>
