@@ -6,14 +6,14 @@ import {
   Box, Typography, Button, Paper, DialogTitle, DialogContent, DialogActions,
   TextField, FormControl, InputLabel, Select, MenuItem, Chip, IconButton, Tooltip, Grid,
   CircularProgress, Card, CardContent, InputAdornment, useTheme, Menu, ListItemIcon, ListItemText,
-  FormControlLabel, Switch, useMediaQuery, Badge, Skeleton, Pagination, Divider
+  FormControlLabel, Switch, useMediaQuery, Badge, Skeleton, Pagination, Divider, Autocomplete
 } from '@mui/material';
 import {
   Add as AddIcon, Chat as ChatIcon, Edit as EditIcon, Delete as DeleteIcon, Sync as SyncIcon,
   Email as EmailIcon, GetApp as GetAppIcon, Search as SearchIcon, AddCircleOutline as AddCircleOutlineIcon,
   FileUpload as FileUploadIcon, Send as SendIcon, MoreVert as MoreVertIcon, Close as CloseIcon, FilterList as FilterListIcon,
   Business as BusinessIcon, RequestQuote as RequestQuoteIcon, Image as ImageIcon, VideoLibrary as VideoLibraryIcon,
-  Description as DescriptionIcon
+  Description as DescriptionIcon, LocalOffer as LocalOfferIcon
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useForm, Controller } from 'react-hook-form';
@@ -50,6 +50,26 @@ const PhoneMaskAdapter = forwardRef(function PhoneMaskAdapter(props, ref) {
     />
   );
 });
+
+const HIDDEN_STATUSES = ['sem_resposta', 'arquivado'];
+
+const cleanOption = (value, maxLength = 80) => (
+  typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').slice(0, maxLength) : ''
+);
+
+const uniqueOptions = (values, maxLength = 80) => [
+  ...new Set((values || []).map(value => cleanOption(value, maxLength)).filter(Boolean))
+];
+
+const getOptionLabel = (value) => {
+  const normalized = cleanOption(value);
+  if (!normalized) return '';
+  return normalized
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, letter => letter.toUpperCase());
+};
+
+const getStatusTranslationKey = (status) => cleanOption(status).toLowerCase().replace(/[\s_-]/g, '');
 
 const TemplateSelectionModal = ({ open, onClose, onConfirm, leadsToContact, isLoadingConfirm }) => {
   const { t } = useTranslation();
@@ -208,17 +228,24 @@ const TemplateSelectionModal = ({ open, onClose, onConfirm, leadsToContact, isLo
   );
 };
 
-const MobileLeadCard = ({ lead, statusColor, onOpenMenu, t, transparentPaperStyle }) => (
+const MobileLeadCard = ({ lead, statusColor, onOpenMenu, getStatusLabel, transparentPaperStyle }) => (
   <Card sx={{ ...transparentPaperStyle, p: 1.5, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', height: '100%' }}>
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 0 }}>
       <Typography variant="subtitle2" component="div" fontWeight="bold" noWrap sx={{ fontSize: '0.85rem' }}>
         {lead.name}
       </Typography>
       <Chip
-        label={t(`dashboard.funnelLabels.${lead.status.toLowerCase()}`, lead.status)}
-        sx={{ backgroundColor: statusColor, color: 'white', height: 20, fontSize: '0.65rem' }}
+        label={getStatusLabel(lead.status)}
+        sx={{ backgroundColor: statusColor, color: 'white', height: 22, fontSize: '0.68rem', maxWidth: 180 }}
         size="small"
       />
+      {lead.tags?.length > 0 && (
+        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', maxWidth: 220 }}>
+          {lead.tags.slice(0, 3).map(tag => (
+            <Chip key={tag} icon={<LocalOfferIcon sx={{ fontSize: '12px !important' }} />} label={tag} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.62rem' }} />
+          ))}
+        </Box>
+      )}
       <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pt: 0.5, fontSize: '0.65rem' }}>
         <EmailIcon sx={{ fontSize: 12 }} /> {lead.email || 'N/A'}
       </Typography>
@@ -275,6 +302,7 @@ export default function PaginaLeads() {
 
   const [statusFilter, setStatusFilter] = useState('');
   const [sourceFilter, setSourceFilter] = useState('');
+  const [tagFilter, setTagFilter] = useState('');
   const [showSemRespostaStatus, setShowSemRespostaStatus] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: isMobile ? 10 : 25 });
   const [textFilter, setTextFilter] = useState(location.state?.leadName || '');
@@ -300,17 +328,20 @@ export default function PaginaLeads() {
   const { control, handleSubmit, reset, formState: { errors } } = useForm();
   const { control: emailControl, handleSubmit: handleEmailSubmit, reset: resetEmailForm, formState: { errors: emailErrors } } = useForm();
   const { data: statusEnumData, isLoading: isLoadingStatusEnum } = useQuery('leadStatusEnums', () => api.get('/leads/statuses').then(res => res.data), { staleTime: 60000, initialData: [] });
+  const { data: tagOptions = [] } = useQuery('leadTagOptions', () => api.get('/leads/tags').then(res => res.data), { staleTime: 60000, initialData: [] });
 
-  const baseStatuses = statusEnumData && Array.isArray(statusEnumData) && statusEnumData.length > 0
-    ? statusEnumData
+  const allStatuses = statusEnumData && Array.isArray(statusEnumData) && statusEnumData.length > 0
+    ? uniqueOptions(statusEnumData)
     : ['novo', 'contatado', 'em_negociacao', 'acordado', 'quitado'];
-  const availableStatuses = showSemRespostaStatus ? [...baseStatuses, 'sem_resposta', 'arquivado'] : baseStatuses;
+  const visibleStatuses = allStatuses.filter(status => !HIDDEN_STATUSES.includes(status));
+  const availableStatuses = showSemRespostaStatus ? allStatuses : visibleStatuses;
 
-  const { data: apiData, isLoading: apiIsLoading } = useQuery(['leads', paginationModel, debouncedTextFilter, statusFilter, sourceFilter], () => {
+  const { data: apiData, isLoading: apiIsLoading } = useQuery(['leads', paginationModel, debouncedTextFilter, statusFilter, sourceFilter, tagFilter], () => {
     const params = new URLSearchParams({ page: paginationModel.page + 1, limit: paginationModel.pageSize, sort: '-createdAt' });
     if (debouncedTextFilter) params.append('search', debouncedTextFilter);
     if (statusFilter) params.append('status', statusFilter);
     if (sourceFilter) params.append('source', sourceFilter);
+    if (tagFilter) params.append('tag', tagFilter);
     return api.get(`/leads?${params.toString()}`).then(res => res.data);
   }, { keepPreviousData: true, enabled: !isGuestMode });
 
@@ -334,6 +365,27 @@ export default function PaginaLeads() {
   const sendEmailMutation = useMutation(({ leadId, subject, body }) => api.post(`/leads/${leadId}/send-email`, { subject, body }), { onSuccess: () => { queryClient.invalidateQueries('conversations'); toast.success(t('leadsPage.toasts.emailSentSuccess')); handleCloseEmailDialog(); }, onError: (error) => { toast.error(error.response?.data?.message || t('leadsPage.toasts.emailSentError')); } });
   const syncAllLeadsMutation = useMutation(() => api.post('/leads/sync-all'), { onSuccess: (response) => { toast.success(t('leadsPage.toasts.syncSuccess')); queryClient.invalidateQueries(['leads', 'dashboard-stats']); }, onError: (error) => { toast.error(error.response?.data?.message || t('leadsPage.toasts.syncError')); } });
   const importFromCRMsMutation = useMutation(() => api.post('/integrations/import-from-all-crms'), { onSuccess: (response) => { const { created, skipped } = response.data; if (created > 0) { toast.success(t('leadsPage.toasts.crmImportSuccess', { created })); } else { toast.info(t('leadsPage.toasts.crmImportNoNew')); } if (skipped > 0) { toast.info(t('leadsPage.toasts.crmImportSkipped', { skipped })); } queryClient.invalidateQueries(['leads', 'dashboard-stats']); }, onError: (error) => { toast.error(error.response?.data?.message || t('leadsPage.toasts.crmImportError')); } });
+  const createStatusOptionMutation = useMutation((status) => api.post('/leads/statuses', { status }).then(res => res.data), {
+    onSuccess: (response) => queryClient.setQueryData('leadStatusEnums', response.statuses || allStatuses)
+  });
+  const createTagOptionMutation = useMutation((tag) => api.post('/leads/tags', { tag }).then(res => res.data), {
+    onSuccess: (response) => queryClient.setQueryData('leadTagOptions', response.tags || tagOptions)
+  });
+
+  const getStatusLabel = (status) => t(`dashboard.funnelLabels.${getStatusTranslationKey(status)}`, { defaultValue: getOptionLabel(status) });
+
+  const rememberStatusOption = (status) => {
+    const cleanStatus = cleanOption(status);
+    if (cleanStatus && !allStatuses.includes(cleanStatus) && !createStatusOptionMutation.isLoading) {
+      createStatusOptionMutation.mutate(cleanStatus);
+    }
+  };
+
+  const rememberTagOptions = (tags = []) => {
+    uniqueOptions(tags, 40)
+      .filter(tag => !tagOptions.includes(tag))
+      .forEach(tag => createTagOptionMutation.mutate(tag));
+  };
 
   const handleOpenDialog = (lead = null) => { 
     setEditingLead(lead); 
@@ -349,10 +401,12 @@ export default function PaginaLeads() {
         zipCode: lead.address?.zipCode || '',
         linkedin: lead.socialMedia?.linkedin || '',
         facebook: lead.socialMedia?.facebook || '',
-        instagram: lead.socialMedia?.instagram || ''
+        instagram: lead.socialMedia?.instagram || '',
+        status: lead.status || 'novo',
+        tags: lead.tags || []
       }); 
     } else { 
-      reset({ name: '', email: '', phone: '', company: '', position: '', source: 'form', taxId: '', street: '', number: '', complement: '', city: '', state: '', zipCode: '', linkedin: '', facebook: '', instagram: '' }); 
+      reset({ name: '', email: '', phone: '', company: '', position: '', source: 'form', status: visibleStatuses[0] || 'novo', tags: [], taxId: '', street: '', number: '', complement: '', city: '', state: '', zipCode: '', linkedin: '', facebook: '', instagram: '' });
     } 
     setOpen(true); 
   };
@@ -362,6 +416,8 @@ export default function PaginaLeads() {
     const leadData = { 
       ...data, 
       phone: data.phone ? ('' + data.phone).replace(/\D/g, '') : '',
+      status: cleanOption(data.status) || 'novo',
+      tags: uniqueOptions(data.tags, 40),
       taxId: data.taxId,
       address: {
         street: data.street,
@@ -377,6 +433,8 @@ export default function PaginaLeads() {
         instagram: data.instagram
       }
     }; 
+    rememberStatusOption(leadData.status);
+    rememberTagOptions(leadData.tags);
     if (editingLead) { 
       updateLeadMutation.mutate({ id: editingLead._id, data: leadData }); 
     } else { 
@@ -406,16 +464,17 @@ export default function PaginaLeads() {
   const handleStatusCardClick = (status) => { setStatusFilter(prevStatus => prevStatus === status ? '' : status); };
   const handleOpenDebtDialog = (lead) => { setSelectedLeadForDebt(lead); setDebtDialogOpen(true); };
   const handleCloseDebtDialog = () => { setDebtDialogOpen(false); setSelectedLeadForDebt(null); };
-  const handleToggleSemRespostaStatus = () => { setShowSemRespostaStatus(prev => !prev); if (statusFilter === 'sem_resposta') { setStatusFilter(''); } };
+  const handleToggleSemRespostaStatus = () => { setShowSemRespostaStatus(prev => !prev); if (HIDDEN_STATUSES.includes(statusFilter)) { setStatusFilter(''); } };
   
   const handlePageChange = (event, value) => {
     setPaginationModel(prev => ({ ...prev, page: value - 1 }));
   };
 
   const statusColorsByIndex = useMemo(() => {
-    if (!availableStatuses || availableStatuses.length === 0) { return {}; }
-    const totalStatuses = availableStatuses.length;
-    return availableStatuses.reduce((acc, status, index) => {
+    const statusesForColor = uniqueOptions([...(availableStatuses || []), ...((data?.leads || []).map(lead => lead.status))]);
+    if (!statusesForColor || statusesForColor.length === 0) { return {}; }
+    const totalStatuses = statusesForColor.length;
+    return statusesForColor.reduce((acc, status, index) => {
       if (status === 'sem_resposta') {
         acc[status] = '#ff6b6b';
       } else if (status === 'arquivado') {
@@ -426,15 +485,23 @@ export default function PaginaLeads() {
       }
       return acc;
     }, {});
-  }, [availableStatuses]);
+  }, [availableStatuses, data?.leads]);
 
   const columns = useMemo(() => [
     { field: 'name', headerName: t('leadsPage.table.name'), minWidth: 120, flex: 1 },
     { field: 'email', headerName: t('leadsPage.table.email'), minWidth: 200, flex: 1.5 },
     { field: 'company', headerName: t('leadsPage.table.company'), minWidth: 130, flex: 1 },
-    { field: 'status', headerName: t('leadsPage.table.status'), width: 130, renderCell: (params) => (<Chip label={t(`dashboard.funnelLabels.${params.value.toLowerCase()}`, params.value)} sx={{ backgroundColor: statusColorsByIndex[params.value], color: 'white' }} size="small" />) },
+    { field: 'status', headerName: t('leadsPage.table.status'), minWidth: 150, flex: 0.7, renderCell: (params) => (<Chip label={getStatusLabel(params.value)} sx={{ backgroundColor: statusColorsByIndex[params.value] || theme.palette.primary.main, color: 'white', maxWidth: '100%' }} size="small" />) },
+    { field: 'tags', headerName: 'Tags', minWidth: 180, flex: 1, sortable: false, renderCell: (params) => (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5 }}>
+        {(params.value || []).slice(0, 3).map(tag => (
+          <Chip key={tag} icon={<LocalOfferIcon sx={{ fontSize: '13px !important' }} />} label={tag} size="small" variant="outlined" sx={{ height: 24, maxWidth: 110 }} />
+        ))}
+        {(params.value || []).length > 3 && <Chip label={`+${params.value.length - 3}`} size="small" sx={{ height: 24 }} />}
+      </Box>
+    ) },
     { field: 'actions', headerName: t('leadsPage.table.actions'), width: 150, sortable: false, align: 'center', headerAlign: 'center', renderCell: (params) => (<Box><Tooltip title={t('leadsPage.table.tooltip.startIaConversation')}><IconButton size="small" onClick={() => handleStartSingleConversation(params.row)}><ChatIcon fontSize="small" /></IconButton></Tooltip><Tooltip title={t('leadsPage.table.tooltip.edit')}><IconButton size="small" onClick={() => handleOpenDialog(params.row)}><EditIcon fontSize="small" /></IconButton></Tooltip><Tooltip title={t('leadsPage.table.tooltip.delete')}><IconButton size="small" onClick={() => handleDeleteLead(params.row._id)}><DeleteIcon fontSize="small" /></IconButton></Tooltip></Box>), },
-  ], [t, statusColorsByIndex]);
+  ], [t, statusColorsByIndex, theme.palette.primary.main, getStatusLabel]);
 
   const transparentPaperStyle = useMemo(() => (theme.palette.mode === 'dark' ? { backgroundColor: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)', border: `1px solid rgba(255, 255, 255, 0.2)`, } : { backgroundColor: theme.palette.background.paper, border: `1px solid ${theme.palette.divider}`, }), [theme.palette.mode]);
   const datagridStyle = { '.MuiDataGrid-root': { border: 'none', '& .MuiDataGrid-columnHeaders': { backgroundColor: 'rgba(255, 255, 255, 0.12)', borderBottom: `1px solid ${theme.palette.divider}`, }, '& .MuiDataGrid-cell': { borderColor: theme.palette.divider, }, '& .MuiDataGrid-row': { '&.Mui-selected': { backgroundColor: 'rgba(142, 68, 173, 0.3)', }, '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.05)', } }, } };
@@ -446,7 +513,7 @@ export default function PaginaLeads() {
         <InputLabel>{t('leadsPage.filters.status')}</InputLabel>
         <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} label={t('leadsPage.filters.status')}>
           <MenuItem value=""><em>{t('leadsPage.filters.allStatuses')}</em></MenuItem>
-          {availableStatuses.map((status) => (<MenuItem key={status} value={status} sx={{ color: statusColorsByIndex[status], fontWeight: 'bold' }}>{t(`dashboard.funnelLabels.${status.toLowerCase().replace(/_/g, '')}`, status)}</MenuItem>))}
+          {availableStatuses.map((status) => (<MenuItem key={status} value={status} sx={{ color: statusColorsByIndex[status], fontWeight: 'bold' }}>{getStatusLabel(status)}</MenuItem>))}
         </Select>
       </FormControl>
       <FormControl fullWidth variant="outlined" size="small" disabled={isGuestMode}>
@@ -456,6 +523,14 @@ export default function PaginaLeads() {
           {Object.entries(t('dashboard.leadSources', { returnObjects: true })).map(([key, label]) => (<MenuItem key={key} value={key}>{label}</MenuItem>))}
         </Select>
       </FormControl>
+      <Autocomplete
+        value={tagFilter || null}
+        onChange={(_, value) => setTagFilter(value || '')}
+        options={tagOptions}
+        disabled={isGuestMode}
+        size="small"
+        renderInput={(params) => <TextField {...params} label="Tag" />}
+      />
     </>
   );
 
@@ -467,10 +542,11 @@ export default function PaginaLeads() {
           <Grid item xs={12} sm="auto"><Typography variant="h4" fontWeight="bold" sx={{ color: 'text.primary', ...(theme.palette.mode === 'dark' && { background: theme.palette.custom?.gradients?.text || 'linear-gradient(45deg, #D8B4FE 30%, #8E24AA 90%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }) }}>{t('leadsPage.title')}</Typography></Grid>
           <Grid item xs={12} sm><Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={isMobile ? 12 : 6}><TextField label={t('leadsPage.filters.searchPlaceholder')} variant="outlined" fullWidth size="small" value={textFilter} onChange={(e) => setTextFilter(e.target.value)} disabled={isGuestMode} InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>), }} /></Grid>
-            {isMobile ? (<Grid item xs={12}><Badge color="primary" variant="dot" invisible={!statusFilter && !sourceFilter}><Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setFilterDialogOpen(true)} fullWidth>{t('common.filters')}</Button></Badge></Grid>
+            {isMobile ? (<Grid item xs={12}><Badge color="primary" variant="dot" invisible={!statusFilter && !sourceFilter && !tagFilter}><Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setFilterDialogOpen(true)} fullWidth>{t('common.filters')}</Button></Badge></Grid>
             ) : (<Grid item container md={6} spacing={2}>
-              <Grid item xs={6}><FormControl fullWidth variant="outlined" size="small" disabled={isGuestMode}><InputLabel>{t('leadsPage.filters.status')}</InputLabel><Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} label={t('leadsPage.filters.status')}><MenuItem value=""><em>{t('leadsPage.filters.allStatuses')}</em></MenuItem>{availableStatuses.map((status) => (<MenuItem key={status} value={status} sx={{ color: statusColorsByIndex[status], fontWeight: 'bold' }}>{t(`dashboard.funnelLabels.${status.toLowerCase().replace(/_/g, '')}`, status)}</MenuItem>))}</Select></FormControl></Grid>
-              <Grid item xs={6}><FormControl fullWidth variant="outlined" size="small" disabled={isGuestMode}><InputLabel>{t('leadsPage.filters.source')}</InputLabel><Select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} label={t('leadsPage.filters.source')}><MenuItem value=""><em>{t('leadsPage.filters.allSources')}</em></MenuItem>{Object.entries(t('dashboard.leadSources', { returnObjects: true })).map(([key, label]) => (<MenuItem key={key} value={key}>{label}</MenuItem>))}</Select></FormControl></Grid>
+              <Grid item xs={4}><FormControl fullWidth variant="outlined" size="small" disabled={isGuestMode}><InputLabel>{t('leadsPage.filters.status')}</InputLabel><Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} label={t('leadsPage.filters.status')}><MenuItem value=""><em>{t('leadsPage.filters.allStatuses')}</em></MenuItem>{availableStatuses.map((status) => (<MenuItem key={status} value={status} sx={{ color: statusColorsByIndex[status], fontWeight: 'bold' }}>{getStatusLabel(status)}</MenuItem>))}</Select></FormControl></Grid>
+              <Grid item xs={4}><FormControl fullWidth variant="outlined" size="small" disabled={isGuestMode}><InputLabel>{t('leadsPage.filters.source')}</InputLabel><Select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} label={t('leadsPage.filters.source')}><MenuItem value=""><em>{t('leadsPage.filters.allSources')}</em></MenuItem>{Object.entries(t('dashboard.leadSources', { returnObjects: true })).map(([key, label]) => (<MenuItem key={key} value={key}>{label}</MenuItem>))}</Select></FormControl></Grid>
+              <Grid item xs={4}><Autocomplete value={tagFilter || null} onChange={(_, value) => setTagFilter(value || '')} options={tagOptions} disabled={isGuestMode} size="small" renderInput={(params) => <TextField {...params} label="Tag" />} /></Grid>
             </Grid>)}
           </Grid></Grid>
         </Grid>
@@ -488,14 +564,15 @@ export default function PaginaLeads() {
           const count = status === 'sem_resposta' ? semRespostaCount : (statusCountsMap[status] || 0);
           const statusColor = statusColorsByIndex[status];
           const isActive = statusFilter === status;
-          return (<Grid item xs={12} sm={6} lg={Math.max(2, 12 / availableStatuses.length)} key={status}><Card sx={{ ...transparentPaperStyle, borderLeft: `5px solid ${statusColor}`, cursor: 'pointer', transition: 'all 0.3s ease', backgroundColor: isActive ? statusColor : transparentPaperStyle.backgroundColor, boxShadow: isActive ? `0 6px 20px -5px ${statusColor}` : 'none', transform: isActive ? 'translateY(-3px)' : 'none', '&:hover': { transform: 'translateY(-2px)', backgroundColor: isActive ? statusColor : alpha(statusColor, 0.1) } }} onClick={() => handleStatusCardClick(status)}><CardContent><Typography variant="h6" fontWeight="bold" sx={{ color: isActive ? 'common.white' : statusColor }}>{t(`dashboard.funnelLabels.${status.toLowerCase().replace(/_/g, '')}`, status)}</Typography><Typography variant="h3" fontWeight="light" color={isActive ? 'common.white' : 'text.primary'}>{isLoadingStatusEnum || isLoading ? <CircularProgress size={20} color="inherit" /> : count}</Typography></CardContent></Card></Grid>)
+          return (<Grid item xs={12} sm={6} lg={Math.max(2, 12 / availableStatuses.length)} key={status}><Card sx={{ ...transparentPaperStyle, borderLeft: `5px solid ${statusColor}`, cursor: 'pointer', transition: 'all 0.3s ease', backgroundColor: isActive ? statusColor : transparentPaperStyle.backgroundColor, boxShadow: isActive ? `0 6px 20px -5px ${statusColor}` : 'none', transform: isActive ? 'translateY(-3px)' : 'none', '&:hover': { transform: 'translateY(-2px)', backgroundColor: isActive ? statusColor : alpha(statusColor, 0.1) } }} onClick={() => handleStatusCardClick(status)}><CardContent><Typography variant="h6" fontWeight="bold" sx={{ color: isActive ? 'common.white' : statusColor }}>{getStatusLabel(status)}</Typography><Typography variant="h3" fontWeight="light" color={isActive ? 'common.white' : 'text.primary'}>{isLoadingStatusEnum || isLoading ? <CircularProgress size={20} color="inherit" /> : count}</Typography></CardContent></Card></Grid>)
         })}
       </Grid>
       
-      {(statusFilter || sourceFilter) && (<Box display="flex" gap={1} alignItems="center" flexWrap="wrap" mb={2}>
+      {(statusFilter || sourceFilter || tagFilter) && (<Box display="flex" gap={1} alignItems="center" flexWrap="wrap" mb={2}>
         <Typography variant="caption" color="text.secondary">{t('common.activeFilters')}:</Typography>
-        {statusFilter && <Chip label={t(`dashboard.funnelLabels.${statusFilter.toLowerCase().replace(/_/g, '')}`, statusFilter)} onDelete={() => setStatusFilter('')} deleteIcon={<CloseIcon style={{ color: 'inherit' }} />} sx={{ backgroundColor: statusColorsByIndex[statusFilter], color: 'common.white', fontWeight: 'bold' }} />}
+        {statusFilter && <Chip label={getStatusLabel(statusFilter)} onDelete={() => setStatusFilter('')} deleteIcon={<CloseIcon style={{ color: 'inherit' }} />} sx={{ backgroundColor: statusColorsByIndex[statusFilter], color: 'common.white', fontWeight: 'bold' }} />}
         {sourceFilter && <Chip label={t(`dashboard.leadSources.${sourceFilter}`, sourceFilter)} onDelete={() => setSourceFilter('')} deleteIcon={<CloseIcon style={{ color: 'inherit' }} />} sx={{ backgroundColor: theme.palette.secondary.main, color: 'common.white', fontWeight: 'bold' }} />}
+        {tagFilter && <Chip icon={<LocalOfferIcon />} label={tagFilter} onDelete={() => setTagFilter('')} deleteIcon={<CloseIcon style={{ color: 'inherit' }} />} sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.18), color: 'text.primary', fontWeight: 'bold' }} />}
       </Box>)}
 
       <Box component={Paper} id="tour-leads-action-bar" sx={{ ...transparentPaperStyle, p: 2, mb: 3, borderRadius: 2, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', md: 'center' }, gap: 2 }}>
@@ -540,9 +617,9 @@ export default function PaginaLeads() {
                   <Grid item xs={12} sm={6} md={3} key={lead._id}>
                     <MobileLeadCard
                       lead={lead}
-                      statusColor={statusColorsByIndex[lead.status]}
+                      statusColor={statusColorsByIndex[lead.status] || theme.palette.primary.main}
                       onOpenMenu={handleOpenRowMenu}
-                      t={t}
+                      getStatusLabel={getStatusLabel}
                       transparentPaperStyle={transparentPaperStyle}
                     />
                   </Grid>
@@ -588,6 +665,31 @@ export default function PaginaLeads() {
             <Controller name="company" control={control} rules={{ required: t('leadsPage.validation.companyRequired') }} render={({ field }) => <TextField {...field} label={t('leadsPage.leadModal.companyLabel')} error={!!errors.company} helperText={errors.company?.message} fullWidth />} />
             <Controller name="position" control={control} render={({ field }) => <TextField {...field} label={t('leadsPage.leadModal.positionLabel')} fullWidth />} />
             <Controller name="source" control={control} defaultValue="form" rules={{ required: t('leadsPage.validation.sourceRequired') }} render={({ field }) => (<FormControl fullWidth error={!!errors.source}><InputLabel>{t('leadsPage.leadModal.sourceLabel')}</InputLabel><Select {...field} label={t('leadsPage.leadModal.sourceLabel')} sx={{ '& fieldset': { borderColor: theme.palette.divider }, '& .MuiSvgIcon-root': { color: 'text.secondary' } }}>{Object.entries(t('dashboard.leadSources', { returnObjects: true })).map(([key, label]) => (<MenuItem key={key} value={key}>{label}</MenuItem>))}</Select></FormControl>)} />
+            <Controller name="status" control={control} rules={{ required: 'Status e obrigatorio' }} render={({ field }) => (
+              <Autocomplete
+                freeSolo
+                value={field.value || ''}
+                onChange={(_, value) => { const nextValue = cleanOption(value); field.onChange(nextValue); rememberStatusOption(nextValue); }}
+                onInputChange={(_, value) => field.onChange(value)}
+                options={allStatuses}
+                getOptionLabel={(option) => getStatusLabel(option)}
+                renderInput={(params) => <TextField {...params} label="Status" error={!!errors.status} helperText={errors.status?.message} fullWidth />}
+              />
+            )} />
+            <Controller name="tags" control={control} render={({ field }) => (
+              <Autocomplete
+                multiple
+                freeSolo
+                filterSelectedOptions
+                value={field.value || []}
+                onChange={(_, value) => { const tags = uniqueOptions(value, 40); field.onChange(tags); rememberTagOptions(tags); }}
+                options={tagOptions}
+                renderTags={(value, getTagProps) => value.map((option, index) => (
+                  <Chip {...getTagProps({ index })} key={option} icon={<LocalOfferIcon />} label={option} size="small" />
+                ))}
+                renderInput={(params) => <TextField {...params} label="Tags" fullWidth />}
+              />
+            )} />
             
             <Divider sx={{ gridColumn: '1 / -1', my: 1 }} />
             <Typography variant="subtitle2" sx={{ gridColumn: '1 / -1' }}>Informações Pessoais e Endereço</Typography>
