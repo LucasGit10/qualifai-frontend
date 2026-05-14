@@ -15,7 +15,7 @@ import ConversionModal from 'components/Showcase/ConversionModal';
 import TopBar from './TopBar';
 import Sidebar from './Sidebar';
 import SupportDialog from './SupportDialog';
-import { Instagram as InstagramIcon } from '@mui/icons-material';
+import { Chat as ChatIcon, Instagram as InstagramIcon } from '@mui/icons-material';
 
 import AnimatedBackground from './AnimatedBackground';
 import StaticBackground from './StaticBackground';
@@ -48,10 +48,29 @@ export default function Layout({ toggleColorMode }) {
   
   const { itensMenu, canAccess: hookCanAccess } = useMenuItems(user, null, plan); 
   
+  const { data: teamMembersData } = useQuery(
+    'teamMembersForMenu',
+    () => api.get('/manager/users').then(res => res.data),
+    { enabled: isAuthenticated && ['manager', 'admin'].includes(user?.role) && plan !== 'guest' }
+  );
+
   const itensMenuCompletos = useMemo(() => {
     const isAdmin = user?.role === 'admin';
+    const activeTeamMembers = (teamMembersData?.users || []).filter(member => member.isActive);
+    let menuComConversas = [...itensMenu];
+    const baseConversationsIndex = menuComConversas.findIndex(item => item.tKey === 'layout.menuItems.conversations');
+
+    if (baseConversationsIndex !== -1 && activeTeamMembers.length > 0) {
+      const memberItems = activeTeamMembers.map(member => ({
+        tKey: `layout.menuItems.teamConversation.${member._id}`,
+        texto: `Conversas - ${member.name}`,
+        path: `/app/conversations/team/${member._id}`,
+        icone: <ChatIcon />,
+      }));
+      menuComConversas.splice(baseConversationsIndex + 1, 0, ...memberItems);
+    }
     
-    if (!isAdmin) return itensMenu;
+    if (!isAdmin) return menuComConversas;
 
     const instagramConversationsItem = {
       tKey: 'layout.menuItems.instagramConversations',
@@ -60,7 +79,7 @@ export default function Layout({ toggleColorMode }) {
       icone: <InstagramIcon />,
     };
 
-    const menuComInstagram = [...itensMenu];
+    const menuComInstagram = [...menuComConversas];
     const conversationsIndex = menuComInstagram.findIndex(item => item.tKey === 'layout.menuItems.conversations');
     
     if (conversationsIndex !== -1) {
@@ -70,7 +89,7 @@ export default function Layout({ toggleColorMode }) {
     }
 
     return menuComInstagram;
-  }, [itensMenu, t, user?.role]);
+  }, [itensMenu, t, user?.role, teamMembersData?.users]);
   const showcaseContextValue = useMemo(() => {
     const isGuestMode = !isAuthenticated || plan === 'guest';
     
@@ -99,7 +118,12 @@ export default function Layout({ toggleColorMode }) {
     }
   }, [isAuthenticated, updateUser]);
 
-  const tituloDaPagina = useMemo(() => itensMenuCompletos.find(item => location.pathname.startsWith(item.path))?.texto || t('Dashboard'), [location.pathname, itensMenuCompletos, t]);
+  const tituloDaPagina = useMemo(() => {
+    const matchingItem = [...itensMenuCompletos]
+      .sort((a, b) => b.path.length - a.path.length)
+      .find(item => location.pathname === item.path || location.pathname.startsWith(item.path + '/'));
+    return matchingItem?.texto || t('Dashboard');
+  }, [location.pathname, itensMenuCompletos, t]);
   const larguraAtualDrawer = menuMinimizado ? LARGURA_MENU_MINIMIZADO : LARGURA_MENU;
 
   return (

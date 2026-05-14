@@ -8,7 +8,7 @@ import api from 'services/api';
 import { toast } from 'react-toastify';
 import { useTranslation } from 'react-i18next';
 
-export default function ConversationPageWhats() {
+export default function ConversationPageWhats({ teamMemberId }) {
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const queryClient = useQueryClient();
   const { t } = useTranslation();
@@ -55,6 +55,7 @@ export default function ConversationPageWhats() {
           }}
         >
           <ConversationList 
+            teamMemberId={teamMemberId}
             selectedConversationId={selectedConversationId} 
             onSelectConversation={setSelectedConversationId}
             onDeleteConversation={handleDeleteConversation}

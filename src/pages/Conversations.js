@@ -185,7 +185,7 @@ const EmptyState = ({ message, onClearFilters }) => {
   );
 };
 
-export default function Conversations({ channel }) {
+export default function Conversations({ channel, teamMemberId }) {
   const { t } = useTranslation();
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -227,13 +227,18 @@ export default function Conversations({ channel }) {
   }, [queryClient, selectedConversation, isGuestMode, user]);
 
   const { data: apiConversationsData, isLoading: apiIsLoading, refetch } = useQuery(
-    ['conversations', page, channel], 
+	    ['conversations', page, channel, teamMemberId],
     async () => {
       if (USE_MOCKS) return MOCK_CONVERSATIONS;
       const params = new URLSearchParams({ page });
-      if (channel) {
-        params.append('channel', channel);
-      }
+	      if (channel) {
+	        params.append('channel', channel);
+	      }
+	      if (teamMemberId) {
+	        params.append('teamMemberId', teamMemberId);
+	      } else {
+	        params.append('owner', 'master');
+	      }
       const res = await api.get(`/conversations?${params.toString()}`);
       return res.data;
     },
@@ -250,8 +255,8 @@ export default function Conversations({ channel }) {
     { enabled: !!selectedConversation && !isGuestMode, refetchInterval: 5000 }
   );
   
-  const deleteAllConversationsMutation = useMutation(
-    () => api.delete('/conversations/actions/delete-all'),
+	  const deleteAllConversationsMutation = useMutation(
+	    () => api.delete('/conversations/actions/delete-all'),
     {
       onSuccess: (data) => {
         queryClient.invalidateQueries('conversations');
@@ -259,10 +264,22 @@ export default function Conversations({ channel }) {
         setConfirmDeleteDialogOpen(false);
       },
       onError: (error) => toast.error(error.response?.data?.message || t('conversationsPage.toasts.resetError'))
-    }
-  );
-  
-  const handleManualRefresh = async () => {
+	    }
+	  );
+
+	  const assignLegacyToMasterMutation = useMutation(
+	    () => api.post('/conversations/actions/assign-legacy-to-master'),
+	    {
+	      onSuccess: (response) => {
+	        queryClient.invalidateQueries(['conversations', page, channel, teamMemberId]);
+	        queryClient.invalidateQueries('conversationsList');
+	        toast.success(response.data?.message || 'Conversas antigas associadas ao usuario mestre.');
+	      },
+	      onError: (error) => toast.error(error.response?.data?.message || 'Erro ao associar conversas antigas.')
+	    }
+	  );
+
+	  const handleManualRefresh = async () => {
     setIsRefreshing(true);
     try { await refetch(); toast.success(t('conversationsPage.toasts.refreshSuccess')); } 
     catch (error) { toast.error(t('conversationsPage.toasts.refreshError')); } 
@@ -544,15 +561,32 @@ export default function Conversations({ channel }) {
             {isRefreshing ? <CircularProgress size={24} color="inherit" /> : <RefreshIcon />}
           </IconButton>
         </Tooltip>
-        {totalUnread > 0 && (
-          <Chip
-            label={`${totalUnread} novas`}
-            color="error"
-            variant="filled"
-            sx={{ fontWeight: 700 }}
-          />
-        )}
-        <Tooltip title="Apagar todas as conversas">
+	        {totalUnread > 0 && (
+	          <Chip
+	            label={`${totalUnread} novas`}
+	            color="error"
+	            variant="filled"
+	            sx={{ fontWeight: 700 }}
+	          />
+	        )}
+	        {!teamMemberId && (
+	          <Tooltip title="Associar conversas antigas sem dono ao usuario mestre">
+	            <span>
+	              <Button
+	                onClick={() => {
+	                  if (isGuestMode) { openModal(); return; }
+	                  assignLegacyToMasterMutation.mutate();
+	                }}
+	                color="primary"
+	                variant="outlined"
+	                disabled={assignLegacyToMasterMutation.isLoading || isGuestMode}
+	              >
+	                {assignLegacyToMasterMutation.isLoading ? 'Migrando...' : 'Migrar antigas para mestre'}
+	              </Button>
+	            </span>
+	          </Tooltip>
+	        )}
+	        <Tooltip title="Apagar todas as conversas">
           <span>
             <Button
               onClick={() => {
@@ -643,10 +677,11 @@ export default function Conversations({ channel }) {
             {filteredConversations.length > 0 ? (
             filteredConversations.map(conversation => {
                 const isEscalated = conversation.status === 'escalated';
+                const hasUnread = (conversation.unreadCount || 0) > 0;
                 return (
                     <Grid item xs={12} sm={6} md={4} lg={3} key={conversation._id}>
                     <Paper
-                        elevation={3}
+                        elevation={hasUnread ? 8 : 3}
                         sx={{
                         p: 2,
                         height: '100%',
@@ -659,10 +694,21 @@ export default function Conversations({ channel }) {
                             boxShadow: theme.shadows[6],
                         },
                         border: '1px solid',
-                        borderColor: isEscalated ? theme.palette.error.main : 'transparent',
-                        borderLeft: `4px solid ${isEscalated ? theme.palette.error.dark : theme.palette[getStatusColor(conversation.status)]?.main || theme.palette.divider}`,
-                        backgroundColor: isEscalated ? alpha(theme.palette.error.light, 0.15) : 'background.paper',
+                        borderColor: hasUnread ? alpha(theme.palette.warning.main, 0.7) : isEscalated ? theme.palette.error.main : 'transparent',
+                        borderLeft: `5px solid ${hasUnread ? theme.palette.warning.main : isEscalated ? theme.palette.error.dark : theme.palette[getStatusColor(conversation.status)]?.main || theme.palette.divider}`,
+                        backgroundColor: hasUnread
+                          ? alpha(theme.palette.warning.main, 0.11)
+                          : isEscalated ? alpha(theme.palette.error.light, 0.15) : 'background.paper',
+                        boxShadow: hasUnread ? `0 10px 30px ${alpha(theme.palette.warning.main, 0.23)}` : undefined,
                         position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': hasUnread ? {
+                          content: '""',
+                          position: 'absolute',
+                          inset: 0,
+                          pointerEvents: 'none',
+                          background: `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.2)} 0%, transparent 42%)`,
+                        } : undefined,
                         }}
                         onClick={() => handleOpenDialog(conversation._id)}
                     >
@@ -767,10 +813,10 @@ export default function Conversations({ channel }) {
 
                         {(conversation.unreadCount || 0) > 0 && (
                           <Chip
-                            label={`${conversation.unreadCount} nova${conversation.unreadCount > 1 ? 's' : ''}`}
+                            label={conversation.unreadCount === 1 ? 'Nova mensagem' : `${conversation.unreadCount} novas mensagens`}
                             size="small"
-                            color="error"
-                            sx={{ fontWeight: 700 }}
+                            color="warning"
+                            sx={{ fontWeight: 900, boxShadow: `0 0 0 3px ${alpha(theme.palette.warning.main, 0.14)}` }}
                           />
                         )}
 

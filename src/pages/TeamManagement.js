@@ -1,187 +1,273 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
-import { Box, Typography, Paper, Switch, CircularProgress, Tooltip, useTheme, alpha, TextField, Grid, Button, Card, CardContent, Alert, IconButton, Chip, Avatar, Menu, MenuItem, Divider, DialogTitle, DialogContent, DialogActions, Pagination, Fade, Grow, Slide } from '@mui/material';
+import {
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  Card,
+  Chip,
+  CircularProgress,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid,
+  IconButton,
+  Paper,
+  Switch,
+  TextField,
+  Tooltip,
+  Typography,
+  alpha,
+  useTheme,
+} from '@mui/material';
+import {
+  CalendarMonth as CalendarMonthIcon,
+  Delete as DeleteIcon,
+  Groups as GroupsIcon,
+  PersonAdd as PersonAddIcon,
+  Warning as WarningIcon,
+} from '@mui/icons-material';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { toast } from 'react-toastify';
-import { Groups as GroupsIcon, PersonAdd as PersonAddIcon, Delete as DeleteIcon, Visibility, VisibilityOff, CalendarMonth as CalendarMonthIcon, Warning as WarningIcon } from '@mui/icons-material';
 import api from '../services/api';
-import { USE_MOCKS } from '../config/env';
-import { MOCK_TEAM_MEMBERS } from '../mocks';
 import { StyledDialog } from '../components/ui/StyledDialog';
 import { GradientButton } from '../components/ui/GradientButton';
 
-const fetchManagedUsers = async () => {
-    const { data } = await api.get('/manager/users');
-    return data;
+const fetchTeamMembers = async () => {
+  const { data } = await api.get('/manager/users');
+  return data;
 };
 
-const CreateUserDialog = ({ open, onClose, onSuccess }) => {
-    const [formData, setFormData] = useState({ name: '', email: '', password: '' });
-    const [showPassword, setShowPassword] = useState(false);
-    const createUserMutation = useMutation((userData) => api.post('/manager/users', userData), {
-        onSuccess: () => { toast.success('Usuário de vendas criado com sucesso!'); onSuccess(); onClose(); },
-        onError: (error) => toast.error(error.response?.data?.message || 'Erro ao criar usuário'),
-    });
-    const handleSubmit = (e) => { e.preventDefault(); createUserMutation.mutate(formData); };
-    const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    return (
-        <StyledDialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-            <DialogTitle>Adicionar Vendedor à Equipe</DialogTitle>
-            <form onSubmit={handleSubmit}>
-                <DialogContent><Grid container spacing={2} sx={{ pt: 1 }}><Grid item xs={12}><TextField fullWidth name="name" label="Nome Completo" value={formData.name} onChange={handleChange} required /></Grid><Grid item xs={12}><TextField fullWidth name="email" label="Email" type="email" value={formData.email} onChange={handleChange} required /></Grid><Grid item xs={12}><TextField fullWidth name="password" label="Senha Provisória" type={showPassword ? 'text' : 'password'} value={formData.password} onChange={handleChange} required helperText="O usuário deverá alterar a senha no primeiro login." InputProps={{ endAdornment: <IconButton onClick={() => setShowPassword(!showPassword)}>{showPassword ? <VisibilityOff/> : <Visibility/>}</IconButton> }} /></Grid></Grid></DialogContent>
-                <DialogActions sx={{ p: '16px 24px' }}><Button onClick={onClose} color="inherit" disabled={createUserMutation.isLoading}>Cancelar</Button><GradientButton type="submit" loading={createUserMutation.isLoading}>Adicionar Usuário</GradientButton></DialogActions>
-            </form>
-        </StyledDialog>
-    );
+const CreateMemberDialog = ({ open, onClose, onSuccess }) => {
+  const [formData, setFormData] = useState({ name: '', roleLabel: 'Atendente' });
+
+  const createMemberMutation = useMutation((payload) => api.post('/manager/users', payload), {
+    onSuccess: () => {
+      toast.success('Perfil de atendimento criado com sucesso!');
+      setFormData({ name: '', roleLabel: 'Atendente' });
+      onSuccess();
+      onClose();
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Erro ao criar perfil.'),
+  });
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    createMemberMutation.mutate(formData);
+  };
+
+  return (
+    <StyledDialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>Adicionar Perfil de Atendimento</DialogTitle>
+      <Box component="form" onSubmit={handleSubmit}>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ pt: 1 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                name="name"
+                label="Nome exibido"
+                value={formData.name}
+                onChange={(event) => setFormData((prev) => ({ ...prev, name: event.target.value }))}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                name="roleLabel"
+                label="Funcao"
+                value={formData.roleLabel}
+                onChange={(event) => setFormData((prev) => ({ ...prev, roleLabel: event.target.value }))}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ p: '16px 24px' }}>
+          <Button onClick={onClose} color="inherit" disabled={createMemberMutation.isLoading}>Cancelar</Button>
+          <GradientButton type="submit" loading={createMemberMutation.isLoading}>Adicionar Perfil</GradientButton>
+        </DialogActions>
+      </Box>
+    </StyledDialog>
+  );
 };
 
-const DeleteUserDialog = ({ open, onClose, onConfirm, userName, isLoading }) => {
-    const theme = useTheme();
-    return (
-        <StyledDialog open={open} onClose={onClose} maxWidth="xs">
-            <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><WarningIcon color="error"/>Confirmar Exclusão</DialogTitle>
-            <DialogContent>
-                <Typography>Você tem certeza que deseja excluir permanentemente o usuário <Typography component="span" fontWeight="bold">{userName}</Typography>?</Typography>
-                <Alert severity="error" sx={{ mt: 2 }}>Esta ação é irreversível.</Alert>
-            </DialogContent>
-            <DialogActions sx={{ p: '16px 24px' }}>
-                <Button onClick={onClose} color="inherit" disabled={isLoading}>Cancelar</Button>
-                <GradientButton onClick={onConfirm} loading={isLoading} color="error" sx={{ background: theme.palette.error.main }}>Excluir</GradientButton>
-            </DialogActions>
-        </StyledDialog>
-    );
-};
+const DeleteMemberDialog = ({ open, onClose, onConfirm, memberName, isLoading }) => (
+  <StyledDialog open={open} onClose={onClose} maxWidth="xs">
+    <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <WarningIcon color="error" />
+      Confirmar Exclusao
+    </DialogTitle>
+    <DialogContent>
+      <Typography>
+        Voce tem certeza que deseja excluir o perfil <Typography component="span" fontWeight="bold">{memberName}</Typography>?
+      </Typography>
+      <Alert severity="warning" sx={{ mt: 2 }}>
+        O login principal e a instancia do WhatsApp nao serao alterados.
+      </Alert>
+    </DialogContent>
+    <DialogActions sx={{ p: '16px 24px' }}>
+      <Button onClick={onClose} color="inherit" disabled={isLoading}>Cancelar</Button>
+      <GradientButton onClick={onConfirm} loading={isLoading} color="error">Excluir</GradientButton>
+    </DialogActions>
+  </StyledDialog>
+);
 
-// ALTERAÇÃO: Trocado o menu de 3 pontos pelo ícone de lixeira
-const UserCard = ({ user, onStatusChange, onDelete, isUpdating }) => {
-    const theme = useTheme();
+const MemberCard = ({ member, onStatusChange, onDelete, isUpdating }) => {
+  const theme = useTheme();
+  const ownerEmail = member.owner?.email;
 
-    return (
-        <Card sx={{ p: 2, borderRadius: 3, backgroundColor: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, overflow: 'hidden', minWidth: 0 }}>
-                    <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.3), color: 'primary.light', flexShrink: 0 }}>
-                        {user.name.charAt(0)}
-                    </Avatar>
-                    <Box sx={{ overflow: 'hidden' }}>
-                        <Typography variant="body1" fontWeight="bold" noWrap>{user.name}</Typography>
-                        <Typography variant="body2" color="text.secondary" noWrap>{user.email}</Typography>
-                    </Box>
-                </Box>
-                <Tooltip title="Excluir Usuário">
-                    <IconButton size="small" onClick={() => onDelete(user)} sx={{ flexShrink: 0 }}>
-                        <DeleteIcon color="error" />
-                    </IconButton>
-                </Tooltip>
-            </Box>
-            <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-            <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 1 }}>
-                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CalendarMonthIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                    <Typography variant="caption" color="text.secondary">Membro desde: {format(new Date(user.createdAt), 'dd/MM/yyyy')}</Typography>
-                </Box>
-                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {user.role && <Chip label={user.role} size="small" variant="outlined" />}
-                </Box>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, pt: 2, borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
-                <Typography variant="body2" fontWeight={500}>{user.isActive ? 'Ativo' : 'Inativo'}</Typography>
-                <Switch checked={user.isActive} onChange={(e) => onStatusChange(user._id, { isActive: e.target.checked })} disabled={isUpdating} color="success" />
-            </Box>
-        </Card>
-    );
+  return (
+    <Card sx={{
+      p: 2,
+      borderRadius: 2,
+      backgroundColor: alpha(theme.palette.background.paper, 0.72),
+      border: `1px solid ${alpha(theme.palette.divider, 0.22)}`,
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+    }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, overflow: 'hidden', minWidth: 0 }}>
+          <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.2), color: 'primary.main', flexShrink: 0 }}>
+            {member.name?.charAt(0)?.toUpperCase() || 'A'}
+          </Avatar>
+          <Box sx={{ overflow: 'hidden' }}>
+            <Typography variant="body1" fontWeight="bold" noWrap>{member.name}</Typography>
+            <Typography variant="body2" color="text.secondary" noWrap>{member.roleLabel || 'Atendente'}</Typography>
+            {ownerEmail && <Typography variant="caption" color="text.secondary" noWrap>{ownerEmail}</Typography>}
+          </Box>
+        </Box>
+        <Tooltip title="Excluir perfil">
+          <IconButton size="small" onClick={() => onDelete(member)} sx={{ flexShrink: 0 }}>
+            <DeleteIcon color="error" />
+          </IconButton>
+        </Tooltip>
+      </Box>
+      <Divider sx={{ my: 2 }} />
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <CalendarMonthIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+          <Typography variant="caption" color="text.secondary">
+            Criado em: {member.createdAt ? format(new Date(member.createdAt), 'dd/MM/yyyy') : '-'}
+          </Typography>
+        </Box>
+        <Chip label="Mesmo login e WhatsApp" size="small" variant="outlined" sx={{ alignSelf: 'flex-start' }} />
+      </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, pt: 2, borderTop: `1px solid ${alpha(theme.palette.divider, 0.2)}` }}>
+        <Typography variant="body2" fontWeight={500}>{member.isActive ? 'Ativo' : 'Inativo'}</Typography>
+        <Switch checked={!!member.isActive} onChange={(event) => onStatusChange(member._id, { isActive: event.target.checked })} disabled={isUpdating} color="success" />
+      </Box>
+    </Card>
+  );
 };
 
 export default function TeamManagement() {
-    const queryClient = useQueryClient();
-    const [createDialogOpen, setCreateDialogOpen] = useState(false);
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-    const [userToDelete, setUserToDelete] = useState(null);
-    const [page, setPage] = useState(1);
-    
-    const USERS_PER_PAGE = 6;
-    const { data, isLoading, isError } = useQuery('managedUsers', async () => {
-        if (USE_MOCKS) {
-            return {
-                users: MOCK_TEAM_MEMBERS,
-                limit: 10,
-                currentCount: MOCK_TEAM_MEMBERS.length,
-                isAdminView: false
-            };
-        }
-        return fetchManagedUsers();
-    });
-    
-    const users = data?.users || [];
-    const limit = data?.limit || 0;
-    const currentCount = data?.currentCount || 0;
-    const isAdminView = data?.isAdminView || false;
-    const canAddUser = currentCount < limit;
-    
-    const paginatedUsers = useMemo(() => users.slice((page - 1) * USERS_PER_PAGE, page * USERS_PER_PAGE), [users, page]);
-    const pageCount = Math.ceil(users.length / USERS_PER_PAGE);
-    const handlePageChange = (event, value) => setPage(value);
+  const queryClient = useQueryClient();
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState(null);
 
-    const updateUserMutation = useMutation(({ userId, updates }) => api.put(`/manager/users/${userId}`, updates), { onSuccess: () => { queryClient.invalidateQueries('managedUsers'); toast.success('Usuário atualizado!'); }, onError: (error) => toast.error(error.response?.data?.message || 'Erro ao atualizar.'), });
-    const deleteUserMutation = useMutation((userId) => api.delete(`/manager/users/${userId}`), { onSuccess: () => { queryClient.invalidateQueries('managedUsers'); toast.success('Usuário excluído!'); setDeleteDialogOpen(false); setUserToDelete(null); }, onError: (error) => toast.error(error.response?.data?.message || 'Erro ao excluir.'), });
+  const { data, isLoading, isError } = useQuery('managedUsers', fetchTeamMembers);
+  const members = data?.users || [];
+  const limit = data?.limit || 0;
+  const currentCount = data?.currentCount || 0;
+  const isAdminView = data?.isAdminView || false;
+  const canAddMember = !isAdminView && currentCount < limit;
 
-    const handleUpdate = (userId, updates) => updateUserMutation.mutate({ userId, updates });
-    
-    const handleDeleteRequest = (user) => {
-        setUserToDelete(user);
-        setDeleteDialogOpen(true);
-    };
+  const limitLabel = useMemo(() => {
+    if (isAdminView || limit === null || limit === undefined) return `${currentCount}`;
+    if (limit === Infinity || Number.isNaN(limit)) return `${currentCount}`;
+    return `${currentCount}/${limit}`;
+  }, [currentCount, isAdminView, limit]);
 
-    const handleConfirmDelete = () => {
-        if(userToDelete) deleteUserMutation.mutate(userToDelete._id);
-    };
+  const updateMemberMutation = useMutation(({ memberId, updates }) => api.put(`/manager/users/${memberId}`, updates), {
+    onSuccess: () => {
+      queryClient.invalidateQueries('managedUsers');
+      queryClient.invalidateQueries('teamMembersForMenu');
+      toast.success('Perfil atualizado!');
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Erro ao atualizar perfil.'),
+  });
 
-    if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>;
-    if (isError) return <Alert severity="error">Não foi possível carregar os dados da equipe.</Alert>;
+  const deleteMemberMutation = useMutation((memberId) => api.delete(`/manager/users/${memberId}`), {
+    onSuccess: () => {
+      queryClient.invalidateQueries('managedUsers');
+      queryClient.invalidateQueries('teamMembersForMenu');
+      toast.success('Perfil excluido!');
+      setMemberToDelete(null);
+    },
+    onError: (error) => toast.error(error.response?.data?.message || 'Erro ao excluir perfil.'),
+  });
 
-    return (
-        <Box sx={{ p: { xs: 2, sm: 3 } }}>
-            <Fade in timeout={500}>
-                <Paper sx={{ p: 2, mb: 3, borderRadius: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)' }}>
-                    <Box display="flex" alignItems="center" gap={2}><GroupsIcon sx={{ fontSize: 40 }} /><Typography variant="h4" fontWeight="bold">Gestão de Time</Typography></Box>
-                </Paper>
-            </Fade>
+  if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>;
+  if (isError) return <Alert severity="error">Nao foi possivel carregar os perfis de atendimento.</Alert>;
 
-            <Grid container spacing={3}>
-                <Grid item xs={12} md={4}>
-                    <Slide direction="right" in timeout={500}>
-                        <Paper sx={{ p: 3, borderRadius: 3, backgroundColor: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)', textAlign: 'center', height: '100%' }}>
-                            <Typography variant="h6">Licenças Utilizadas</Typography>
-                            <Box sx={{ position: 'relative', display: 'inline-flex', my: 2 }}><CircularProgress variant="determinate" value={(currentCount / limit) * 100} size={100} thickness={4} /><Box sx={{ top: 0, left: 0, bottom: 0, right: 0, position: 'absolute', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Typography variant="h5" component="div" fontWeight="bold">{`${currentCount}/${limit}`}</Typography></Box></Box>
-                            <GradientButton fullWidth startIcon={<PersonAddIcon />} onClick={() => setCreateDialogOpen(true)} disabled={!canAddUser || isAdminView}>Adicionar Vendedor</GradientButton>
-                            {!canAddUser && <Alert severity="warning" variant="outlined" sx={{ mt: 2, textAlign: 'left' }}>Limite de usuários atingido.</Alert>}
-                        </Paper>
-                    </Slide>
-                </Grid>
-
-                <Grid item xs={12} md={8}>
-                    <Slide direction="left" in timeout={500}>
-                        <Paper sx={{ p: 2, borderRadius: 3, backgroundColor: 'rgba(255, 255, 255, 0.08)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)', display: 'flex', flexDirection: 'column', height: '100%' }}>
-                            <Grid container spacing={2} sx={{ flexGrow: 1 }}>
-                                {paginatedUsers.length > 0 ? paginatedUsers.map((user, index) => (
-                                    <Grid item xs={12} sm={6} lg={4} key={user._id}>
-                                        <Grow in timeout={300 + index * 100}>
-                                            <Box sx={{ height: '100%' }}>
-                                                <UserCard user={user} onStatusChange={handleUpdate} onDelete={handleDeleteRequest} isUpdating={updateUserMutation.isLoading}/>
-                                            </Box>
-                                        </Grow>
-                                    </Grid>
-                                )) : <Typography sx={{p:3}}>Nenhum usuário encontrado.</Typography>}
-                            </Grid>
-                            {pageCount > 1 && (<Box sx={{ display: 'flex', justifyContent: 'center', pt: 3, mt: 'auto' }}><Pagination count={pageCount} page={page} onChange={handlePageChange} color="primary" /></Box>)}
-                        </Paper>
-                    </Slide>
-                </Grid>
-            </Grid>
-
-            <CreateUserDialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} onSuccess={() => queryClient.invalidateQueries('managedUsers')} />
-            <DeleteUserDialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)} onConfirm={handleConfirmDelete} userName={userToDelete?.name} isLoading={deleteUserMutation.isLoading} />
+  return (
+    <Box sx={{ p: { xs: 2, sm: 3 } }}>
+      <Paper sx={{ p: 2, mb: 3, borderRadius: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box display="flex" alignItems="center" gap={2}>
+          <GroupsIcon sx={{ fontSize: 40 }} />
+          <Box>
+            <Typography variant="h4" fontWeight="bold">Gestao de Atendimento</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Crie perfis internos que usam o mesmo login e a mesma instancia de WhatsApp.
+            </Typography>
+          </Box>
         </Box>
-    );
+      </Paper>
+
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 3, borderRadius: 2, textAlign: 'center', height: '100%' }}>
+            <Typography variant="h6">Perfis Cadastrados</Typography>
+            <Typography variant="h3" fontWeight="bold" sx={{ my: 2 }}>{limitLabel}</Typography>
+            <GradientButton fullWidth startIcon={<PersonAddIcon />} onClick={() => setCreateDialogOpen(true)} disabled={!canAddMember}>
+              Adicionar Perfil
+            </GradientButton>
+            {isAdminView && <Alert severity="info" variant="outlined" sx={{ mt: 2, textAlign: 'left' }}>Administradores visualizam os perfis, mas a criacao fica no login do manager.</Alert>}
+            {!isAdminView && !canAddMember && <Alert severity="warning" variant="outlined" sx={{ mt: 2, textAlign: 'left' }}>Limite de perfis atingido.</Alert>}
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12} md={8}>
+          <Grid container spacing={2}>
+            {members.length > 0 ? members.map((member) => (
+              <Grid item xs={12} sm={6} lg={4} key={member._id}>
+                <MemberCard
+                  member={member}
+                  onStatusChange={(memberId, updates) => updateMemberMutation.mutate({ memberId, updates })}
+                  onDelete={setMemberToDelete}
+                  isUpdating={updateMemberMutation.isLoading}
+                />
+              </Grid>
+            )) : (
+              <Grid item xs={12}>
+                <Paper sx={{ p: 3, textAlign: 'center', borderRadius: 2 }}>
+                  <Typography color="text.secondary">Nenhum perfil cadastrado.</Typography>
+                </Paper>
+              </Grid>
+            )}
+          </Grid>
+        </Grid>
+      </Grid>
+
+      <CreateMemberDialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        onSuccess={() => {
+          queryClient.invalidateQueries('managedUsers');
+          queryClient.invalidateQueries('teamMembersForMenu');
+        }}
+      />
+      <DeleteMemberDialog
+        open={!!memberToDelete}
+        onClose={() => setMemberToDelete(null)}
+        onConfirm={() => memberToDelete && deleteMemberMutation.mutate(memberToDelete._id)}
+        memberName={memberToDelete?.name}
+        isLoading={deleteMemberMutation.isLoading}
+      />
+    </Box>
+  );
 }

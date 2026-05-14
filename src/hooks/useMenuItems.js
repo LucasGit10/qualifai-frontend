@@ -52,6 +52,7 @@ export function useMenuItems(user, canAccess, plan) {
       ],
       manager: [
         ...items, 
+        { tKey: 'layout.menuItems.team', icone: <TeamIcon />, path: '/app/team' },
         { tKey: 'layout.menuItems.profile', icone: <ProfileIcon />, path: '/app/profile' }, 
         { tKey: 'layout.menuItems.settings', icone: <SettingsIcon />, path: '/app/settings' },
         { tKey: 'layout.menuItems.noResponseLeads', icone: <ChatIcon />, path: '/app/no-response-leads' },

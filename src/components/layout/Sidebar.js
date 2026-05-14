@@ -65,7 +65,7 @@ export default function Sidebar({
       <ScrollableList>
         {itensMenu.map((item) => {
           const isSelected = location.pathname === item.path || 
-                             (item.path !== '/app/instagram' && location.pathname.startsWith(item.path + '/'));
+                             (item.path !== '/app/instagram' && item.path !== '/app/conversations' && location.pathname.startsWith(item.path + '/'));
 
           return (
             <ListItem key={item.tKey} disablePadding sx={{ display: 'block', my: 0.5 }}>

@@ -34,6 +34,7 @@ import { GradientButton } from '../components/ui/GradientButton';
 
 // --- IMPORTAÇÃO ADICIONAL PARA O TOUR ---
 import { useTour } from '../contexts/TourContext';
+import { useAuthStore } from '../stores/authStore';
 
 // --- COMPONENTES AUXILIARES ---
 const PhoneMaskAdapter = forwardRef(function PhoneMaskAdapter(props, ref) {
@@ -53,15 +54,19 @@ const PhoneMaskAdapter = forwardRef(function PhoneMaskAdapter(props, ref) {
 const TemplateSelectionModal = ({ open, onClose, onConfirm, leadsToContact, isLoadingConfirm }) => {
   const { t } = useTranslation();
   const theme = useTheme();
+  const { user } = useAuthStore();
   const [selectedInstanceId, setSelectedInstanceId] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [selectedOwner, setSelectedOwner] = useState('master');
   const [mediaUrl, setMediaUrl] = useState('');
 
   const { data: instances, isLoading: isLoadingInstances } = useQuery('whatsappInstances', () => api.get('/whatsapp/').then(res => res.data), { enabled: open });
   const { data: templates, isLoading: isLoadingTemplates } = useQuery('messageTemplates', () => api.get('/template-message').then(res => res.data), { enabled: open });
+  const { data: teamMembersData, isLoading: isLoadingTeamMembers } = useQuery('teamMembersForTemplateStart', () => api.get('/manager/users').then(res => res.data), { enabled: open && ['manager', 'admin'].includes(user?.role) });
 
   const selectedTemplate = templates?.find(t => t._id === selectedTemplateId);
   const hasMediaHeader = selectedTemplate?.components?.some(c => c.type === 'HEADER' && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(c.format));
+  const savedMediaUrl = selectedTemplate?.sampleMediaUrl || '';
   const getMediaIcon = (format) => {
     switch (format) {
       case 'IMAGE':
@@ -81,16 +86,33 @@ const TemplateSelectionModal = ({ open, onClose, onConfirm, leadsToContact, isLo
       toast.warn(t('leadsPage.toasts.selectInstanceAndTemplate'));
       return;
     }
-    onConfirm({ instanceId: selectedInstanceId, templateId: selectedTemplateId, leads: leadsToContact, mediaUrl });
+    const isTeamMemberOwner = selectedOwner.startsWith('teamMember:');
+    onConfirm({
+      instanceId: selectedInstanceId,
+      templateId: selectedTemplateId,
+      leads: leadsToContact,
+      mediaUrl: mediaUrl || savedMediaUrl,
+      conversationOwnerType: isTeamMemberOwner ? 'teamMember' : 'master',
+      teamMemberId: isTeamMemberOwner ? selectedOwner.replace('teamMember:', '') : null
+    });
   };
 
   useEffect(() => {
     if (!open) {
       setSelectedInstanceId('');
       setSelectedTemplateId('');
+      setSelectedOwner('master');
       setMediaUrl('');
     }
   }, [open]);
+
+  useEffect(() => {
+    if (savedMediaUrl) {
+      setMediaUrl(savedMediaUrl);
+    } else if (selectedTemplateId) {
+      setMediaUrl('');
+    }
+  }, [selectedTemplateId, savedMediaUrl]);
 
   const selectStyles = {
     '& fieldset': { borderColor: theme.palette.divider },
@@ -106,6 +128,15 @@ const TemplateSelectionModal = ({ open, onClose, onConfirm, leadsToContact, isLo
       <DialogContent>
         <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Typography>{t('leadsPage.templateModal.description', { count: leadsToContact.length })}</Typography>
+          <FormControl fullWidth disabled={isLoadingTeamMembers}>
+            <InputLabel>Quem vai iniciar a conversa</InputLabel>
+            <Select value={selectedOwner} label="Quem vai iniciar a conversa" onChange={(e) => setSelectedOwner(e.target.value)} sx={selectStyles}>
+              <MenuItem value="master">Usuario mestre ({user?.name || user?.email || 'principal'})</MenuItem>
+              {(teamMembersData?.users || []).filter(member => member.isActive).map(member => (
+                <MenuItem key={member._id} value={`teamMember:${member._id}`}>{member.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <FormControl fullWidth disabled={isLoadingInstances}>
             <InputLabel>{t('leadsPage.templateModal.instanceLabel')}</InputLabel>
             <Select value={selectedInstanceId} label={t('leadsPage.templateModal.instanceLabel')} onChange={(e) => setSelectedInstanceId(e.target.value)} sx={selectStyles}>
@@ -145,18 +176,23 @@ const TemplateSelectionModal = ({ open, onClose, onConfirm, leadsToContact, isLo
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
               <Chip
                 icon={getMediaIcon(mediaFormat)}
-                label={`Este template usa HEADER de ${mediaFormat}`}
+                label={savedMediaUrl ? `${mediaFormat} salvo no template` : `Este template usa HEADER de ${mediaFormat}`}
                 color="primary"
                 variant="outlined"
                 sx={{ alignSelf: 'flex-start' }}
               />
+              {savedMediaUrl && (
+                <Typography variant="body2" color="text.secondary">
+                  A midia salva na criacao/aprovacao do template sera enviada automaticamente.
+                </Typography>
+              )}
               <TextField
                 fullWidth
                 label={`URL do(a) ${mediaFormat || 'M?dia'}`}
                 placeholder="https://exemplo.com/imagem.jpg"
                 value={mediaUrl}
                 onChange={(e) => setMediaUrl(e.target.value)}
-                helperText={`Este template exige um(a) ${mediaFormat}. Insira o link p?blico do arquivo.`}
+                helperText={savedMediaUrl ? 'Voce pode trocar a URL apenas se quiser substituir a midia padrao deste envio.' : `Este template exige um(a) ${mediaFormat}. Insira o link publico do arquivo.`}
                 variant="outlined"
                 sx={selectStyles}
               />
@@ -349,7 +385,14 @@ export default function PaginaLeads() {
   };
   const handleStartSingleConversation = async (lead) => { if (!lead.phone || !lead.phone.trim()) { toast.warn(t('leadsPage.toasts.noPhoneError')); return; } const provider = whatsAppProviderData?.provider; if (provider === 'zapi') { try { const statusResponse = await api.get('/zapi/status'); if (!statusResponse.data?.success || !statusResponse.data.status?.connected) { toast.warn(t('leadsPage.toasts.zapiNotConnected')); return; } startZapiConversationMutation.mutate({ leadId: lead._id }); } catch (error) { toast.error(t('leadsPage.toasts.providerError')); } } else if (provider === 'whatsapp') { setLeadsToContact([lead]); setTemplateModalOpen(true); } else { toast.error(isLoadingProvider ? t('leadsPage.toasts.checkingProvider') : t('leadsPage.toasts.providerConfigError')); } };
   const handleStartMultipleConversations = async () => { const selectedLeads = data?.leads.filter(lead => selectionModel.includes(lead._id)) || []; const leadsWithoutPhone = selectedLeads.filter(lead => !lead.phone || !lead.phone.trim()); if (leadsWithoutPhone.length > 0) { toast.warn(t('leadsPage.toasts.batchNoPhoneError', { count: leadsWithoutPhone.length })); return; } const provider = whatsAppProviderData?.provider; if (provider === 'zapi') { try { const statusResponse = await api.get('/zapi/status'); if (!statusResponse.data?.success || !statusResponse.data.status?.connected) { toast.warn(t('leadsPage.toasts.zapiNotConnected')); return; } startMultipleZapiConversationsMutation.mutate({ leadIds: selectionModel }); } catch (error) { toast.error(t('leadsPage.toasts.providerError')); } } else if (provider === 'whatsapp') { setLeadsToContact(selectedLeads); setTemplateModalOpen(true); } else { toast.error(isLoadingProvider ? t('leadsPage.toasts.checkingProvider') : t('leadsPage.toasts.providerConfigError')); } };
-  const handleTemplateModalConfirm = ({ instanceId, templateId, leads, mediaUrl }) => { if (leads.length === 1) { startWhatsappConversationMutation.mutate({ instanceId, templateId, leadId: leads[0]._id, mediaUrl }); } else { startMultipleWhatsappConversationsMutation.mutate({ instanceId, templateId, leadIds: leads.map(lead => lead._id), mediaUrl }); } };
+  const handleTemplateModalConfirm = ({ instanceId, templateId, leads, mediaUrl, conversationOwnerType, teamMemberId }) => {
+    const ownerPayload = { conversationOwnerType, teamMemberId };
+    if (leads.length === 1) {
+      startWhatsappConversationMutation.mutate({ instanceId, templateId, leadId: leads[0]._id, mediaUrl, ...ownerPayload });
+    } else {
+      startMultipleWhatsappConversationsMutation.mutate({ instanceId, templateId, leadIds: leads.map(lead => lead._id), mediaUrl, ...ownerPayload });
+    }
+  };
   const handleDeleteLead = (id) => { if (window.confirm(t('leadsPage.dialogs.confirmDelete'))) { deleteLeadMutation.mutate(id); } };
   const handleDeleteSelected = () => { if (selectionModel.length === 0) return; if (window.confirm(t('leadsPage.dialogs.confirmDeleteMultiple', { count: selectionModel.length }))) { deleteMultipleLeadsMutation.mutate(selectionModel); } };
   const handleOpenEmailDialog = (lead) => { setSelectedLeadForEmail(lead); resetEmailForm({ subject: '', body: '' }); setEmailDialogOpen(true); };

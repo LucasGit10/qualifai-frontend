@@ -30,6 +30,9 @@ import {
   Error as ErrorIcon,
   DeleteSweep as DeleteSweepIcon,
   Download as DownloadIcon,
+  NoteAlt as NoteIcon,
+  AddComment as AddNoteIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { format, subMonths, parseISO } from 'date-fns';
@@ -495,7 +498,146 @@ function KpiCard({ label, value, icon, color, sub }) {
 }
 
 // â”€â”€â”€ Card de Devedor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function DebtorCard({ debtor, onViewDetails, onReportStatusChange }) {
+function DebtorNotesDialog({ open, debtor, onClose }) {
+  const theme = useTheme();
+  const queryClient = useQueryClient();
+  const [content, setContent] = useState('');
+  const notes = useMemo(
+    () => [...(debtor?.debtorNotes || [])].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
+    [debtor]
+  );
+
+  React.useEffect(() => {
+    if (!open) setContent('');
+  }, [open]);
+
+  const addNoteMutation = useMutation(
+    () => api.post(`/spreadsheets/debtors/${debtor._id}/notes`, { content: content.trim() }),
+    {
+      onSuccess: () => {
+        setContent('');
+        queryClient.invalidateQueries(['debtors-summary']);
+        toast.success('Nota adicionada.');
+      },
+      onError: (err) => {
+        toast.error(err.response?.data?.message || 'Erro ao adicionar nota.');
+      }
+    }
+  );
+
+  const deleteNoteMutation = useMutation(
+    (noteId) => api.delete(`/spreadsheets/debtors/${debtor._id}/notes/${noteId}`),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['debtors-summary']);
+        toast.success('Nota removida.');
+      },
+      onError: (err) => {
+        toast.error(err.response?.data?.message || 'Erro ao remover nota.');
+      }
+    }
+  );
+
+  const handleAdd = () => {
+    if (!content.trim()) {
+      toast.info('Digite uma nota antes de salvar.');
+      return;
+    }
+    addNoteMutation.mutate();
+  };
+
+  if (!debtor) return null;
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <NoteIcon color="primary" />
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="h6" fontWeight={800}>Notas do devedor</Typography>
+          <Typography variant="body2" color="text.secondary" noWrap>{debtor.cliente}</Typography>
+        </Box>
+      </DialogTitle>
+      <DialogContent dividers>
+        <Stack spacing={1.5}>
+          <TextField
+            label="Nova nota"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Ex: Cliente pediu retorno na sexta..."
+            multiline
+            minRows={3}
+            fullWidth
+            inputProps={{ maxLength: 1000 }}
+            helperText={`${content.length}/1000`}
+          />
+          <Button
+            variant="contained"
+            startIcon={<AddNoteIcon />}
+            onClick={handleAdd}
+            disabled={addNoteMutation.isLoading}
+            sx={{ alignSelf: 'flex-end', fontWeight: 800 }}
+          >
+            Adicionar nota
+          </Button>
+
+          <Divider />
+
+          {notes.length === 0 ? (
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                textAlign: 'center',
+                borderRadius: 2,
+                bgcolor: alpha(theme.palette.primary.main, 0.06),
+                border: `1px dashed ${alpha(theme.palette.primary.main, 0.35)}`
+              }}
+            >
+              <Typography color="text.secondary">Nenhuma nota cadastrada.</Typography>
+            </Paper>
+          ) : (
+            notes.map((note) => (
+              <Paper
+                key={note._id}
+                elevation={0}
+                sx={{
+                  p: 1.5,
+                  borderRadius: 2,
+                  bgcolor: alpha(theme.palette.background.default, 0.5),
+                  border: `1px solid ${alpha(theme.palette.divider, 0.5)}`
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, alignItems: 'flex-start' }}>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>{note.content}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {note.createdAt ? format(new Date(note.createdAt), 'dd/MM/yyyy HH:mm') : 'Sem data'}
+                    </Typography>
+                  </Box>
+                  <Tooltip title="Remover nota">
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => deleteNoteMutation.mutate(note._id)}
+                      disabled={deleteNoteMutation.isLoading}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Paper>
+            ))
+          )}
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Fechar</Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function DebtorCard({ debtor, onViewDetails, onReportStatusChange, onOpenNotes }) {
   const theme = useTheme();
   const AVATAR_COLORS = ['#6366f1','#8b5cf6','#ec4899','#0ea5e9','#10b981'];
   const avatarColor = AVATAR_COLORS[debtor.cpfCnpj?.charCodeAt(0) % AVATAR_COLORS.length || 0];
@@ -507,6 +649,7 @@ function DebtorCard({ debtor, onViewDetails, onReportStatusChange }) {
     mantido: { label: 'Permanece', color: theme.palette.info.main },
     saiu: { label: 'Saiu da importação', color: '#ef4444' },
   }[debtor.importStatus || 'mantido'];
+  const notesCount = debtor.debtorNotes?.length || 0;
 
   React.useEffect(() => {
     setManualStatus(debtor.manualReportStatus || '');
@@ -693,18 +836,41 @@ function DebtorCard({ debtor, onViewDetails, onReportStatusChange }) {
 
         {/* Rodapé: contrato + botão */}
         <Divider sx={{ mb: 1.5, borderColor: alpha(theme.palette.divider, 0.4) }} />
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
           <Box>
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
               Contrato <strong style={{ color: '#fff' }}>{debtor.contrato}</strong>
               {debtor.apto ? ` · Apto ${debtor.apto}` : ''}
             </Typography>
           </Box>
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<ViewIcon sx={{ fontSize: 14 }} />}
-            onClick={() => onViewDetails(debtor)}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
+            <Tooltip title={notesCount ? `${notesCount} nota${notesCount > 1 ? 's' : ''}` : 'Adicionar nota'}>
+              <IconButton
+                size="small"
+                onClick={() => onOpenNotes?.(debtor)}
+                disabled={!debtor._id}
+                sx={{
+                  width: 34,
+                  height: 34,
+                  color: notesCount ? '#f59e0b' : 'text.secondary',
+                  bgcolor: notesCount ? alpha('#f59e0b', 0.16) : alpha(theme.palette.action.hover, 0.7),
+                  border: `1px solid ${notesCount ? alpha('#f59e0b', 0.35) : alpha(theme.palette.divider, 0.5)}`,
+                  '&:hover': {
+                    bgcolor: alpha('#f59e0b', 0.22),
+                    color: '#f59e0b',
+                  }
+                }}
+              >
+                <Badge badgeContent={notesCount || null} color="warning" max={9}>
+                  <NoteIcon sx={{ fontSize: 17 }} />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<ViewIcon sx={{ fontSize: 14 }} />}
+              onClick={() => onViewDetails(debtor)}
             sx={{
               borderRadius: 2, fontWeight: 700, fontSize: '0.75rem', px: 1.5, py: 0.5,
               background: `linear-gradient(135deg, ${avatarColor}, ${theme.palette.primary.dark})`,
@@ -713,7 +879,8 @@ function DebtorCard({ debtor, onViewDetails, onReportStatusChange }) {
             }}
           >
             Ver Lançamentos
-          </Button>
+            </Button>
+          </Box>
         </Box>
       </CardContent>
     </Card>
@@ -727,8 +894,13 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos'); // Filtro de status padrão
   const [movementFilter, setMovementFilter] = useState('todos');
+  const [notesDebtorId, setNotesDebtorId] = useState(null);
   
-  const debtors = debtorsData || [];
+  const debtors = useMemo(() => debtorsData || [], [debtorsData]);
+  const notesDebtor = useMemo(
+    () => debtors.find((debtor) => debtor._id === notesDebtorId) || null,
+    [debtors, notesDebtorId]
+  );
 
   // Busca totais reais diretamente do banco (inclui registros com lead=null)
   const { data: carteiraTotals } = useQuery(
@@ -936,6 +1108,7 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
             <DebtorCard
               debtor={debtor}
               onViewDetails={onViewDetails}
+              onOpenNotes={(selectedDebtor) => setNotesDebtorId(selectedDebtor._id)}
               onReportStatusChange={(leadId, manualReportStatus) => reportStatusMutation.mutate({ leadId, manualReportStatus })}
             />
           </Grid>
@@ -950,6 +1123,12 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
           </Grid>
         )}
       </Grid>
+
+      <DebtorNotesDialog
+        open={Boolean(notesDebtor)}
+        debtor={notesDebtor}
+        onClose={() => setNotesDebtorId(null)}
+      />
 
     </Box>
   );

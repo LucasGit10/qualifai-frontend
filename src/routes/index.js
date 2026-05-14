@@ -98,6 +98,7 @@ export const createRouter = (isAuthenticated, toggleColorMode) => createBrowserR
               { path: "debts", element: <Debts /> },
               { path: "conversations-whats", element: <Conversations /> },
               { path: "conversations", element: <ToggleConversation /> },
+              { path: "conversations/team/:teamMemberId", element: <ToggleConversation /> },
               { path: "settings", element: <Settings /> },
               { path: "whatsapp", element: <WhatsApp /> },
               { path: "kanban", element: <KanbanBoard /> },

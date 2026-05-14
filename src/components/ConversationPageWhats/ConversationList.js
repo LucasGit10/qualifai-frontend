@@ -43,6 +43,7 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
   const unreadCount = conversation.unreadCount || 0;
   const readCount = conversation.readCount || 0;
   const hasUnread = unreadCount > 0;
+  const unreadColor = theme.palette.warning.main;
 
   // ALTERAÇÃO: Estilos de status adaptados para o fundo de vidro
   const getStatusStyles = () => {
@@ -71,15 +72,28 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
         py: 1.5,
         px: 2,
         alignItems: 'flex-start',
-        transition: 'background-color 0.2s, opacity 0.3s',
+        position: 'relative',
+        overflow: 'hidden',
+        borderRadius: 1.5,
+        transition: 'background-color 0.2s, opacity 0.3s, box-shadow 0.2s, transform 0.2s',
         ...getStatusStyles(),
+        borderLeft: hasUnread ? `5px solid ${unreadColor}` : undefined,
+        boxShadow: hasUnread ? `inset 0 0 0 1px ${alpha(unreadColor, 0.28)}, 0 6px 18px ${alpha(unreadColor, 0.18)}` : undefined,
         backgroundColor: theme.palette.mode === 'dark' 
-          ? (isSelected ? alpha(theme.palette.primary.main, 0.25) : hasUnread ? alpha(theme.palette.info.main, 0.16) : 'rgba(255, 255, 255, 0.05)')
-          : (isSelected ? alpha(theme.palette.primary.main, 0.15) : hasUnread ? alpha(theme.palette.info.main, 0.12) : 'rgba(255, 255, 255, 0.8)'),
+          ? (isSelected ? alpha(theme.palette.primary.main, 0.25) : hasUnread ? alpha(unreadColor, 0.18) : 'rgba(255, 255, 255, 0.05)')
+          : (isSelected ? alpha(theme.palette.primary.main, 0.15) : hasUnread ? alpha(unreadColor, 0.12) : 'rgba(255, 255, 255, 0.8)'),
+        '&::before': hasUnread ? {
+          content: '""',
+          position: 'absolute',
+          inset: 0,
+          pointerEvents: 'none',
+          background: `linear-gradient(90deg, ${alpha(unreadColor, 0.18)}, transparent 38%)`,
+        } : undefined,
         '&:hover': {
+          transform: 'translateX(2px)',
           backgroundColor: theme.palette.mode === 'dark' 
-            ? 'rgba(255, 255, 255, 0.1)' 
-            : 'rgba(255, 255, 255, 0.9)'
+            ? (hasUnread ? alpha(unreadColor, 0.24) : 'rgba(255, 255, 255, 0.1)')
+            : (hasUnread ? alpha(unreadColor, 0.18) : 'rgba(255, 255, 255, 0.9)')
         },
         '&.Mui-selected': { 
           backgroundColor: theme.palette.mode === 'dark'
@@ -100,7 +114,7 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
           badgeContent={hasUnread ? unreadCount : null}
           max={99}
         >
-          <Avatar sx={{ background: theme.palette.custom?.gradients?.button }}>
+          <Avatar sx={{ background: theme.palette.custom?.gradients?.button, boxShadow: hasUnread ? `0 0 0 3px ${alpha(unreadColor, 0.22)}` : 'none' }}>
               {conversation.lead?.name ? conversation.lead.name.charAt(0).toUpperCase() : '?'}
           </Avatar>
         </Badge>
@@ -163,7 +177,12 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
               </Typography>
               <Box display="flex" gap={1} ml={1} alignItems="center">
                 {hasUnread && (
-                  <Chip label={`${unreadCount} nova${unreadCount > 1 ? 's' : ''}`} size="small" color="error" />
+                  <Chip
+                    label={unreadCount === 1 ? 'Nova mensagem' : `${unreadCount} novas`}
+                    size="small"
+                    color="warning"
+                    sx={{ fontWeight: 900 }}
+                  />
                 )}
                 {readCount > 0 && (
                   <Chip label={`${readCount} lida${readCount > 1 ? 's' : ''}`} size="small" color="success" variant="outlined" />
@@ -183,7 +202,7 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
   );
 };
 
-export default function ConversationList({ channel, selectedConversationId, onSelectConversation, onDeleteConversation }) {
+export default function ConversationList({ channel, teamMemberId, selectedConversationId, onSelectConversation, onDeleteConversation }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const theme = useTheme();
@@ -191,11 +210,16 @@ export default function ConversationList({ channel, selectedConversationId, onSe
   const [filter, setFilter] = useState('');
   const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
   const { data, isLoading, refetch } = useQuery(
-    ['conversationsList', channel], 
+    ['conversationsList', channel, teamMemberId],
     () => {
       const params = new URLSearchParams({ limit: 100, sortBy: 'lastContact' });
       if (channel) {
         params.append('channel', channel);
+      }
+      if (teamMemberId) {
+        params.append('teamMemberId', teamMemberId);
+      } else {
+        params.append('owner', 'master');
       }
       return api.get(`/conversations?${params.toString()}`).then(res => res.data);
     }
@@ -206,7 +230,7 @@ export default function ConversationList({ channel, selectedConversationId, onSe
     if (!socket) return undefined;
 
     const handleConversationEvent = () => {
-      queryClient.invalidateQueries(['conversationsList', channel]);
+      queryClient.invalidateQueries(['conversationsList', channel, teamMemberId]);
     };
 
     socket.on('conversation_updated', handleConversationEvent);
@@ -216,7 +240,7 @@ export default function ConversationList({ channel, selectedConversationId, onSe
       socket.off('conversation_updated', handleConversationEvent);
       socket.off('conversation_escalated', handleConversationEvent);
     };
-  }, [socket, queryClient, channel]);
+  }, [socket, queryClient, channel, teamMemberId]);
 
   const deleteAllConversationsMutation = useMutation(
     () => api.delete('/conversations/actions/delete-all'),
@@ -230,6 +254,17 @@ export default function ConversationList({ channel, selectedConversationId, onSe
         toast.error(error.response?.data?.message || t('conversationsPage.toasts.resetError'));
         setConfirmDeleteDialogOpen(false);
       }
+    }
+  );
+
+  const assignLegacyToMasterMutation = useMutation(
+    () => api.post('/conversations/actions/assign-legacy-to-master'),
+    {
+      onSuccess: (response) => {
+        queryClient.invalidateQueries(['conversationsList', channel, teamMemberId]);
+        toast.success(response.data?.message || 'Conversas antigas associadas ao usuario mestre.');
+      },
+      onError: (error) => toast.error(error.response?.data?.message || 'Erro ao associar conversas antigas.')
     }
   );
 
@@ -285,6 +320,15 @@ export default function ConversationList({ channel, selectedConversationId, onSe
             >
               Atualizar
             </Button>
+            {!teamMemberId && (
+              <Button
+                size="small"
+                onClick={() => assignLegacyToMasterMutation.mutate()}
+                disabled={assignLegacyToMasterMutation.isLoading}
+              >
+                {assignLegacyToMasterMutation.isLoading ? 'Migrando...' : 'Migrar antigas'}
+              </Button>
+            )}
             <Button 
               size="small" 
               color="error" 
