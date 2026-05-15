@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useMutation, useQueryClient, useQuery } from 'react-query';
 import {
   Box, Typography, Paper, TextField, Button, Switch, FormControlLabel,
@@ -8,7 +8,6 @@ import {
   // --- NOVAS IMPORTAÇÕES ---
   Dialog, DialogTitle, DialogContent, DialogActions, Chip, DialogContentText
 } from '@mui/material';
-import { motion } from 'framer-motion';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import {
@@ -29,14 +28,26 @@ import { useTour } from '../../contexts/TourContext';
 
 
 
-// Modos de operação do agente de cobrança
+// Perfis seguros do agente de cobrança humanizada
 const collectionModesInfo = [
-  { key: 'amigavel',    label: 'Cordável',      accent: '#10b981', desc: 'Abordagem amigável e empática. Foco em entender a situação do devedor e propor um acordo viável.' },
-  { key: 'neutro',      label: 'Neutro',         accent: '#6366f1', desc: 'Tom profissional e objetivo. Identifica a dívida, informa sobre as obrigações e negocia sem julgamentos.' },
-  { key: 'persistente', label: 'Persistente',    accent: '#f59e0b', desc: 'Abordagem firme mas respeitosa. Enfatiza os impactos do inadimplimento e a urgência de resolver.' },
+  { key: 'acolhedor', label: 'Acolhedor', accent: '#10b981', desc: 'Mais empático e cuidadoso. Prioriza escuta, acolhimento e confiança antes de propor uma alternativa.' },
+  { key: 'equilibrado', label: 'Equilibrado', accent: '#6366f1', desc: 'Profissional, claro e humano. Mantém objetividade sem pressão e busca uma solução conjunta.' },
+  { key: 'resolutivo', label: 'Resolutivo', accent: '#f59e0b', desc: 'Mais orientado ao acordo. Conduz próximos passos com firmeza respeitosa, sem ameaças ou constrangimento.' },
 ];
 
-const DEFAULT_AI_PROMPT = `Você é um agente de cobrança profissional. Sua missão é entrar em contato de forma cordial, identificar a dívida em aberto e negociar as melhores condições de pagamento possíveis.`;
+const legacyCollectionModeMap = {
+  amigavel: 'acolhedor',
+  neutro: 'equilibrado',
+  persistente: 'resolutivo',
+  Default: 'equilibrado',
+};
+
+const normalizeCollectionMode = (mode) => {
+  const normalized = legacyCollectionModeMap[mode] || mode;
+  return collectionModesInfo.some((item) => item.key === normalized) ? normalized : 'equilibrado';
+};
+
+const DEFAULT_AI_PROMPT = `Você é um agente de cobrança humanizado. Sua missão é conversar com respeito, acolher a situação do cliente e negociar alternativas viáveis para regularizar uma pendência financeira.`;
 
 const FieldLabel = ({ children, required = false, tooltip = null }) => (
   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -72,65 +83,6 @@ const CriteriaFieldArray = ({ control, name, label, status }) => {
     </Box>
   );
 };
-
-// --- COMPONENTE MethodologyCard (com ajuste de altura da última vez) ---
-const MethodologyCard = ({ methodologyKey, info, isSelected, onSelect }) => {
-  const [isFlipped, setIsFlipped] = useState(false);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-  const handleMobileFlip = (e) => {
-    e.stopPropagation();
-    if (isMobile) setIsFlipped(!isFlipped);
-  };
-
-  const glassmorphismStyle = {
-    position: 'absolute', width: '100%', height: '100%',
-    backfaceVisibility: 'hidden', display: 'flex', borderRadius: 3,
-    border: '1px solid rgba(255, 255, 255, 0.3)', background: 'rgba(255, 255, 255, 0.08)',
-    backdropFilter: 'blur(15px)', color: 'white', overflow: 'hidden',
-  };
-
-  return (
-    // Altura ajustada na interação anterior
-    <Box onClick={onSelect} onMouseEnter={!isMobile ? () => setIsFlipped(true) : undefined} onMouseLeave={!isMobile ? () => setIsFlipped(false) : undefined} sx={{ perspective: '1000px', cursor: 'pointer', position: 'relative', height: { xs: 180, md: 200 } }}>
-      <motion.div animate={{ rotateY: isFlipped ? 180 : 0 }} transition={{ duration: 0.6, ease: 'easeInOut' }} style={{ position: 'relative', transformStyle: 'preserve-3d', width: '100%', height: '100%' }}>
-        
-        {/* Frente do Card */}
-        <Box sx={{ ...glassmorphismStyle, flexDirection: 'column', alignItems: 'center', justifyContent: 'space-evenly', p: 2, opacity: isSelected ? 1 : 0.7, transform: isSelected ? 'translateY(-10px) scale(1.05)' : 'scale(1)', boxShadow: isSelected ? `0 0 20px -5px ${theme.palette.primary.light}, 0 10px 30px -10px rgba(0,0,0,0.5)` : '0 4px 15px rgba(0,0,0,0.2)', borderColor: isSelected ? theme.palette.primary.main : 'rgba(255, 255, 255, 0.3)', transition: 'transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease, border-color 0.3s ease', '&:hover': { opacity: 1, transform: isSelected ? 'translateY(-10px) scale(1.05)' : 'translateY(-5px) scale(1.02)' }, '&::before': { content: '""', position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, background: info.gradient, opacity: 0.75, borderRadius: 'inherit', zIndex: -1 } }}>
-          <Box component="img" src={info.logo} sx={{ height: { xs: 50, md: 60 }, objectFit: 'contain', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))' }} />
-          <Typography fontWeight="bold" sx={{ textAlign: 'center', width: '100%', fontSize: { xs: '1rem', sm: '1.1rem', md: '1.2rem' }, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
-            {info.name}
-          </Typography>
-          {isMobile && (<IconButton onClick={handleMobileFlip} sx={{ position: 'absolute', top: 8, right: 8, color: 'white', opacity: 0.8 }}><InfoIcon /></IconButton>)}
-        </Box>
-
-        {/* Verso do Card (com ajuste de fonte da última vez) */}
-        <Box onClick={isMobile ? handleMobileFlip : undefined} sx={{ ...glassmorphismStyle, transform: 'rotateY(180deg)', alignItems: 'center', justifyContent: 'center', p: 3, boxShadow: `0 8px 25px -5px rgba(0,0,0,0.3)`, '&::before': { content: '""', position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, background: info.gradient, opacity: 0.85, borderRadius: 'inherit', zIndex: -1 } }}>
-          <Typography
-            variant="body2"
-            textAlign="center"
-            sx={{
-              fontSize: { xs: '0.75rem', sm: '0.8rem', md: '0.875rem' },
-              lineHeight: { xs: 1.4, md: 1.5 }, 
-              overflowY: 'auto', // Permite scroll se o texto for muito grande
-              maxHeight: '100%', // Garante que o texto não vaze do card
-              // Oculta a barra de scroll
-              scrollbarWidth: 'none', // Firefox
-              '&::-webkit-scrollbar': {
-                display: 'none' // Chrome, Safari, etc.
-              }
-            }}
-          >
-            {info.explanation}
-          </Typography>
-        </Box>
-      </motion.div>
-    </Box>
-  );
-};
-// --- FIM DO COMPONENTE MethodologyCard ---
-
 
 // --- NOVO COMPONENTE: MODAL DE CONFIGURAÇÃO TWILIO ---
 const TwilioConfigModal = ({ open, onClose, config }) => {
@@ -314,8 +266,8 @@ export default function AiSettings() {
     {
       element: '#tour-collection-mode',
       popover: {
-        title: 'Modo de Operação de Cobrança',
-        description: 'Escolha o tom que a IA usará nas negociações. "Cordial" é mais empático, "Persistente" é mais firme.',
+        title: 'Perfil de Cobrança Humanizada',
+        description: 'Escolha como a IA deve equilibrar acolhimento, clareza e condução do acordo. Todos os perfis mantêm respeito e segurança.',
         side: "top",
         align: 'start'
       }
@@ -343,7 +295,7 @@ export default function AiSettings() {
       element: '#tour-qualification-criteria',
       popover: {
         title: 'Critérios de Prioridade',
-        description: 'Ensine a IA a classificar a prioridade de abordagem do devedor com base nos critérios que você definir aqui.',
+        description: 'Ensine a IA a classificar a prioridade de abordagem do cliente com base nos critérios que você definir aqui.',
         side: "top",
         align: 'start'
       }
@@ -368,7 +320,7 @@ export default function AiSettings() {
       companyIndustry: '',
       language: 'Brazilian Portuguese',
       prompt: '',
-      salesMethodology: 'Default',
+      salesMethodology: 'equilibrado',
       enableAutonomousSwitching: false,
       hotCriteria: [],
       warmCriteria: [],
@@ -407,7 +359,7 @@ export default function AiSettings() {
         companyIndustry: user.settings?.aiConfig?.companyIndustry || '',
         language: user.settings?.aiConfig?.language || 'Brazilian Portuguese',
         prompt: user.settings?.aiConfig?.prompt || DEFAULT_AI_PROMPT,
-        salesMethodology: user.settings?.aiConfig?.salesMethodology || 'Default',
+        salesMethodology: normalizeCollectionMode(user.settings?.aiConfig?.salesMethodology),
         enableAutonomousSwitching: user.settings?.aiConfig?.enableAutonomousSwitching ?? false,
         hotCriteria: parseCriteria(user.settings?.aiConfig?.hotCriteria),
         warmCriteria: parseCriteria(user.settings?.aiConfig?.warmCriteria),
@@ -481,7 +433,7 @@ export default function AiSettings() {
           companyIndustry: data.companyIndustry,
           language: data.language,
           prompt: data.prompt,
-          salesMethodology: data.salesMethodology,
+          salesMethodology: normalizeCollectionMode(data.salesMethodology),
           enableAutonomousSwitching: data.enableAutonomousSwitching,
           hotCriteria: data.hotCriteria.filter(Boolean),
           warmCriteria: data.warmCriteria.filter(Boolean),
@@ -587,7 +539,7 @@ export default function AiSettings() {
             <Grid item xs={12} md={6}><FieldLabel>Idioma</FieldLabel><Controller name="language" control={aiControl} render={({ field }) => (<FormControl fullWidth sx={formControlStyles}><Select {...field} variant="outlined" disabled={isGuestMode}><MenuItem value="Brazilian Portuguese">Português do Brasil</MenuItem><MenuItem value="English">Inglês</MenuItem><MenuItem value="Español">Espanhol</MenuItem></Select></FormControl>)} /></Grid>
             <Grid item xs={12} sx={{ mt: 2 }}>
               <Box id="tour-collection-mode">
-                <FieldLabel tooltip="Selecione o tom que o agente usará nas negociações de cobrança.">Modo de Operação do Agente</FieldLabel>
+                <FieldLabel tooltip="Selecione o perfil de abordagem do agente. Todos seguem cobrança humanizada, sem pressão, ameaça ou exposição indevida.">Perfil de Cobrança Humanizada</FieldLabel>
               </Box>
               <Controller
                 name="salesMethodology"
@@ -727,7 +679,7 @@ export default function AiSettings() {
       <Fade in timeout={900}>
         <Paper id="tour-qualification-criteria" variant="outlined" sx={paperStyles}>
           <Typography variant="h6" gutterBottom>Critérios de Prioridade</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>Defina as palavras-chave para classificar a urgência e prioridade da negociação com o devedor.</Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>Defina as palavras-chave para classificar a urgência e prioridade da negociação com o cliente.</Typography>
           <Grid container spacing={3}>
             <Grid item xs={12} sm={6} md={4}><CriteriaFieldArray control={aiControl} name="hotCriteria" label="Alta Prioridade" status="hot" /></Grid>
             <Grid item xs={12} sm={6} md={4}><CriteriaFieldArray control={aiControl} name="warmCriteria" label="Média Prioridade" status="warm" /></Grid>
@@ -740,7 +692,7 @@ export default function AiSettings() {
         <Fade in timeout={1100}>
           <Paper variant="outlined" sx={paperStyles}>
             <Typography variant="h6" gutterBottom>Follow-up Automático</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Envie mensagens de acompanhamento automaticamente se um lead não responder.</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Envie mensagens de acompanhamento automaticamente se um cliente não responder.</Typography>
             <Controller name="followupEnabled" control={aiControl} render={({ field }) => (<FormControlLabel control={<Switch {...field} checked={field.value} disabled={isGuestMode} />} label="Habilitar follow-up" />)} />
             <Collapse in={watchAiFollowup}>
               <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mt: 1 }}>

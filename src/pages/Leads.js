@@ -6,14 +6,14 @@ import {
   Box, Typography, Button, Paper, DialogTitle, DialogContent, DialogActions,
   TextField, FormControl, InputLabel, Select, MenuItem, Chip, IconButton, Tooltip, Grid,
   CircularProgress, Card, CardContent, InputAdornment, useTheme, Menu, ListItemIcon, ListItemText,
-  FormControlLabel, Switch, useMediaQuery, Badge, Skeleton, Pagination, Divider, Autocomplete
+  FormControlLabel, Switch, useMediaQuery, Badge, Skeleton, Pagination, Autocomplete
 } from '@mui/material';
 import {
   Add as AddIcon, Chat as ChatIcon, Edit as EditIcon, Delete as DeleteIcon, Sync as SyncIcon,
   Email as EmailIcon, GetApp as GetAppIcon, Search as SearchIcon, AddCircleOutline as AddCircleOutlineIcon,
   FileUpload as FileUploadIcon, Send as SendIcon, MoreVert as MoreVertIcon, Close as CloseIcon, FilterList as FilterListIcon,
   Business as BusinessIcon, RequestQuote as RequestQuoteIcon, Image as ImageIcon, VideoLibrary as VideoLibraryIcon,
-  Description as DescriptionIcon, LocalOffer as LocalOfferIcon
+  Description as DescriptionIcon
 } from '@mui/icons-material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useForm, Controller } from 'react-hook-form';
@@ -239,13 +239,6 @@ const MobileLeadCard = ({ lead, statusColor, onOpenMenu, getStatusLabel, transpa
         sx={{ backgroundColor: statusColor, color: 'white', height: 22, fontSize: '0.68rem', maxWidth: 180 }}
         size="small"
       />
-      {lead.tags?.length > 0 && (
-        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', maxWidth: 220 }}>
-          {lead.tags.slice(0, 3).map(tag => (
-            <Chip key={tag} icon={<LocalOfferIcon sx={{ fontSize: '12px !important' }} />} label={tag} size="small" variant="outlined" sx={{ height: 20, fontSize: '0.62rem' }} />
-          ))}
-        </Box>
-      )}
       <Typography variant="caption" color="text.secondary" noWrap sx={{ display: 'flex', alignItems: 'center', gap: 0.5, pt: 0.5, fontSize: '0.65rem' }}>
         <EmailIcon sx={{ fontSize: 12 }} /> {lead.email || 'N/A'}
       </Typography>
@@ -302,7 +295,6 @@ export default function PaginaLeads() {
 
   const [statusFilter, setStatusFilter] = useState('');
   const [sourceFilter, setSourceFilter] = useState('');
-  const [tagFilter, setTagFilter] = useState('');
   const [showSemRespostaStatus, setShowSemRespostaStatus] = useState(false);
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: isMobile ? 10 : 25 });
   const [textFilter, setTextFilter] = useState(location.state?.leadName || '');
@@ -328,7 +320,6 @@ export default function PaginaLeads() {
   const { control, handleSubmit, reset, formState: { errors } } = useForm();
   const { control: emailControl, handleSubmit: handleEmailSubmit, reset: resetEmailForm, formState: { errors: emailErrors } } = useForm();
   const { data: statusEnumData, isLoading: isLoadingStatusEnum } = useQuery('leadStatusEnums', () => api.get('/leads/statuses').then(res => res.data), { staleTime: 60000, initialData: [] });
-  const { data: tagOptions = [] } = useQuery('leadTagOptions', () => api.get('/leads/tags').then(res => res.data), { staleTime: 60000, initialData: [] });
 
   const allStatuses = statusEnumData && Array.isArray(statusEnumData) && statusEnumData.length > 0
     ? uniqueOptions(statusEnumData)
@@ -336,12 +327,11 @@ export default function PaginaLeads() {
   const visibleStatuses = allStatuses.filter(status => !HIDDEN_STATUSES.includes(status));
   const availableStatuses = showSemRespostaStatus ? allStatuses : visibleStatuses;
 
-  const { data: apiData, isLoading: apiIsLoading } = useQuery(['leads', paginationModel, debouncedTextFilter, statusFilter, sourceFilter, tagFilter], () => {
+  const { data: apiData, isLoading: apiIsLoading } = useQuery(['leads', paginationModel, debouncedTextFilter, statusFilter, sourceFilter], () => {
     const params = new URLSearchParams({ page: paginationModel.page + 1, limit: paginationModel.pageSize, sort: '-createdAt' });
     if (debouncedTextFilter) params.append('search', debouncedTextFilter);
     if (statusFilter) params.append('status', statusFilter);
     if (sourceFilter) params.append('source', sourceFilter);
-    if (tagFilter) params.append('tag', tagFilter);
     return api.get(`/leads?${params.toString()}`).then(res => res.data);
   }, { keepPreviousData: true, enabled: !isGuestMode });
 
@@ -368,9 +358,6 @@ export default function PaginaLeads() {
   const createStatusOptionMutation = useMutation((status) => api.post('/leads/statuses', { status }).then(res => res.data), {
     onSuccess: (response) => queryClient.setQueryData('leadStatusEnums', response.statuses || allStatuses)
   });
-  const createTagOptionMutation = useMutation((tag) => api.post('/leads/tags', { tag }).then(res => res.data), {
-    onSuccess: (response) => queryClient.setQueryData('leadTagOptions', response.tags || tagOptions)
-  });
 
   const getStatusLabel = (status) => t(`dashboard.funnelLabels.${getStatusTranslationKey(status)}`, { defaultValue: getOptionLabel(status) });
 
@@ -379,12 +366,6 @@ export default function PaginaLeads() {
     if (cleanStatus && !allStatuses.includes(cleanStatus) && !createStatusOptionMutation.isLoading) {
       createStatusOptionMutation.mutate(cleanStatus);
     }
-  };
-
-  const rememberTagOptions = (tags = []) => {
-    uniqueOptions(tags, 40)
-      .filter(tag => !tagOptions.includes(tag))
-      .forEach(tag => createTagOptionMutation.mutate(tag));
   };
 
   const handleOpenDialog = (lead = null) => { 
@@ -402,22 +383,22 @@ export default function PaginaLeads() {
         linkedin: lead.socialMedia?.linkedin || '',
         facebook: lead.socialMedia?.facebook || '',
         instagram: lead.socialMedia?.instagram || '',
-        status: lead.status || 'novo',
-        tags: lead.tags || []
+        status: lead.status || 'novo'
       }); 
     } else { 
-      reset({ name: '', email: '', phone: '', company: '', position: '', source: 'form', status: visibleStatuses[0] || 'novo', tags: [], taxId: '', street: '', number: '', complement: '', city: '', state: '', zipCode: '', linkedin: '', facebook: '', instagram: '' });
+      reset({ name: '', email: '', phone: '', company: '', position: '', source: 'form', status: visibleStatuses[0] || 'novo', taxId: '', street: '', number: '', complement: '', city: '', state: '', zipCode: '', linkedin: '', facebook: '', instagram: '' });
     } 
     setOpen(true); 
   };
   const handleCloseDialog = () => { setOpen(false); setEditingLead(null); reset(); };
 
   const onSubmit = (data) => { 
+    const formData = { ...data };
+    delete formData.tags;
     const leadData = { 
-      ...data, 
+      ...formData, 
       phone: data.phone ? ('' + data.phone).replace(/\D/g, '') : '',
       status: cleanOption(data.status) || 'novo',
-      tags: uniqueOptions(data.tags, 40),
       taxId: data.taxId,
       address: {
         street: data.street,
@@ -434,7 +415,6 @@ export default function PaginaLeads() {
       }
     }; 
     rememberStatusOption(leadData.status);
-    rememberTagOptions(leadData.tags);
     if (editingLead) { 
       updateLeadMutation.mutate({ id: editingLead._id, data: leadData }); 
     } else { 
@@ -492,14 +472,6 @@ export default function PaginaLeads() {
     { field: 'email', headerName: t('leadsPage.table.email'), minWidth: 200, flex: 1.5 },
     { field: 'company', headerName: t('leadsPage.table.company'), minWidth: 130, flex: 1 },
     { field: 'status', headerName: t('leadsPage.table.status'), minWidth: 150, flex: 0.7, renderCell: (params) => (<Chip label={getStatusLabel(params.value)} sx={{ backgroundColor: statusColorsByIndex[params.value] || theme.palette.primary.main, color: 'white', maxWidth: '100%' }} size="small" />) },
-    { field: 'tags', headerName: 'Tags', minWidth: 180, flex: 1, sortable: false, renderCell: (params) => (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', py: 0.5 }}>
-        {(params.value || []).slice(0, 3).map(tag => (
-          <Chip key={tag} icon={<LocalOfferIcon sx={{ fontSize: '13px !important' }} />} label={tag} size="small" variant="outlined" sx={{ height: 24, maxWidth: 110 }} />
-        ))}
-        {(params.value || []).length > 3 && <Chip label={`+${params.value.length - 3}`} size="small" sx={{ height: 24 }} />}
-      </Box>
-    ) },
     { field: 'actions', headerName: t('leadsPage.table.actions'), width: 150, sortable: false, align: 'center', headerAlign: 'center', renderCell: (params) => (<Box><Tooltip title={t('leadsPage.table.tooltip.startIaConversation')}><IconButton size="small" onClick={() => handleStartSingleConversation(params.row)}><ChatIcon fontSize="small" /></IconButton></Tooltip><Tooltip title={t('leadsPage.table.tooltip.edit')}><IconButton size="small" onClick={() => handleOpenDialog(params.row)}><EditIcon fontSize="small" /></IconButton></Tooltip><Tooltip title={t('leadsPage.table.tooltip.delete')}><IconButton size="small" onClick={() => handleDeleteLead(params.row._id)}><DeleteIcon fontSize="small" /></IconButton></Tooltip></Box>), },
   ], [t, statusColorsByIndex, theme.palette.primary.main, getStatusLabel]);
 
@@ -523,14 +495,6 @@ export default function PaginaLeads() {
           {Object.entries(t('dashboard.leadSources', { returnObjects: true })).map(([key, label]) => (<MenuItem key={key} value={key}>{label}</MenuItem>))}
         </Select>
       </FormControl>
-      <Autocomplete
-        value={tagFilter || null}
-        onChange={(_, value) => setTagFilter(value || '')}
-        options={tagOptions}
-        disabled={isGuestMode}
-        size="small"
-        renderInput={(params) => <TextField {...params} label="Tag" />}
-      />
     </>
   );
 
@@ -542,11 +506,10 @@ export default function PaginaLeads() {
           <Grid item xs={12} sm="auto"><Typography variant="h4" fontWeight="bold" sx={{ color: 'text.primary', ...(theme.palette.mode === 'dark' && { background: theme.palette.custom?.gradients?.text || 'linear-gradient(45deg, #D8B4FE 30%, #8E24AA 90%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }) }}>{t('leadsPage.title')}</Typography></Grid>
           <Grid item xs={12} sm><Grid container spacing={2} alignItems="center">
             <Grid item xs={12} md={isMobile ? 12 : 6}><TextField label={t('leadsPage.filters.searchPlaceholder')} variant="outlined" fullWidth size="small" value={textFilter} onChange={(e) => setTextFilter(e.target.value)} disabled={isGuestMode} InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>), }} /></Grid>
-            {isMobile ? (<Grid item xs={12}><Badge color="primary" variant="dot" invisible={!statusFilter && !sourceFilter && !tagFilter}><Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setFilterDialogOpen(true)} fullWidth>{t('common.filters')}</Button></Badge></Grid>
+            {isMobile ? (<Grid item xs={12}><Badge color="primary" variant="dot" invisible={!statusFilter && !sourceFilter}><Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setFilterDialogOpen(true)} fullWidth>{t('common.filters')}</Button></Badge></Grid>
             ) : (<Grid item container md={6} spacing={2}>
-              <Grid item xs={4}><FormControl fullWidth variant="outlined" size="small" disabled={isGuestMode}><InputLabel>{t('leadsPage.filters.status')}</InputLabel><Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} label={t('leadsPage.filters.status')}><MenuItem value=""><em>{t('leadsPage.filters.allStatuses')}</em></MenuItem>{availableStatuses.map((status) => (<MenuItem key={status} value={status} sx={{ color: statusColorsByIndex[status], fontWeight: 'bold' }}>{getStatusLabel(status)}</MenuItem>))}</Select></FormControl></Grid>
-              <Grid item xs={4}><FormControl fullWidth variant="outlined" size="small" disabled={isGuestMode}><InputLabel>{t('leadsPage.filters.source')}</InputLabel><Select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} label={t('leadsPage.filters.source')}><MenuItem value=""><em>{t('leadsPage.filters.allSources')}</em></MenuItem>{Object.entries(t('dashboard.leadSources', { returnObjects: true })).map(([key, label]) => (<MenuItem key={key} value={key}>{label}</MenuItem>))}</Select></FormControl></Grid>
-              <Grid item xs={4}><Autocomplete value={tagFilter || null} onChange={(_, value) => setTagFilter(value || '')} options={tagOptions} disabled={isGuestMode} size="small" renderInput={(params) => <TextField {...params} label="Tag" />} /></Grid>
+              <Grid item xs={6}><FormControl fullWidth variant="outlined" size="small" disabled={isGuestMode}><InputLabel>{t('leadsPage.filters.status')}</InputLabel><Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} label={t('leadsPage.filters.status')}><MenuItem value=""><em>{t('leadsPage.filters.allStatuses')}</em></MenuItem>{availableStatuses.map((status) => (<MenuItem key={status} value={status} sx={{ color: statusColorsByIndex[status], fontWeight: 'bold' }}>{getStatusLabel(status)}</MenuItem>))}</Select></FormControl></Grid>
+              <Grid item xs={6}><FormControl fullWidth variant="outlined" size="small" disabled={isGuestMode}><InputLabel>{t('leadsPage.filters.source')}</InputLabel><Select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} label={t('leadsPage.filters.source')}><MenuItem value=""><em>{t('leadsPage.filters.allSources')}</em></MenuItem>{Object.entries(t('dashboard.leadSources', { returnObjects: true })).map(([key, label]) => (<MenuItem key={key} value={key}>{label}</MenuItem>))}</Select></FormControl></Grid>
             </Grid>)}
           </Grid></Grid>
         </Grid>
@@ -568,11 +531,10 @@ export default function PaginaLeads() {
         })}
       </Grid>
       
-      {(statusFilter || sourceFilter || tagFilter) && (<Box display="flex" gap={1} alignItems="center" flexWrap="wrap" mb={2}>
+      {(statusFilter || sourceFilter) && (<Box display="flex" gap={1} alignItems="center" flexWrap="wrap" mb={2}>
         <Typography variant="caption" color="text.secondary">{t('common.activeFilters')}:</Typography>
         {statusFilter && <Chip label={getStatusLabel(statusFilter)} onDelete={() => setStatusFilter('')} deleteIcon={<CloseIcon style={{ color: 'inherit' }} />} sx={{ backgroundColor: statusColorsByIndex[statusFilter], color: 'common.white', fontWeight: 'bold' }} />}
         {sourceFilter && <Chip label={t(`dashboard.leadSources.${sourceFilter}`, sourceFilter)} onDelete={() => setSourceFilter('')} deleteIcon={<CloseIcon style={{ color: 'inherit' }} />} sx={{ backgroundColor: theme.palette.secondary.main, color: 'common.white', fontWeight: 'bold' }} />}
-        {tagFilter && <Chip icon={<LocalOfferIcon />} label={tagFilter} onDelete={() => setTagFilter('')} deleteIcon={<CloseIcon style={{ color: 'inherit' }} />} sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.18), color: 'text.primary', fontWeight: 'bold' }} />}
       </Box>)}
 
       <Box component={Paper} id="tour-leads-action-bar" sx={{ ...transparentPaperStyle, p: 2, mb: 3, borderRadius: 2, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', md: 'center' }, gap: 2 }}>
@@ -657,14 +619,35 @@ export default function PaginaLeads() {
 
       <StyledDialog open={open} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogTitle sx={{ display: 'flex', alignItems: "center", gap: 1, color: theme.palette.primary.light }}><AddCircleOutlineIcon color="primary" />{editingLead ? t('leadsPage.leadModal.editTitle') : t('leadsPage.leadModal.newTitle')}</DialogTitle>
-          <DialogContent><Box sx={{ pt: 2, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2 }}>
-            <Controller name="name" control={control} rules={{ required: t('leadsPage.validation.nameRequired') }} render={({ field }) => <TextField {...field} label={t('leadsPage.leadModal.nameLabel')} error={!!errors.name} helperText={errors.name?.message} fullWidth />} />
-            <Controller name="email" control={control} rules={{ required: t('leadsPage.validation.emailRequired'), pattern: { value: /^\S+@\S+$/i, message: t('leadsPage.validation.emailInvalid') } }} render={({ field }) => <TextField {...field} label={t('leadsPage.leadModal.emailLabel')} type="email" error={!!errors.email} helperText={errors.email?.message} fullWidth />} />
-            <Controller name="phone" control={control} render={({ field }) => (<TextField {...field} label={t('leadsPage.leadModal.phoneLabel')} fullWidth InputProps={{ inputComponent: PhoneMaskAdapter }} />)} />
-            <Controller name="company" control={control} rules={{ required: t('leadsPage.validation.companyRequired') }} render={({ field }) => <TextField {...field} label={t('leadsPage.leadModal.companyLabel')} error={!!errors.company} helperText={errors.company?.message} fullWidth />} />
-            <Controller name="position" control={control} render={({ field }) => <TextField {...field} label={t('leadsPage.leadModal.positionLabel')} fullWidth />} />
-            <Controller name="source" control={control} defaultValue="form" rules={{ required: t('leadsPage.validation.sourceRequired') }} render={({ field }) => (<FormControl fullWidth error={!!errors.source}><InputLabel>{t('leadsPage.leadModal.sourceLabel')}</InputLabel><Select {...field} label={t('leadsPage.leadModal.sourceLabel')} sx={{ '& fieldset': { borderColor: theme.palette.divider }, '& .MuiSvgIcon-root': { color: 'text.secondary' } }}>{Object.entries(t('dashboard.leadSources', { returnObjects: true })).map(([key, label]) => (<MenuItem key={key} value={key}>{label}</MenuItem>))}</Select></FormControl>)} />
+          <DialogTitle sx={{ px: 3, pt: 2.5, pb: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+              <Box sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 2,
+                display: 'grid',
+                placeItems: 'center',
+                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                boxShadow: `0 8px 20px ${alpha(theme.palette.primary.main, 0.28)}`,
+              }}>
+                <AddCircleOutlineIcon sx={{ color: '#fff', fontSize: 20 }} />
+              </Box>
+              <Box>
+                <Typography variant="h6" fontWeight={800}>
+                  {editingLead ? 'Editar cliente' : 'Novo cliente'}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Status customizável e dados essenciais para cobrança por WhatsApp.
+                </Typography>
+              </Box>
+            </Box>
+          </DialogTitle>
+          <DialogContent sx={{ px: 3, pb: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+              <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, border: `1px solid ${alpha(theme.palette.divider, 0.55)}`, bgcolor: alpha(theme.palette.background.paper, 0.55) }}>
+                <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 1.5 }}>Dados principais</Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1.4fr 1fr' }, gap: 2 }}>
+            <Controller name="name" control={control} rules={{ required: t('leadsPage.validation.nameRequired') }} render={({ field }) => <TextField {...field} size="small" label="Nome do cliente" error={!!errors.name} helperText={errors.name?.message} fullWidth />} />
             <Controller name="status" control={control} rules={{ required: 'Status e obrigatorio' }} render={({ field }) => (
               <Autocomplete
                 freeSolo
@@ -673,45 +656,45 @@ export default function PaginaLeads() {
                 onInputChange={(_, value) => field.onChange(value)}
                 options={allStatuses}
                 getOptionLabel={(option) => getStatusLabel(option)}
-                renderInput={(params) => <TextField {...params} label="Status" error={!!errors.status} helperText={errors.status?.message} fullWidth />}
+                renderInput={(params) => <TextField {...params} size="small" label="Status do cliente" placeholder="Digite para criar" error={!!errors.status} helperText={errors.status?.message || 'Crie novos status direto aqui.'} fullWidth />}
               />
             )} />
-            <Controller name="tags" control={control} render={({ field }) => (
-              <Autocomplete
-                multiple
-                freeSolo
-                filterSelectedOptions
-                value={field.value || []}
-                onChange={(_, value) => { const tags = uniqueOptions(value, 40); field.onChange(tags); rememberTagOptions(tags); }}
-                options={tagOptions}
-                renderTags={(value, getTagProps) => value.map((option, index) => (
-                  <Chip {...getTagProps({ index })} key={option} icon={<LocalOfferIcon />} label={option} size="small" />
-                ))}
-                renderInput={(params) => <TextField {...params} label="Tags" fullWidth />}
-              />
-            )} />
-            
-            <Divider sx={{ gridColumn: '1 / -1', my: 1 }} />
-            <Typography variant="subtitle2" sx={{ gridColumn: '1 / -1' }}>Informações Pessoais e Endereço</Typography>
-            
-            <Controller name="taxId" control={control} render={({ field }) => <TextField {...field} label="CPF/CNPJ" fullWidth />} />
-            <Controller name="zipCode" control={control} render={({ field }) => <TextField {...field} label="CEP" fullWidth />} />
-            <Controller name="street" control={control} render={({ field }) => <TextField {...field} label="Logradouro" fullWidth />} />
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Controller name="number" control={control} render={({ field }) => <TextField {...field} label="Nº" sx={{ width: '80px' }} />} />
-              <Controller name="complement" control={control} render={({ field }) => <TextField {...field} label="Complemento" fullWidth />} />
-            </Box>
-            <Controller name="city" control={control} render={({ field }) => <TextField {...field} label="Cidade" fullWidth />} />
-            <Controller name="state" control={control} render={({ field }) => <TextField {...field} label="Estado" fullWidth />} />
+            <Controller name="phone" control={control} render={({ field }) => (<TextField {...field} size="small" label="WhatsApp / Telefone" fullWidth InputProps={{ inputComponent: PhoneMaskAdapter }} />)} />
+            <Controller name="email" control={control} rules={{ pattern: { value: /^\S+@\S+$/i, message: t('leadsPage.validation.emailInvalid') } }} render={({ field }) => <TextField {...field} size="small" label="E-mail" type="email" error={!!errors.email} helperText={errors.email?.message} fullWidth />} />
+            <Controller name="company" control={control} render={({ field }) => <TextField {...field} size="small" label="Empresa / Credor" fullWidth />} />
+            <Controller name="source" control={control} defaultValue="form" rules={{ required: t('leadsPage.validation.sourceRequired') }} render={({ field }) => (<FormControl size="small" fullWidth error={!!errors.source}><InputLabel>{t('leadsPage.leadModal.sourceLabel')}</InputLabel><Select {...field} label={t('leadsPage.leadModal.sourceLabel')} sx={{ '& fieldset': { borderColor: theme.palette.divider }, '& .MuiSvgIcon-root': { color: 'text.secondary' } }}>{Object.entries(t('dashboard.leadSources', { returnObjects: true })).map(([key, label]) => (<MenuItem key={key} value={key}>{label}</MenuItem>))}</Select></FormControl>)} />
+                </Box>
+              </Paper>
 
-            <Divider sx={{ gridColumn: '1 / -1', my: 1 }} />
-            <Typography variant="subtitle2" sx={{ gridColumn: '1 / -1' }}>Redes Sociais</Typography>
+              <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, border: `1px solid ${alpha(theme.palette.divider, 0.45)}`, bgcolor: alpha(theme.palette.background.default, 0.28) }}>
+                <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 1.5 }}>Documento e endereço</Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2 }}>
             
-            <Controller name="linkedin" control={control} render={({ field }) => <TextField {...field} label="LinkedIn" fullWidth />} />
-            <Controller name="instagram" control={control} render={({ field }) => <TextField {...field} label="Instagram" fullWidth />} />
-            <Controller name="facebook" control={control} render={({ field }) => <TextField {...field} label="Facebook" fullWidth />} />
-          </Box></DialogContent>
-          <DialogActions sx={{ p: '16px 24px' }}><Button onClick={handleCloseDialog} color="inherit">{t('common.cancel')}</Button><GradientButton type="submit" disabled={createLeadMutation.isLoading || updateLeadMutation.isLoading}>{createLeadMutation.isLoading || updateLeadMutation.isLoading ? <CircularProgress size={24} color="inherit" /> : (editingLead ? t('leadsPage.leadModal.updateButton') : t('leadsPage.leadModal.createButton'))}</GradientButton></DialogActions>
+            <Controller name="taxId" control={control} render={({ field }) => <TextField {...field} size="small" label="CPF/CNPJ" fullWidth />} />
+            <Controller name="zipCode" control={control} render={({ field }) => <TextField {...field} size="small" label="CEP" fullWidth />} />
+            <Controller name="street" control={control} render={({ field }) => <TextField {...field} size="small" label="Logradouro" fullWidth />} />
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Controller name="number" control={control} render={({ field }) => <TextField {...field} size="small" label="Nº" sx={{ width: '80px' }} />} />
+              <Controller name="complement" control={control} render={({ field }) => <TextField {...field} size="small" label="Complemento" fullWidth />} />
+            </Box>
+            <Controller name="city" control={control} render={({ field }) => <TextField {...field} size="small" label="Cidade" fullWidth />} />
+            <Controller name="state" control={control} render={({ field }) => <TextField {...field} size="small" label="UF" fullWidth />} />
+
+                </Box>
+              </Paper>
+
+              <Paper elevation={0} sx={{ p: 2, borderRadius: 2.5, border: `1px solid ${alpha(theme.palette.divider, 0.45)}`, bgcolor: alpha(theme.palette.background.default, 0.2) }}>
+                <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 1.5 }}>Canais complementares</Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
+            
+            <Controller name="linkedin" control={control} render={({ field }) => <TextField {...field} size="small" label="LinkedIn" fullWidth />} />
+            <Controller name="instagram" control={control} render={({ field }) => <TextField {...field} size="small" label="Instagram" fullWidth />} />
+            <Controller name="facebook" control={control} render={({ field }) => <TextField {...field} size="small" label="Facebook" fullWidth />} />
+                </Box>
+              </Paper>
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2, gap: 1, borderTop: `1px solid ${alpha(theme.palette.divider, 0.45)}` }}><Button onClick={handleCloseDialog} color="inherit">{t('common.cancel')}</Button><GradientButton type="submit" disabled={createLeadMutation.isLoading || updateLeadMutation.isLoading}>{createLeadMutation.isLoading || updateLeadMutation.isLoading ? <CircularProgress size={24} color="inherit" /> : (editingLead ? t('leadsPage.leadModal.updateButton') : t('leadsPage.leadModal.createButton'))}</GradientButton></DialogActions>
         </form>
       </StyledDialog>
 

@@ -1,11 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import {
   Box, Typography, Button, Paper, Dialog, DialogTitle, DialogContent, DialogActions,
   useTheme, Grid, Card, CardContent, Divider, Chip, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip, alpha, TextField,
   InputAdornment, Select, MenuItem, FormControl, InputLabel, Badge, Tab, Tabs, Alert,
-  LinearProgress, Collapse, Stack, Avatar, Pagination, CircularProgress
+  LinearProgress, Collapse, Stack, Avatar, Pagination, CircularProgress, Autocomplete
 } from '@mui/material';
 import {
   CloudUpload as UploadIcon,
@@ -47,6 +47,41 @@ import DebtorDetailModal from '../components/debts/DebtorDetailModal';
 const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtNum = (v) => new Intl.NumberFormat('pt-BR').format(v || 0);
+
+const DEFAULT_DEBTOR_STATUS_OPTIONS = [
+  { value: 'novo', label: 'Novo Devedor' },
+  { value: 'contatado', label: 'Contatado' },
+  { value: 'em_negociacao', label: 'Em Negociacao' },
+  { value: 'acordado', label: 'Acordo Feito' },
+  { value: 'quitado', label: 'Quitado' },
+];
+
+const cleanStatusOption = (value, maxLength = 80) => (
+  typeof value === 'string' ? value.trim().replace(/\s+/g, ' ').slice(0, maxLength) : ''
+);
+
+const formatStatusLabel = (status) => {
+  const clean = cleanStatusOption(status);
+  const defaultStatus = DEFAULT_DEBTOR_STATUS_OPTIONS.find(option => option.value === clean);
+  if (defaultStatus) return defaultStatus.label;
+  return clean.replace(/_/g, ' ').replace(/\b\w/g, letter => letter.toUpperCase());
+};
+
+const getDebtorStatusConfig = (status, theme) => {
+  const normalized = cleanStatusOption(status).toLowerCase() || 'novo';
+  const colorMap = {
+    novo: theme.palette.info.main,
+    contatado: theme.palette.warning.main,
+    em_negociacao: '#9c27b0',
+    acordado: theme.palette.secondary.main,
+    quitado: theme.palette.success.main,
+  };
+
+  return {
+    color: colorMap[normalized] || theme.palette.grey[500],
+    label: formatStatusLabel(normalized).toUpperCase(),
+  };
+};
 
 
 
@@ -637,13 +672,13 @@ function DebtorNotesDialog({ open, debtor, onClose }) {
   );
 }
 
-function DebtorCard({ debtor, onViewDetails, onReportStatusChange, onOpenNotes }) {
+function DebtorCard({ debtor, onViewDetails, onStatusChange, statusOptions, onOpenNotes }) {
   const theme = useTheme();
   const AVATAR_COLORS = ['#6366f1','#8b5cf6','#ec4899','#0ea5e9','#10b981'];
   const avatarColor = AVATAR_COLORS[debtor.cpfCnpj?.charCodeAt(0) % AVATAR_COLORS.length || 0];
   const initials = debtor.cliente?.split(' ').slice(0,2).map(n => n[0]).join('').toUpperCase() || '??';
   const hasOverdue = debtor.qtdVencidas > 0;
-  const [manualStatus, setManualStatus] = useState(debtor.manualReportStatus || '');
+  const [statusDraft, setStatusDraft] = useState(debtor.status || 'novo');
   const movementConfig = {
     novo: { label: 'Novo na importação', color: '#10b981' },
     mantido: { label: 'Permanece', color: theme.palette.info.main },
@@ -651,14 +686,14 @@ function DebtorCard({ debtor, onViewDetails, onReportStatusChange, onOpenNotes }
   }[debtor.importStatus || 'mantido'];
   const notesCount = debtor.debtorNotes?.length || 0;
 
-  React.useEffect(() => {
-    setManualStatus(debtor.manualReportStatus || '');
-  }, [debtor.manualReportStatus]);
+  useEffect(() => {
+    setStatusDraft(debtor.status || 'novo');
+  }, [debtor.status]);
 
-  const saveManualStatus = () => {
-    const next = manualStatus.trim();
-    if (next !== (debtor.manualReportStatus || '')) {
-      onReportStatusChange?.(debtor._id, next);
+  const saveDebtorStatus = (value) => {
+    const next = cleanStatusOption(value) || 'novo';
+    if (next !== (debtor.status || 'novo')) {
+      onStatusChange?.(debtor._id, next);
     }
   };
 
@@ -710,16 +745,7 @@ function DebtorCard({ debtor, onViewDetails, onReportStatusChange, onOpenNotes }
             </Typography>
             <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
               {(() => {
-                const status = debtor.status?.toLowerCase() || 'novo';
-                const statusMap = {
-                  'novo': { color: theme.palette.info.main, label: 'NOVO' },
-                  'contatado': { color: theme.palette.warning.main, label: 'CONTATADO' },
-                  'em_negociacao': { color: '#9c27b0', label: 'NEGOCIANDO' },
-                  'acordado': { color: theme.palette.secondary.main, label: 'ACORDADO' },
-                  'quitado': { color: theme.palette.success.main, label: 'QUITADO' },
-                };
-                const config = statusMap[status] || { color: theme.palette.grey[500], label: status.toUpperCase() };
-
+                const config = getDebtorStatusConfig(debtor.status, theme);
                 return (
                   <Chip
                     label={config.label}
@@ -781,19 +807,33 @@ function DebtorCard({ debtor, onViewDetails, onReportStatusChange, onOpenNotes }
           </Box>
         )}
 
-        <TextField
+        <Autocomplete
           size="small"
-          label="Status para relatório"
-          value={manualStatus}
-          onChange={(e) => setManualStatus(e.target.value)}
-          onBlur={saveManualStatus}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault();
-              e.currentTarget.blur();
-            }
+          freeSolo
+          value={statusDraft}
+          inputValue={statusDraft}
+          options={(statusOptions || []).filter(opt => opt.value !== 'todos').map(opt => opt.value)}
+          getOptionLabel={formatStatusLabel}
+          onInputChange={(_, value) => setStatusDraft(value)}
+          onChange={(_, value) => {
+            const next = cleanStatusOption(value) || 'novo';
+            setStatusDraft(next);
+            saveDebtorStatus(next);
           }}
-          placeholder="Digite o status"
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Status do devedor"
+              placeholder="Digite para criar"
+              onBlur={() => saveDebtorStatus(statusDraft)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.currentTarget.blur();
+                }
+              }}
+            />
+          )}
           fullWidth
           sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 1.5 }, '& .MuiInputBase-input': { fontSize: '0.78rem' } }}
         />
@@ -915,28 +955,32 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
     },
     { staleTime: 30000 }
   );
-  const reportStatusMutation = useMutation(
-    ({ leadId, manualReportStatus }) => api.put(`/spreadsheets/debtors/${leadId}/report-status`, { manualReportStatus }),
+  const debtorStatusMutation = useMutation(
+    ({ leadId, status }) => api.put(`/spreadsheets/debtors/${leadId}/status`, { status }),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['debtors-summary']);
-        toast.success('Status do relatório salvo.');
+        queryClient.invalidateQueries('leadStatusEnums');
+        toast.success('Status do devedor salvo.');
       },
       onError: (err) => {
-        toast.error(err.response?.data?.message || 'Erro ao salvar status do relatório.');
+        toast.error(err.response?.data?.message || 'Erro ao salvar status do devedor.');
       }
     }
   );
 
-  // Opções de status disponíveis
-  const statusOptions = [
-    { value: 'todos', label: 'Todos os Status' },
-    { value: 'novo', label: 'Novo Devedor' },
-    { value: 'contatado', label: 'Contatado' },
-    { value: 'em_negociacao', label: 'Em Negociação' },
-    { value: 'acordado', label: 'Acordo Feito' },
-    { value: 'quitado', label: 'Quitado' },
-  ];
+  const statusOptions = useMemo(() => {
+    const statuses = [
+      ...DEFAULT_DEBTOR_STATUS_OPTIONS.map(option => option.value),
+      ...debtors.map(debtor => debtor.status),
+    ];
+    const uniqueStatuses = [...new Set(statuses.map(status => cleanStatusOption(status)).filter(Boolean))];
+
+    return [
+      { value: 'todos', label: 'Todos os Status' },
+      ...uniqueStatuses.map(status => ({ value: status, label: formatStatusLabel(status) })),
+    ];
+  }, [debtors]);
 
   const filtered = useMemo(() => {
     return debtors.filter(d => {
@@ -1107,9 +1151,10 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
           <Grid item xs={12} sm={6} md={3} key={debtor.cpfCnpj}>
             <DebtorCard
               debtor={debtor}
+              statusOptions={statusOptions}
               onViewDetails={onViewDetails}
               onOpenNotes={(selectedDebtor) => setNotesDebtorId(selectedDebtor._id)}
-              onReportStatusChange={(leadId, manualReportStatus) => reportStatusMutation.mutate({ leadId, manualReportStatus })}
+              onStatusChange={(leadId, status) => debtorStatusMutation.mutate({ leadId, status })}
             />
           </Grid>
         ))}
