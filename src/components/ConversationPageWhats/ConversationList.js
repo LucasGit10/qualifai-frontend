@@ -41,11 +41,9 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
   const hasNotes = conversation.notes && conversation.notes.length > 0;
   const isAiActive = conversation.aiEnabled !== false;
   const unreadCount = conversation.unreadCount || 0;
-  const readCount = conversation.readCount || 0;
   const hasUnread = unreadCount > 0;
   const unreadColor = theme.palette.warning.main;
 
-  // ALTERAÇÃO: Estilos de status adaptados para o fundo de vidro
   const getStatusStyles = () => {
     switch (conversation.status) {
       case 'escalated':
@@ -64,7 +62,6 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
   };
 
   return (
-    // ALTERAÇÃO: Usando ListItemButton para melhor semântica e efeito de hover
     <ListItemButton
       selected={isSelected}
       onClick={() => onSelect(conversation._id)}
@@ -82,28 +79,11 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
         backgroundColor: theme.palette.mode === 'dark' 
           ? (isSelected ? alpha(theme.palette.primary.main, 0.25) : hasUnread ? alpha(unreadColor, 0.18) : 'rgba(255, 255, 255, 0.05)')
           : (isSelected ? alpha(theme.palette.primary.main, 0.15) : hasUnread ? alpha(unreadColor, 0.12) : 'rgba(255, 255, 255, 0.8)'),
-        '&::before': hasUnread ? {
-          content: '""',
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          background: `linear-gradient(90deg, ${alpha(unreadColor, 0.18)}, transparent 38%)`,
-        } : undefined,
         '&:hover': {
           transform: 'translateX(2px)',
           backgroundColor: theme.palette.mode === 'dark' 
             ? (hasUnread ? alpha(unreadColor, 0.24) : 'rgba(255, 255, 255, 0.1)')
             : (hasUnread ? alpha(unreadColor, 0.18) : 'rgba(255, 255, 255, 0.9)')
-        },
-        '&.Mui-selected': { 
-          backgroundColor: theme.palette.mode === 'dark'
-            ? alpha(theme.palette.primary.main, 0.25)
-            : alpha(theme.palette.primary.main, 0.15),
-          '&:hover': { 
-            backgroundColor: theme.palette.mode === 'dark'
-              ? alpha(theme.palette.primary.main, 0.35)
-              : alpha(theme.palette.primary.main, 0.25)
-          } 
         },
       }}
     >
@@ -114,7 +94,7 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
           badgeContent={hasUnread ? unreadCount : null}
           max={99}
         >
-          <Avatar sx={{ background: theme.palette.custom?.gradients?.button, boxShadow: hasUnread ? `0 0 0 3px ${alpha(unreadColor, 0.22)}` : 'none' }}>
+          <Avatar sx={{ background: theme.palette.custom?.gradients?.button, width: 40, height: 40 }}>
               {conversation.lead?.name ? conversation.lead.name.charAt(0).toUpperCase() : '?'}
           </Avatar>
         </Badge>
@@ -127,11 +107,13 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
               <Typography variant="subtitle1" noWrap fontWeight={hasUnread ? 800 : 'bold'} color={theme.palette.text.primary}>
                 {conversation.lead?.name || 'Lead Desconhecido'}
               </Typography>
-              <Tooltip title={isAiActive ? "IA Ativa" : "IA Desativada"}>
-                {isAiActive 
-                    ? <AiIcon color="info" sx={{ fontSize: 18 }} /> 
-                    : <VoiceOverOffIcon color="action" sx={{ fontSize: 18 }} />
-                }
+              <Tooltip title={isAiActive ? "IA Ativa" : "IA Desativada (Modo Manual)"}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  {isAiActive 
+                      ? <AiIcon color="info" sx={{ fontSize: 18, opacity: 0.8 }} /> 
+                      : <VoiceOverOffIcon sx={{ fontSize: 18, color: theme.palette.error.main }} />
+                  }
+                </Box>
               </Tooltip>
             </Box>
             {lastMessage && (
@@ -143,56 +125,38 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
         }
         secondary={
           <>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5, flexWrap: 'wrap' }}>
                 {conversation.lead?.company && (
                   <Chip 
                     icon={<BusinessIcon fontSize="small" />} 
                     label={conversation.lead.company} 
                     size="small" 
                     variant="outlined" 
-                    sx={{ 
-                      color: theme.palette.text.primary,
-                      borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'
-                    }}
+                    sx={{ height: 20, fontSize: '0.65rem' }}
                   />
                 )}
-                {conversation.instance?.instanceName && (
+                {!isAiActive && (
                   <Chip 
-                    label={conversation.instance.instanceName} 
+                    label="IA OFF" 
                     size="small" 
-                    variant="outlined" 
-                    sx={{ 
-                      color: theme.palette.text.primary,
-                      borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)'
-                    }}
+                    color="error"
+                    variant="filled"
+                    sx={{ height: 20, fontSize: '0.65rem', fontWeight: 'bold' }}
                   />
                 )}
             </Box>
-            <Typography variant="body2" color={theme.palette.text.secondary} noWrap sx={{ display: 'block', mb: 1 }}>
+            <Typography variant="body2" color={theme.palette.text.secondary} noWrap sx={{ display: 'block', mb: 0.5, fontSize: '0.75rem' }}>
                 {formatPhoneNumber(conversation.lead?.phone)}
             </Typography>
             <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="body2" color={theme.palette.text.secondary} noWrap sx={{ flex: 1 }}>
+              <Typography variant="body2" color={theme.palette.text.secondary} noWrap sx={{ flex: 1, fontSize: '0.8rem' }}>
                 {lastMessage?.content || 'Nenhuma mensagem ainda'}
               </Typography>
-              <Box display="flex" gap={1} ml={1} alignItems="center">
-                {hasUnread && (
-                  <Chip
-                    label={unreadCount === 1 ? 'Nova mensagem' : `${unreadCount} novas`}
-                    size="small"
-                    color="warning"
-                    sx={{ fontWeight: 900 }}
-                  />
-                )}
-                {readCount > 0 && (
-                  <Chip label={`${readCount} lida${readCount > 1 ? 's' : ''}`} size="small" color="success" variant="outlined" />
-                )}
-                {hasNotes && <Tooltip title="Possui notas"><NoteIcon sx={{ fontSize: 16, color: 'warning.main' }} /></Tooltip>}
-                <Tooltip title="Excluir Conversa">
-                  <IconButton edge="end" size="small" aria-label="delete" onClick={(e) => onDelete(conversation._id, e)}>
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
+              <Box display="flex" gap={0.5} ml={1} alignItems="center">
+                {hasNotes && <Tooltip title="Possui notas"><NoteIcon sx={{ fontSize: 14, color: 'warning.main' }} /></Tooltip>}
+                <IconButton edge="end" size="small" onClick={(e) => { e.stopPropagation(); onDelete(conversation._id); }}>
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
               </Box>
             </Box>
           </>
@@ -203,71 +167,34 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
 };
 
 export default function ConversationList({ channel, teamMemberId, selectedConversationId, onSelectConversation, onDeleteConversation }) {
-  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const theme = useTheme();
   const { socket } = useSocket();
   const [filter, setFilter] = useState('');
   const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
+  const { t } = useTranslation();
+
   const { data, isLoading, refetch } = useQuery(
     ['conversationsList', channel, teamMemberId],
     () => {
       const params = new URLSearchParams({ limit: 100, sortBy: 'lastContact' });
-      if (channel) {
-        params.append('channel', channel);
-      }
-      if (teamMemberId) {
-        params.append('teamMemberId', teamMemberId);
-      } else {
-        params.append('owner', 'master');
-      }
+      if (channel) params.append('channel', channel);
+      if (teamMemberId) params.append('teamMemberId', teamMemberId);
+      else params.append('owner', 'master');
       return api.get(`/conversations?${params.toString()}`).then(res => res.data);
     }
   );
-  const totalUnread = data?.totalUnread || 0;
 
   useEffect(() => {
-    if (!socket) return undefined;
-
-    const handleConversationEvent = () => {
-      queryClient.invalidateQueries(['conversationsList', channel, teamMemberId]);
-    };
-
-    socket.on('conversation_updated', handleConversationEvent);
-    socket.on('conversation_escalated', handleConversationEvent);
-
+    if (!socket) return;
+    const handleUpdate = () => queryClient.invalidateQueries(['conversationsList']);
+    socket.on('conversation_updated', handleUpdate);
+    socket.on('new_conversation', handleUpdate);
     return () => {
-      socket.off('conversation_updated', handleConversationEvent);
-      socket.off('conversation_escalated', handleConversationEvent);
+      socket.off('conversation_updated', handleUpdate);
+      socket.off('new_conversation', handleUpdate);
     };
-  }, [socket, queryClient, channel, teamMemberId]);
-
-  const deleteAllConversationsMutation = useMutation(
-    () => api.delete('/conversations/actions/delete-all'),
-    {
-      onSuccess: (data) => {
-        queryClient.invalidateQueries('conversationsList');
-        toast.success(data.data.message || t('conversationsPage.toasts.resetSuccess'));
-        setConfirmDeleteDialogOpen(false);
-      },
-      onError: (error) => {
-        toast.error(error.response?.data?.message || t('conversationsPage.toasts.resetError'));
-        setConfirmDeleteDialogOpen(false);
-      }
-    }
-  );
-
-  // eslint-disable-next-line no-unused-vars
-  const assignLegacyToMasterMutation = useMutation(
-    () => api.post('/conversations/actions/assign-legacy-to-master'),
-    {
-      onSuccess: (response) => {
-        queryClient.invalidateQueries(['conversationsList', channel, teamMemberId]);
-        toast.success(response.data?.message || 'Conversas antigas associadas ao usuario mestre.');
-      },
-      onError: (error) => toast.error(error.response?.data?.message || 'Erro ao associar conversas antigas.')
-    }
-  );
+  }, [socket, queryClient]);
 
   const filteredConversations = useMemo(() => {
     if (!data?.conversations) return [];
@@ -275,147 +202,68 @@ export default function ConversationList({ channel, teamMemberId, selectedConver
   }, [data, filter]);
 
   return (
-    <>
-      <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {/* ALTERAÇÃO: Header com borda transparente */}
-        <Box sx={{ 
-          p: 2, 
-          borderBottom: 1, 
-          borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-          backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)',
-        }}>
-          <Box display="flex" alignItems="center" justifyContent="space-between" gap={1}>
-            <Typography variant="h6" fontWeight="bold" gutterBottom color={theme.palette.text.primary}>
-              Conversas
-            </Typography>
-            {totalUnread > 0 && <Chip label={`${totalUnread} novas`} size="small" color="error" />}
-          </Box>
-          <TextField 
-            fullWidth 
-            variant="outlined" 
-            placeholder="Buscar conversas..." 
-            value={filter} 
-            onChange={(e) => setFilter(e.target.value)} 
-            size="small" 
-            InputProps={{ 
-              startAdornment: <InputAdornment position="start"><SearchIcon color="action" /></InputAdornment>, 
-              sx: { 
-                borderRadius: 8, 
-                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.9)',
-                '& .MuiOutlinedInput-input': {
-                  color: theme.palette.text.primary,
-                },
-                '& .MuiOutlinedInput-notchedOutline': {
-                  borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
-                },
-              } 
-            }} 
-          />
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-            <Button 
-              size="small" 
-              startIcon={<RefreshIcon />} 
-              onClick={() => refetch()} 
-              disabled={isLoading}
-              sx={{ color: theme.palette.text.primary }}
-            >
-              Atualizar
-            </Button>
-            <Button 
-              size="small" 
-              color="error" 
-              startIcon={<DeleteIcon />} 
-              onClick={() => setConfirmDeleteDialogOpen(true)} 
-              disabled={deleteAllConversationsMutation.isLoading}
-            >
-              Resetar Todas
-            </Button>
-          </Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+          <Typography variant="h6" fontWeight="bold">Conversas</Typography>
+          <IconButton size="small" onClick={() => refetch()}><RefreshIcon /></IconButton>
         </Box>
-
-        {isLoading ? (
-          <Box sx={{ 
-            display: 'flex', 
-            justifyContent: 'center', 
-            alignItems: 'center', 
-            flex: 1,
-            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.5)',
-          }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <List sx={{ 
-            flex: 1, 
-            overflowY: 'auto', 
-            p: 0,
-            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.5)',
-            scrollbarWidth: 'thin',
-            scrollbarColor: `${alpha(theme.palette.primary.main, 0.65)} transparent`,
-            '&::-webkit-scrollbar': {
-              width: 9,
-            },
-            '&::-webkit-scrollbar-track': {
-              backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.05 : 0.07),
-              borderRadius: 999,
-            },
-            '&::-webkit-scrollbar-thumb': {
-              borderRadius: 999,
-              background: `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.75)}, ${alpha(theme.palette.secondary.main, 0.6)})`,
-              border: `2px solid ${alpha(theme.palette.background.paper, 0.65)}`,
-            },
-            '&::-webkit-scrollbar-thumb:hover': {
-              background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            },
-          }}>
-            {filteredConversations.map((conv) => (
-              <React.Fragment key={conv._id}>
-                <ConversationListItem
-                  conversation={conv}
-                  isSelected={selectedConversationId === conv._id}
-                  onSelect={onSelectConversation}
-                  onDelete={onDeleteConversation}
-                />
-                <Divider component="li" sx={{ borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)' }} />
-              </React.Fragment>
-            ))}
-          </List>
-        )}
+        <TextField 
+          fullWidth 
+          variant="outlined" 
+          placeholder="Buscar..." 
+          size="small"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          InputProps={{ 
+            startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment>,
+            sx: { borderRadius: 2 }
+          }}
+        />
       </Box>
 
-      {/* ALTERAÇÃO: Usando StyledDialog e GradientButton */}
+      {isLoading ? (
+        <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>
+      ) : (
+        <List sx={{ flex: 1, overflowY: 'auto', p: 0 }}>
+          {filteredConversations.map((conv) => (
+            <React.Fragment key={conv._id}>
+              <ConversationListItem
+                conversation={conv}
+                isSelected={selectedConversationId === conv._id}
+                onSelect={onSelectConversation}
+                onDelete={onDeleteConversation}
+              />
+              <Divider />
+            </React.Fragment>
+          ))}
+        </List>
+      )}
+
+      <Box sx={{ p: 1, borderTop: 1, borderColor: 'divider' }}>
+        <Button 
+          fullWidth 
+          color="error" 
+          size="small" 
+          startIcon={<DeleteIcon />}
+          onClick={() => setConfirmDeleteDialogOpen(true)}
+        >
+          Limpar Tudo
+        </Button>
+      </Box>
+
       <StyledDialog open={confirmDeleteDialogOpen} onClose={() => setConfirmDeleteDialogOpen(false)}>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <WarningIcon color="error" />
-          <Typography variant="h6" color={theme.palette.text.primary}>
-            {t('conversationsPage.deleteConfirmDialog.title')}
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Typography color={theme.palette.text.primary}>
-            <Trans i18nKey="conversationsPage.deleteConfirmDialog.message">
-              Você tem certeza que deseja apagar <strong>TODAS</strong> as suas conversas? Esta ação é irreversível.
-            </Trans>
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: '16px 24px' }}>
-          <Button 
-            onClick={() => setConfirmDeleteDialogOpen(false)} 
-            disabled={deleteAllConversationsMutation.isLoading} 
-            color="inherit"
-            sx={{ color: theme.palette.text.secondary }}
-          >
-            {t('common.cancel')}
-          </Button>
-          <GradientButton 
-            onClick={() => deleteAllConversationsMutation.mutate()} 
-            color="error" 
-            disabled={deleteAllConversationsMutation.isLoading}
-            sx={{ background: theme.palette.error.main }}
-          >
-            {deleteAllConversationsMutation.isLoading ? <CircularProgress size={24} color="inherit" /> : t('conversationsPage.deleteConfirmDialog.confirmButton')}
-          </GradientButton>
+        <DialogTitle>Limpar Conversas?</DialogTitle>
+        <DialogContent>Deseja apagar todas as conversas? Esta ação é irreversível.</DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDeleteDialogOpen(false)}>Cancelar</Button>
+          <GradientButton onClick={async () => {
+            await api.delete('/conversations/actions/delete-all');
+            queryClient.invalidateQueries('conversationsList');
+            setConfirmDeleteDialogOpen(false);
+          }}>Limpar</GradientButton>
         </DialogActions>
       </StyledDialog>
-    </>
+    </Box>
   );
 }
