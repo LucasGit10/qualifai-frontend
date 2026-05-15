@@ -54,7 +54,7 @@ export default function Sidebar({
           alt="Logo QualifAI" 
           sx={{ 
             objectFit: 'contain', 
-            height: theme.palette.mode === 'light' ? '40px' : '250px', 
+            height: '40px', 
             width: 'auto', 
             opacity: menuMinimizado ? 0 : 1, 
             transition: 'opacity 0.2s ease-out, height 0.2s ease-out' 

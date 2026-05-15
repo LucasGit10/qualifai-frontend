@@ -67,7 +67,7 @@ const darkPalette = {
   divider: 'rgba(226, 214, 255, 0.12)',
   custom: {
     logos: {
-      full: '/Fundo transparente(1).png',
+      full: '/logo-dark.png',
     },
     gradients: {
       background: 'linear-gradient(135deg, #0a071a 0%, #1c1633 100%)',
@@ -112,7 +112,7 @@ const lightPalette = {
   divider: 'rgba(0, 0, 0, 0.12)',
   custom: {
     logos: {
-      full: '/Logoooo.png',
+      full: '/logo-light.png',
     },
     gradients: {
       background: 'linear-gradient(135deg, #FFFFFF 0%, #E5E7EB 100%)',
