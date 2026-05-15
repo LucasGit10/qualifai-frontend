@@ -33,6 +33,31 @@ const formatPhoneNumber = (phone) => {
 // ALTERAÇÃO: Bolhas de mensagem totalmente reestilizadas
 const MessageBubble = ({ message, theme }) => {
     const isLead = message.role === 'lead';
+    const isSystem = message.role === 'system';
+
+    if (isSystem) {
+      return (
+        <Box sx={{ my: 2, display: 'flex', justifyContent: 'center' }}>
+          <Paper 
+            elevation={0} 
+            sx={{ 
+              p: 1, 
+              px: 2,
+              borderRadius: '12px', 
+              background: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+              color: theme.palette.text.secondary, 
+              maxWidth: '90%',
+              border: `1px dashed ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)'}`,
+            }}
+          >
+            <Typography variant="caption" sx={{ whiteSpace: 'pre-wrap', textAlign: 'center', display: 'block', fontWeight: '500' }}>
+              {message.content}
+            </Typography>
+          </Paper>
+        </Box>
+      );
+    }
+
     return (
         <Box sx={{ my: 1, display: 'flex', justifyContent: isLead ? 'flex-start' : 'flex-end' }}>
             <Paper 
@@ -62,7 +87,7 @@ const MessageBubble = ({ message, theme }) => {
                     color: isLead ? 'rgba(255, 255, 255, 0.7)' : theme.palette.text.secondary
                   }}
                 >
-                  {format(new Date(message.timestamp), 'HH:mm', { locale: ptBR })}
+                  {message.timestamp ? format(new Date(message.timestamp), 'HH:mm', { locale: ptBR }) : ''}
                 </Typography>
             </Paper>
         </Box>
@@ -82,7 +107,7 @@ export default function ChatWindow({ conversationId, onClose, onDelete }) {
   const { data, isLoading, isError } = useQuery(
     ['conversation', conversationId],
     () => api.get(`/conversations/${conversationId}`).then(res => res.data),
-    { enabled: !!conversationId, refetchInterval: 3000 } // Aumenta a frequência de atualização do chat aberto
+    { enabled: !!conversationId, refetchInterval: 3000 }
   );
 
   const { mutate: markAsRead, isLoading: isMarkingAsRead } = useMutation(
@@ -187,7 +212,6 @@ export default function ChatWindow({ conversationId, onClose, onDelete }) {
   return (
     <>
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {/* ALTERAÇÃO: Header agora é transparente e usa gradiente no avatar */}
         <Box sx={{ 
           p: 2, 
           display: 'flex', 
@@ -299,7 +323,6 @@ export default function ChatWindow({ conversationId, onClose, onDelete }) {
           </Box>
         </Box>
 
-        {/* ALTERAÇÃO: Área de mensagens com fundo escuro sutil */}
         <Box sx={{ 
           flex: 1, 
           overflowY: 'auto', 
@@ -311,7 +334,6 @@ export default function ChatWindow({ conversationId, onClose, onDelete }) {
           ))}
         </Box>
 
-        {/* ALTERAÇÃO: Área de input transparente e campo de texto com estilo de vidro */}
         <Box component="form" onSubmit={handleSendMessage} sx={{ 
           p: 2, 
           borderTop: 1, 
@@ -354,10 +376,8 @@ export default function ChatWindow({ conversationId, onClose, onDelete }) {
         </Box>
       </Box>
 
-      {/* Este Dialog também precisa ser refatorado para usar o StyledDialog internamente */}
       <NotesDialog open={notesOpen} onClose={() => setNotesOpen(false)} conversationId={conversationId} />
       
-      {/* ALTERAÇÃO: Usando StyledDialog e GradientButton */}
       <StyledDialog open={confirmDeleteDialogOpen} onClose={() => setConfirmDeleteDialogOpen(false)}>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <WarningIcon color="error" />
