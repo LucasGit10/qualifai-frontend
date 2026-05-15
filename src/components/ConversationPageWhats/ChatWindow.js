@@ -7,7 +7,8 @@ import {
 } from '@mui/material';
 import { 
     ArrowBack as ArrowBackIcon, Send as SendIcon, Description as DescriptionIcon, 
-    Delete as DeleteIcon, Warning as WarningIcon, Business as BusinessIcon, Phone as PhoneIcon, WhatsApp as WhatsAppIcon
+    Delete as DeleteIcon, Warning as WarningIcon, Business as BusinessIcon, Phone as PhoneIcon, WhatsApp as WhatsAppIcon,
+    SmartToy as SmartToyIcon, PowerOff as PowerOffIcon
 } from '@mui/icons-material';
 import api from 'services/api';
 import { format } from 'date-fns'; 
@@ -323,11 +324,71 @@ export default function ChatWindow({ conversationId, onClose, onDelete }) {
           </Box>
         </Box>
 
+        {conversation.aiEnabled === false && (
+          <Box sx={{
+            mx: { xs: 1, sm: 2, md: 3 },
+            mt: 2,
+            p: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            borderRadius: 2,
+            background: theme.palette.mode === 'dark'
+              ? `linear-gradient(135deg, rgba(211,47,47,0.3) 0%, rgba(237,108,2,0.15) 100%)`
+              : `linear-gradient(135deg, rgba(211,47,47,0.12) 0%, rgba(237,108,2,0.08) 100%)`,
+            border: `1px solid rgba(211,47,47,0.4)`,
+            boxShadow: `0 0 20px rgba(211,47,47,0.12)`,
+            animation: 'aiDisabledPulse 3s ease-in-out infinite',
+            '@keyframes aiDisabledPulse': {
+              '0%, 100%': { boxShadow: `0 0 12px rgba(211,47,47,0.08)` },
+              '50%': { boxShadow: `0 0 24px rgba(211,47,47,0.2)` },
+            },
+          }}>
+            <Box sx={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <SmartToyIcon sx={{ fontSize: 28, color: theme.palette.error.main, opacity: 0.5 }} />
+              <PowerOffIcon sx={{ 
+                fontSize: 16, color: theme.palette.error.main, position: 'absolute', bottom: -2, right: -4,
+                backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : '#fff',
+                borderRadius: '50%', padding: '1px',
+              }} />
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="subtitle2" sx={{ color: theme.palette.error.main, fontWeight: 700, lineHeight: 1.2 }}>
+                IA Desativada
+              </Typography>
+              <Typography variant="caption" sx={{ color: theme.palette.text.secondary, lineHeight: 1.3 }}>
+                A automação está pausada. Ative o switch de IA para retomar.
+              </Typography>
+            </Box>
+          </Box>
+        )}
+
         <Box sx={{ 
           flex: 1, 
           overflowY: 'auto', 
           p: { xs: 1, sm: 2, md: 3 }, 
           backgroundColor: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.5)',
+          '&::-webkit-scrollbar': { width: 8 },
+          '&::-webkit-scrollbar-track': {
+            background: theme.palette.mode === 'dark'
+              ? 'rgba(255, 255, 255, 0.03)'
+              : 'rgba(109, 40, 217, 0.04)',
+            borderRadius: 4,
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: theme.palette.mode === 'dark'
+              ? 'linear-gradient(180deg, rgba(37, 117, 252, 0.5), rgba(215, 109, 119, 0.4))'
+              : 'linear-gradient(180deg, rgba(109, 40, 217, 0.5), rgba(236, 72, 153, 0.4))',
+            borderRadius: 4,
+            border: '2px solid transparent',
+            backgroundClip: 'padding-box',
+            '&:hover': {
+              background: theme.palette.mode === 'dark'
+                ? 'linear-gradient(180deg, #2575FC, #D76D77)'
+                : 'linear-gradient(180deg, #6D28D9, #EC4899)',
+            },
+          },
+          scrollbarWidth: 'thin',
         }}>
           {conversation.messages.map((msg, index) => (
             <MessageBubble key={index} message={msg} theme={theme} />

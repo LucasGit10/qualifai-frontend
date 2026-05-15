@@ -44,7 +44,7 @@ export default function Sidebar({
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
-        height: '64px', 
+        height: '120px', 
         borderBottom: `1px solid ${theme.palette.divider}`, 
         flexShrink: 0 
       }}>
@@ -54,7 +54,8 @@ export default function Sidebar({
           alt="Logo QualifAI" 
           sx={{ 
             objectFit: 'contain', 
-            height: '40px', 
+            height: '90px', 
+            maxWidth: '100%',
             width: 'auto', 
             opacity: menuMinimizado ? 0 : 1, 
             transition: 'opacity 0.2s ease-out, height 0.2s ease-out' 

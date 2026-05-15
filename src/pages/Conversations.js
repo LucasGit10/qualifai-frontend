@@ -831,9 +831,7 @@ export default function Conversations({ channel, teamMemberId }) {
                             color="success"
                             variant="outlined"
                           />
-                        )}
-
-                        {isAIActive(conversation) ? (
+                             {isAIActive(conversation) ? (
                             <Box sx={{
                             display: 'flex',
                             alignItems: 'center',
@@ -859,20 +857,26 @@ export default function Conversations({ channel, teamMemberId }) {
                             display: 'flex',
                             alignItems: 'center',
                             gap: 0.5,
-                            backgroundColor: alpha(theme.palette.error.main, 0.1),
+                            background: `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.18)} 0%, ${alpha(theme.palette.warning.main, 0.1)} 100%)`,
+                            border: `1px solid ${alpha(theme.palette.error.main, 0.35)}`,
                             px: 1,
                             py: 0.5,
                             borderRadius: 1,
+                            animation: 'aiOffPulse 2.5s ease-in-out infinite',
+                            '@keyframes aiOffPulse': {
+                              '0%, 100%': { opacity: 0.85 },
+                              '50%': { opacity: 1 },
+                            },
                             }}>
                             <VoiceOverOffIcon sx={{
                                 fontSize: 16,
                                 color: theme.palette.error.main
                             }} />
                             <Typography variant="caption" sx={{
-                                color: theme.palette.error.dark,
-                                fontWeight: 500,
+                                color: theme.palette.error.main,
+                                fontWeight: 700,
                             }}>
-                                IA inativa
+                                ⚠ IA Desativada
                             </Typography>
                             </Box>
                         )}

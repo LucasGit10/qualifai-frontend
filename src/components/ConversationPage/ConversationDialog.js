@@ -11,6 +11,8 @@ import {
   Person as PersonIcon,
   Description as DescriptionIcon,
   RecordVoiceOver as AiIcon,
+  SmartToy as SmartToyIcon,
+  PowerOff as PowerOffIcon,
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 import { ptBR, enUS } from 'date-fns/locale';
@@ -280,6 +282,64 @@ export default function ConversationDialog({
                     {t('conversationDialog.escalatedAlert')}
                   </Alert>
                 )}
+                {conversation.aiEnabled === false && (
+                  <Box sx={{
+                    mb: 2,
+                    p: 1.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    borderRadius: 2,
+                    background: theme.palette.mode === 'dark'
+                      ? `linear-gradient(135deg, ${alpha(theme.palette.error.dark, 0.35)} 0%, ${alpha(theme.palette.warning.dark, 0.2)} 100%)`
+                      : `linear-gradient(135deg, ${alpha(theme.palette.error.light, 0.18)} 0%, ${alpha(theme.palette.warning.light, 0.12)} 100%)`,
+                    border: `1px solid ${alpha(theme.palette.error.main, 0.4)}`,
+                    boxShadow: `0 0 20px ${alpha(theme.palette.error.main, 0.15)}`,
+                    animation: 'aiDisabledPulse 3s ease-in-out infinite',
+                    '@keyframes aiDisabledPulse': {
+                      '0%, 100%': { boxShadow: `0 0 12px ${alpha(theme.palette.error.main, 0.1)}` },
+                      '50%': { boxShadow: `0 0 24px ${alpha(theme.palette.error.main, 0.25)}` },
+                    },
+                  }}>
+                    <Box sx={{
+                      position: 'relative',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <SmartToyIcon sx={{ 
+                        fontSize: 28, 
+                        color: theme.palette.error.main, 
+                        opacity: 0.5,
+                      }} />
+                      <PowerOffIcon sx={{ 
+                        fontSize: 16, 
+                        color: theme.palette.error.main, 
+                        position: 'absolute', 
+                        bottom: -2, 
+                        right: -4,
+                        backgroundColor: theme.palette.mode === 'dark' ? theme.palette.background.paper : '#fff',
+                        borderRadius: '50%',
+                        padding: '1px',
+                      }} />
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="subtitle2" sx={{ 
+                        color: theme.palette.error.main, 
+                        fontWeight: 700,
+                        lineHeight: 1.2,
+                      }}>
+                        IA Desativada
+                      </Typography>
+                      <Typography variant="caption" sx={{ 
+                        color: theme.palette.text.secondary,
+                        lineHeight: 1.3,
+                      }}>
+                        A automação está pausada. Ative o switch acima para retomar.
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
                 <Box display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
                   <Chip 
                     icon={<WhatsAppIcon />} 
@@ -335,7 +395,29 @@ export default function ConversationDialog({
                 </Box>
               </Box>
 
-              <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
+              <Box sx={{ 
+                flex: 1, 
+                overflowY: 'auto', 
+                p: 2,
+                '&::-webkit-scrollbar': { width: 8 },
+                '&::-webkit-scrollbar-track': {
+                  background: theme.palette.mode === 'dark'
+                    ? alpha(theme.palette.common.white, 0.03)
+                    : alpha(theme.palette.primary.main, 0.04),
+                  borderRadius: 4,
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: `linear-gradient(180deg, ${alpha(theme.palette.primary.main, 0.5)}, ${alpha(theme.palette.secondary.main, 0.4)})`,
+                  borderRadius: 4,
+                  border: `2px solid transparent`,
+                  backgroundClip: 'padding-box',
+                  '&:hover': {
+                    background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                  },
+                },
+                scrollbarWidth: 'thin',
+                scrollbarColor: `${alpha(theme.palette.primary.main, 0.4)} ${alpha(theme.palette.primary.main, 0.06)}`,
+              }}>
                 {messages.map((message, index) => (
                   <MessageBubble 
                     key={index} 
