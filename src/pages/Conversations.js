@@ -831,7 +831,9 @@ export default function Conversations({ channel, teamMemberId }) {
                             color="success"
                             variant="outlined"
                           />
-                             {isAIActive(conversation) ? (
+                        )}
+
+                        {isAIActive(conversation) ? (
                             <Box sx={{
                             display: 'flex',
                             alignItems: 'center',
