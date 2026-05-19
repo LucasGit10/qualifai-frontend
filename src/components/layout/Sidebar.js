@@ -40,25 +40,25 @@ export default function Sidebar({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <Box sx={{ 
-        p: 2, 
+        p: menuMinimizado ? 1 : 1.5,
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
-        height: '120px', 
+        height: menuMinimizado ? 68 : 88,
         borderBottom: `1px solid ${theme.palette.divider}`, 
-        flexShrink: 0 
+        flexShrink: 0,
+        transition: 'height 0.2s ease-out, padding 0.2s ease-out',
       }}>
         <Box 
           component="img" 
-          src={theme.palette.custom.logos.full} 
+          src={menuMinimizado ? '/Qaii.png' : theme.palette.custom.logos.full}
           alt="Logo QualifAI" 
           sx={{ 
             objectFit: 'contain', 
-            height: '90px', 
-            maxWidth: '100%',
-            width: 'auto', 
-            opacity: menuMinimizado ? 0 : 1, 
-            transition: 'opacity 0.2s ease-out, height 0.2s ease-out' 
+            height: menuMinimizado ? 40 : 58,
+            maxWidth: menuMinimizado ? 42 : 190,
+            width: 'auto',
+            transition: 'height 0.2s ease-out, max-width 0.2s ease-out',
           }} 
         />
       </Box>

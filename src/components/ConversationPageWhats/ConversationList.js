@@ -27,6 +27,26 @@ const pulseAnimation = keyframes`
   100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); }
 `;
 
+const conversationScrollbarSx = (theme) => ({
+  scrollbarWidth: 'thin',
+  scrollbarColor: `${alpha(theme.palette.primary.main, 0.55)} transparent`,
+  '&::-webkit-scrollbar': {
+    width: 10,
+  },
+  '&::-webkit-scrollbar-track': {
+    background: 'transparent',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.45 : 0.32),
+    border: '3px solid transparent',
+    backgroundClip: 'padding-box',
+    borderRadius: 999,
+  },
+  '&::-webkit-scrollbar-thumb:hover': {
+    backgroundColor: alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.68 : 0.5),
+  },
+});
+
 const formatPhoneNumber = (phone) => {
     if (!phone) return null;
     const cleaned = ('' + phone).replace(/\D/g, '');
@@ -225,7 +245,7 @@ export default function ConversationList({ channel, teamMemberId, selectedConver
       {isLoading ? (
         <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>
       ) : (
-        <List sx={{ flex: 1, overflowY: 'auto', p: 0 }}>
+        <List sx={{ flex: 1, overflowY: 'auto', p: 1, ...conversationScrollbarSx(theme) }}>
           {filteredConversations.map((conv) => (
             <React.Fragment key={conv._id}>
               <ConversationListItem

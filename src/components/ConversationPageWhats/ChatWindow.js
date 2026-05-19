@@ -32,6 +32,29 @@ const formatPhoneNumber = (phone) => {
 };
 
 // ALTERAÇÃO: Bolhas de mensagem totalmente reestilizadas
+const conversationScrollbarSx = (theme) => ({
+  scrollbarWidth: 'thin',
+  scrollbarColor: `${theme.palette.mode === 'dark' ? 'rgba(37, 117, 252, 0.6)' : 'rgba(109, 40, 217, 0.5)'} transparent`,
+  '&::-webkit-scrollbar': { width: 10 },
+  '&::-webkit-scrollbar-track': {
+    background: 'transparent',
+  },
+  '&::-webkit-scrollbar-thumb': {
+    background: theme.palette.mode === 'dark'
+      ? 'linear-gradient(180deg, rgba(37, 117, 252, 0.62), rgba(215, 109, 119, 0.5))'
+      : 'linear-gradient(180deg, rgba(109, 40, 217, 0.48), rgba(236, 72, 153, 0.38))',
+    borderRadius: 999,
+    border: '3px solid transparent',
+    backgroundClip: 'padding-box',
+  },
+  '&::-webkit-scrollbar-thumb:hover': {
+    background: theme.palette.mode === 'dark'
+      ? 'linear-gradient(180deg, rgba(37, 117, 252, 0.85), rgba(215, 109, 119, 0.72))'
+      : 'linear-gradient(180deg, rgba(109, 40, 217, 0.68), rgba(236, 72, 153, 0.56))',
+    backgroundClip: 'padding-box',
+  },
+});
+
 const MessageBubble = ({ message, theme }) => {
     const isLead = message.role === 'lead';
     const isSystem = message.role === 'system';
@@ -368,27 +391,7 @@ export default function ChatWindow({ conversationId, onClose, onDelete }) {
           overflowY: 'auto', 
           p: { xs: 1, sm: 2, md: 3 }, 
           backgroundColor: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.5)',
-          '&::-webkit-scrollbar': { width: 8 },
-          '&::-webkit-scrollbar-track': {
-            background: theme.palette.mode === 'dark'
-              ? 'rgba(255, 255, 255, 0.03)'
-              : 'rgba(109, 40, 217, 0.04)',
-            borderRadius: 4,
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: theme.palette.mode === 'dark'
-              ? 'linear-gradient(180deg, rgba(37, 117, 252, 0.5), rgba(215, 109, 119, 0.4))'
-              : 'linear-gradient(180deg, rgba(109, 40, 217, 0.5), rgba(236, 72, 153, 0.4))',
-            borderRadius: 4,
-            border: '2px solid transparent',
-            backgroundClip: 'padding-box',
-            '&:hover': {
-              background: theme.palette.mode === 'dark'
-                ? 'linear-gradient(180deg, #2575FC, #D76D77)'
-                : 'linear-gradient(180deg, #6D28D9, #EC4899)',
-            },
-          },
-          scrollbarWidth: 'thin',
+          ...conversationScrollbarSx(theme),
         }}>
           {conversation.messages.map((msg, index) => (
             <MessageBubble key={index} message={msg} theme={theme} />
