@@ -40,27 +40,44 @@ export default function Sidebar({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       <Box sx={{ 
-        p: menuMinimizado ? 1 : 1.5,
+        p: menuMinimizado ? 0.75 : 0.5,
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
-        height: menuMinimizado ? 68 : 88,
+        height: menuMinimizado ? 58 : 64,
         borderBottom: `1px solid ${theme.palette.divider}`, 
         flexShrink: 0,
         transition: 'height 0.2s ease-out, padding 0.2s ease-out',
       }}>
-        <Box 
-          component="img" 
-          src={menuMinimizado ? '/Qaii.png' : theme.palette.custom.logos.full}
-          alt="Logo QualifAI" 
-          sx={{ 
-            objectFit: 'contain', 
-            height: menuMinimizado ? 40 : 58,
-            maxWidth: menuMinimizado ? 42 : 190,
-            width: 'auto',
-            transition: 'height 0.2s ease-out, max-width 0.2s ease-out',
-          }} 
-        />
+        <Box
+          sx={{
+            position: 'relative',
+            width: menuMinimizado ? 42 : 220,
+            height: menuMinimizado ? 42 : 54,
+            overflow: 'hidden',
+            flexShrink: 0,
+            transition: 'width 0.2s ease-out, height 0.2s ease-out',
+          }}
+        >
+          <Box
+            component="img"
+            src={menuMinimizado ? '/Qaii.png' : theme.palette.custom.logos.full}
+            alt="Logo QualifAI"
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: menuMinimizado ? 48 : 260,
+              height: 'auto',
+              maxWidth: 'none',
+              transform: menuMinimizado
+                ? 'translate(-50%, -50%) scale(1.08)'
+                : 'translate(-50%, -50%) scale(1.3)',
+              transformOrigin: 'center',
+              transition: 'width 0.2s ease-out, transform 0.2s ease-out',
+            }}
+          />
+        </Box>
       </Box>
 
       <ScrollableList>
