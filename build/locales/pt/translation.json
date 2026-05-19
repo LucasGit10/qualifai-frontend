@@ -718,12 +718,12 @@
       "createCampaign": "Criar Campanha"
     },
     "uploadDialog": {
-      "title": "Importar Contatos via CSV",
-      "formatInfo": "Formato esperado:",
-      "requiredColumnsEmail": "Colunas obrigatórias: nome, email.",
-      "requiredColumnsWhatsapp": "Colunas obrigatórias: nome, telefone.",
-      "dropzone": "Clique ou arraste o arquivo .csv aqui",
-      "dropzoneCaption": "Tamanho máx: 5MB",
+      "title": "Importar Contatos",
+      "formatInfo": "Importação inteligente:",
+      "requiredColumnsEmail": "Envie CSV, XLSX ou XLS. A IA reconhece colunas como nome, cliente, email, empresa, cidade e observações automaticamente.",
+      "requiredColumnsWhatsapp": "Envie CSV, XLSX ou XLS. A IA reconhece colunas como nome, cliente, telefone, WhatsApp, empresa, cidade e observações automaticamente.",
+      "dropzone": "Clique ou arraste o arquivo aqui",
+      "dropzoneCaption": "CSV, XLSX ou XLS até 5MB",
       "importing": "Importando...",
       "importButton": "Importar"
     },
@@ -757,6 +757,7 @@
       "deleteSuccess": "Campanha deletada com sucesso!",
       "deleteError": "Erro ao deletar campanha",
       "importSuccess": "{{count}} contatos importados!",
+      "importMappingInfo": "Colunas reconhecidas: {{columns}}",
       "importWarning": "{{count}} linhas com erros foram ignoradas.",
       "importError": "Erro ao importar contatos",
       "generateTemplateInfo": "Funcionalidade de IA para gerar templates ainda não implementada aqui."
