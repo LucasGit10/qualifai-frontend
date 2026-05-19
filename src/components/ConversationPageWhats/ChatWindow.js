@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'react-toastify';
 import NotesDialog from '../ConversationPage/NotesDialog';
+import NegotiationIntelligencePanel from '../ConversationPage/NegotiationIntelligencePanel';
 
 import { useAuthStore } from 'stores/authStore';
 import { useTranslation, Trans } from 'react-i18next';
@@ -31,7 +32,6 @@ const formatPhoneNumber = (phone) => {
     return phone;
 };
 
-// ALTERAÇÃO: Bolhas de mensagem totalmente reestilizadas
 const conversationScrollbarSx = (theme) => ({
   scrollbarWidth: 'thin',
   scrollbarColor: `${theme.palette.mode === 'dark' ? 'rgba(37, 117, 252, 0.6)' : 'rgba(109, 40, 217, 0.5)'} transparent`,
@@ -55,6 +55,7 @@ const conversationScrollbarSx = (theme) => ({
   },
 });
 
+// ALTERAÇÃO: Bolhas de mensagem totalmente reestilizadas
 const MessageBubble = ({ message, theme }) => {
     const isLead = message.role === 'lead';
     const isSystem = message.role === 'system';
@@ -194,6 +195,19 @@ export default function ChatWindow({ conversationId, onClose, onDelete }) {
         queryClient.invalidateQueries('conversationsList');
       },
       onError: (error) => toast.error(error.response?.data?.message || 'Erro ao atualizar a conversa.'),
+    }
+  );
+
+  const analyzeNegotiationMutation = useMutation(
+    () => api.post(`/conversations/${conversationId}/negotiation-intelligence`),
+    {
+      onSuccess: (response) => {
+        queryClient.setQueryData(['conversation', conversationId], response.data);
+        queryClient.invalidateQueries(['conversation', conversationId]);
+        queryClient.invalidateQueries('conversationsList');
+        toast.success('Central inteligente atualizada.');
+      },
+      onError: (error) => toast.error(error.response?.data?.message || 'Erro ao analisar a negociação.'),
     }
   );
   
@@ -385,6 +399,16 @@ export default function ChatWindow({ conversationId, onClose, onDelete }) {
             </Box>
           </Box>
         )}
+
+        <Box sx={{ px: { xs: 1, sm: 2, md: 3 }, pt: 2 }}>
+          <NegotiationIntelligencePanel
+            intelligence={conversation.negotiationIntelligence}
+            isAnalyzing={analyzeNegotiationMutation.isLoading}
+            onAnalyze={() => analyzeNegotiationMutation.mutate()}
+            onUseMessage={(suggestedMessage) => setMessage(suggestedMessage || '')}
+            compact
+          />
+        </Box>
 
         <Box sx={{ 
           flex: 1, 

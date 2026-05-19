@@ -445,7 +445,7 @@ const UploadContactsDialog = ({ open, onClose, onSubmit, isLoading, campaign }) 
     const { t } = useTranslation();
     const theme = useTheme();
     const [csvFile, setCsvFile] = useState(null);
-    const getCSVInstructions = (channel) => {
+    const getImportInstructions = (channel) => {
         return channel === 'email' ? t('campaignsPage.uploadDialog.requiredColumnsEmail') : t('campaignsPage.uploadDialog.requiredColumnsWhatsapp');
     }
     const handleSubmit = () => { if (csvFile) onSubmit(csvFile); };
@@ -460,7 +460,7 @@ const UploadContactsDialog = ({ open, onClose, onSubmit, isLoading, campaign }) 
                 <Stack spacing={2} sx={{ pt: 1 }}>
                     <Alert severity="info">
                       <strong style={{ color: theme.palette.text.primary }}>{t('campaignsPage.uploadDialog.formatInfo')}</strong>
-                      <br/>{getCSVInstructions(campaign?.channel)}
+                      <br/>{getImportInstructions(campaign?.channel)}
                     </Alert>
                     <label htmlFor="csv-upload-button">
                         <Paper variant="outlined" sx={{ 
@@ -472,7 +472,7 @@ const UploadContactsDialog = ({ open, onClose, onSubmit, isLoading, campaign }) 
                           backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.5)',
                           '&:hover': { borderColor: 'primary.main', bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.7)' } 
                         }}>
-                            <InputFile id="csv-upload-button" type="file" accept=".csv" onChange={(e) => setCsvFile(e.target.files[0])} />
+                            <InputFile id="csv-upload-button" type="file" accept=".csv,.xlsx,.xls" onChange={(e) => setCsvFile(e.target.files[0])} />
                             <UploadIcon sx={{ fontSize: 40, mb: 1, color: theme.palette.text.secondary }} />
                             <Typography sx={{ color: theme.palette.text.primary }}>{csvFile ? csvFile.name : t('campaignsPage.uploadDialog.dropzone')}</Typography>
                             <Typography variant="caption" color={theme.palette.text.secondary}>{t('campaignsPage.uploadDialog.dropzoneCaption')}</Typography>
@@ -559,7 +559,22 @@ export default function Campaigns() {
     const formData = new FormData();
     formData.append('csvFile', file);
     return api.post(`/campaigns/${campaignId}/contacts/upload`, formData);
-  }, { onSuccess: (response) => { queryClient.invalidateQueries('campaigns'); toast.success(t('campaignsPage.toasts.importSuccess', { count: response.data.imported })); if (response.data.errors?.length > 0) { toast.warning(t('campaignsPage.toasts.importWarning', { count: response.data.totalErrors })); } handleCloseDialogs(); }, onError: (error) => toast.error(error.response?.data?.message || t('campaignsPage.toasts.importError')), });
+  }, { onSuccess: (response) => {
+    queryClient.invalidateQueries('campaigns');
+    toast.success(t('campaignsPage.toasts.importSuccess', { count: response.data.imported }));
+    const recognizedColumns = Object.entries(response.data.columnMapping || {})
+      .filter(([, header]) => Boolean(header))
+      .map(([field, header]) => `${field}: ${header}`)
+      .slice(0, 4)
+      .join(', ');
+    if (recognizedColumns) {
+      toast.info(t('campaignsPage.toasts.importMappingInfo', { columns: recognizedColumns }));
+    }
+    if (response.data.errors?.length > 0) {
+      toast.warning(t('campaignsPage.toasts.importWarning', { count: response.data.totalErrors }));
+    }
+    handleCloseDialogs();
+  }, onError: (error) => toast.error(error.response?.data?.message || t('campaignsPage.toasts.importError')), });
   
   const anyActionIsLoading = startCampaignMutation.isLoading || pauseCampaignMutation.isLoading || cancelCampaignMutation.isLoading || duplicateCampaignMutation.isLoading || restartCampaignMutation.isLoading;
 

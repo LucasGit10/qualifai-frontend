@@ -20,6 +20,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import NotesDialog from './NotesDialog';
+import NegotiationIntelligencePanel from './NegotiationIntelligencePanel';
 import api from '../../services/api';
 import { toast } from 'react-toastify';
 
@@ -186,6 +187,19 @@ export default function ConversationDialog({
     }
   );
 
+  const analyzeNegotiationMutation = useMutation(
+    () => api.post(`/conversations/${conversation._id}/negotiation-intelligence`),
+    {
+      onSuccess: (response) => {
+        queryClient.setQueryData(['conversation', conversation._id], response.data);
+        queryClient.invalidateQueries(['conversation', conversation._id]);
+        queryClient.invalidateQueries('conversationsList');
+        toast.success('Central inteligente atualizada.');
+      },
+      onError: (error) => toast.error(error.response?.data?.message || 'Erro ao analisar a negociação.'),
+    }
+  );
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!message.trim() || !conversation) return;
@@ -205,6 +219,7 @@ export default function ConversationDialog({
 
   const handleKeyPress = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); } };
   const handleAdminUpdate = (updates) => onAdminUpdate?.({ conversationId: conversation._id, updates });
+  const handleUseSuggestedMessage = (suggestedMessage) => setMessage(suggestedMessage || '');
   
   const isAdmin = userRole === 'admin';
   const isLoadingAnything = isLoading || isToggleAILoading || isUpdatingByAdmin;
@@ -393,6 +408,15 @@ export default function ConversationDialog({
                     )}
                   </Box>
                 </Box>
+              </Box>
+
+              <Box sx={{ px: 2, py: 1.5 }}>
+                <NegotiationIntelligencePanel
+                  intelligence={conversation.negotiationIntelligence}
+                  isAnalyzing={analyzeNegotiationMutation.isLoading}
+                  onAnalyze={() => analyzeNegotiationMutation.mutate()}
+                  onUseMessage={handleUseSuggestedMessage}
+                />
               </Box>
 
               <Box sx={{ 

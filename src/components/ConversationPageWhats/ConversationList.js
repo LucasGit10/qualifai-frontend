@@ -55,6 +55,16 @@ const formatPhoneNumber = (phone) => {
     return phone;
 };
 
+const intelligenceColor = {
+  quente: 'success',
+  morno: 'warning',
+  frio: 'info',
+  critico: 'error',
+  alto: 'error',
+  medio: 'warning',
+  baixo: 'success',
+};
+
 const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) => {
   const theme = useTheme();
   const lastMessage = conversation.messages[conversation.messages.length - 1];
@@ -63,6 +73,7 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
   const unreadCount = conversation.unreadCount || 0;
   const hasUnread = unreadCount > 0;
   const unreadColor = theme.palette.warning.main;
+  const intelligence = conversation.negotiationIntelligence;
 
   const getStatusStyles = () => {
     switch (conversation.status) {
@@ -161,6 +172,33 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
                     size="small" 
                     color="error"
                     variant="filled"
+                    sx={{ height: 20, fontSize: '0.65rem', fontWeight: 'bold' }}
+                  />
+                )}
+                {intelligence?.temperature && intelligence.temperature !== 'desconhecido' && (
+                  <Chip
+                    label={`Temp. ${intelligence.temperature}`}
+                    size="small"
+                    color={intelligenceColor[intelligence.temperature] || 'default'}
+                    variant="outlined"
+                    sx={{ height: 20, fontSize: '0.65rem', fontWeight: 'bold' }}
+                  />
+                )}
+                {intelligence?.riskLevel && ['alto', 'critico'].includes(intelligence.riskLevel) && (
+                  <Chip
+                    label={`Risco ${intelligence.riskLevel}`}
+                    size="small"
+                    color="error"
+                    variant="filled"
+                    sx={{ height: 20, fontSize: '0.65rem', fontWeight: 'bold' }}
+                  />
+                )}
+                {Number.isFinite(Number(intelligence?.agreementProbability)) && (
+                  <Chip
+                    label={`${intelligence.agreementProbability}% acordo`}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
                     sx={{ height: 20, fontSize: '0.65rem', fontWeight: 'bold' }}
                   />
                 )}

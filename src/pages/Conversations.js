@@ -882,6 +882,38 @@ export default function Conversations({ channel, teamMemberId }) {
                             </Typography>
                             </Box>
                         )}
+                        {conversation.negotiationIntelligence?.temperature &&
+                          conversation.negotiationIntelligence.temperature !== 'desconhecido' && (
+                            <Chip
+                              label={`Temp. ${conversation.negotiationIntelligence.temperature}`}
+                              size="small"
+                              color={
+                                conversation.negotiationIntelligence.temperature === 'quente' ? 'success' :
+                                conversation.negotiationIntelligence.temperature === 'morno' ? 'warning' :
+                                conversation.negotiationIntelligence.temperature === 'critico' ? 'error' :
+                                'info'
+                              }
+                              variant="outlined"
+                              sx={{ fontWeight: 700 }}
+                            />
+                          )}
+                        {['alto', 'critico'].includes(conversation.negotiationIntelligence?.riskLevel) && (
+                          <Chip
+                            label={`Risco ${conversation.negotiationIntelligence.riskLevel}`}
+                            size="small"
+                            color="error"
+                            sx={{ fontWeight: 800 }}
+                          />
+                        )}
+                        {Number.isFinite(Number(conversation.negotiationIntelligence?.agreementProbability)) && (
+                          <Chip
+                            label={`${conversation.negotiationIntelligence.agreementProbability}% acordo`}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                            sx={{ fontWeight: 700 }}
+                          />
+                        )}
                         </Box>
 
                         {conversation.messages?.length > 0 && (
