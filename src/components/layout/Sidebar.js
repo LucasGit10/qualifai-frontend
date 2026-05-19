@@ -67,12 +67,12 @@ export default function Sidebar({
               position: 'absolute',
               top: '50%',
               left: '50%',
-              width: menuMinimizado ? 48 : 260,
+              width: menuMinimizado ? 44 : 230,
               height: 'auto',
               maxWidth: 'none',
               transform: menuMinimizado
-                ? 'translate(-50%, -50%) scale(1.08)'
-                : 'translate(-50%, -50%) scale(1.3)',
+                ? 'translate(-50%, -50%) scale(1)'
+                : 'translate(-50%, -50%) scale(1.14)',
               transformOrigin: 'center',
               transition: 'width 0.2s ease-out, transform 0.2s ease-out',
             }}
