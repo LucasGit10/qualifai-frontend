@@ -1358,14 +1358,15 @@ export default function Debts() {
     }
   };
 
-  const handleExportList = async () => {
+  const handleExportList = async (exportType = 'listagem') => {
     setIsExportingList(true);
     try {
-      const res = await api.get('/spreadsheets/export/debtors?type=listagem', { responseType: 'blob' });
+      const res = await api.get(`/spreadsheets/export/debtors?type=${exportType}`, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Relatorio_Devedores_${format(new Date(), 'ddMMyyyy')}.pdf`);
+      const fileName = exportType === 'importacao' ? `Relatorio_Importacao_${format(new Date(), 'ddMMyyyy')}.pdf` : `Relatorio_Devedores_${format(new Date(), 'ddMMyyyy')}.pdf`;
+      link.setAttribute('download', fileName);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -1436,12 +1437,21 @@ export default function Debts() {
           </Button>
           <Button
             variant="outlined"
-            onClick={handleExportList}
+            onClick={() => handleExportList('listagem')}
             disabled={isExportingList || debtors.length === 0}
             startIcon={isExportingList ? <CircularProgress size={16} /> : <DownloadIcon />}
             sx={{ borderRadius: 2, fontWeight: 700, borderColor: alpha(theme.palette.success.main, 0.5) }}
           >
             Baixar Relatório
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => handleExportList('importacao')}
+            disabled={isExportingList || debtors.length === 0}
+            startIcon={isExportingList ? <CircularProgress size={16} /> : <DownloadIcon />}
+            sx={{ borderRadius: 2, fontWeight: 700, borderColor: alpha(theme.palette.info.main, 0.5), color: theme.palette.info.main || '#3b82f6' }}
+          >
+            Status Importação
           </Button>
           <Button
             variant="contained"

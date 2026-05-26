@@ -8,8 +8,12 @@ import {
 import { 
     ArrowBack as ArrowBackIcon, Send as SendIcon, Description as DescriptionIcon, 
     Delete as DeleteIcon, Warning as WarningIcon, Business as BusinessIcon, Phone as PhoneIcon, WhatsApp as WhatsAppIcon,
-    SmartToy as SmartToyIcon, PowerOff as PowerOffIcon
+    SmartToy as SmartToyIcon, PowerOff as PowerOffIcon, InsertDriveFile as InsertDriveFileIcon
 } from '@mui/icons-material';
+import PizZip from 'pizzip';
+import Docxtemplater from 'docxtemplater';
+import { saveAs } from 'file-saver';
+import DocGeneratorDialog from './DocGeneratorDialog';
 import api from 'services/api';
 import { format } from 'date-fns'; 
 import { ptBR } from 'date-fns/locale';
@@ -126,6 +130,9 @@ export default function ChatWindow({ conversationId, onClose, onDelete }) {
   const { t } = useTranslation();
   const [notesOpen, setNotesOpen] = useState(false);
   const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
+  const [docAnchorEl, setDocAnchorEl] = useState(null);
+  const [generatorOpen, setGeneratorOpen] = useState(false);
+  const [docTypeToGenerate, setDocTypeToGenerate] = useState(null);
   
   const [message, setMessage] = useState('');
 
@@ -219,6 +226,15 @@ export default function ChatWindow({ conversationId, onClose, onDelete }) {
   const handleStatusChange = (e) => updateConversationMutation.mutate({ updates: { status: e.target.value } });
   const handleToggleAI = (e) => updateConversationMutation.mutate({ updates: { aiEnabled: e.target.checked } });
 
+  const handleDocClick = (event) => setDocAnchorEl(event.currentTarget);
+  const handleDocClose = () => setDocAnchorEl(null);
+
+  const handleOpenGenerator = (type) => {
+    setDocTypeToGenerate(type);
+    setGeneratorOpen(true);
+    handleDocClose();
+  };
+
   if (isLoading) {
     return (
       <Box sx={{ 
@@ -308,6 +324,19 @@ export default function ChatWindow({ conversationId, onClose, onDelete }) {
               </Box>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0, sm: 2 } }}>
+              <Tooltip title="Gerar Documento">
+                <IconButton onClick={handleDocClick}>
+                  <InsertDriveFileIcon sx={{ color: theme.palette.text.primary }} />
+                </IconButton>
+              </Tooltip>
+              <Menu
+                anchorEl={docAnchorEl}
+                open={Boolean(docAnchorEl)}
+                onClose={handleDocClose}
+              >
+                <MenuItem onClick={() => handleOpenGenerator('aditivo')}>Aditivo Contratual</MenuItem>
+                <MenuItem onClick={() => handleOpenGenerator('confissao')}>Termo de Confissão</MenuItem>
+              </Menu>
               <Tooltip title="Ver Notas">
                 <IconButton onClick={() => setNotesOpen(true)}>
                   <DescriptionIcon sx={{ color: theme.palette.text.primary }} />
@@ -465,6 +494,13 @@ export default function ChatWindow({ conversationId, onClose, onDelete }) {
       </Box>
 
       <NotesDialog open={notesOpen} onClose={() => setNotesOpen(false)} conversationId={conversationId} />
+      
+      <DocGeneratorDialog 
+        open={generatorOpen} 
+        onClose={() => setGeneratorOpen(false)} 
+        docType={docTypeToGenerate} 
+        conversation={conversation} 
+      />
       
       <StyledDialog open={confirmDeleteDialogOpen} onClose={() => setConfirmDeleteDialogOpen(false)}>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
