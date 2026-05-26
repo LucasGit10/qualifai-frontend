@@ -1062,7 +1062,7 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
           { label: 'Total Principal',       value: fmt(totalPrincipal),      color: theme.palette.primary.main, icon: <AccountBalanceIcon />, sub: 'Apenas dívida original' },
           { label: 'Montante Total',        value: fmt(totalMontante),       color: '#6366f1',                  icon: <MoneyIcon />,     sub: 'Geral (vencido + futuro)' },
           { label: 'Total Vencido',         value: fmt(totalVencido),        color: '#ef4444',                  icon: <ErrorIcon />,     sub: 'Em atraso / vencido' },
-          { label: 'Lançamentos Futuros',   value: fmt(totalFuturo),         color: '#10b981',                  icon: <ScheduleIcon />,  sub: 'A vencer (2026â€“2027+)' },
+          { label: 'Lançamentos Futuros',   value: fmt(totalFuturo),         color: '#10b981',                  icon: <ScheduleIcon />,  sub: 'A vencer (2026-2027+)' },
           { label: 'Novos / Sairam',         value: `${totalNovosImportacao} / ${totalSairamImportacao}`, color: '#f59e0b', icon: <PeopleIcon />, sub: 'Ultima importacao' },
         ].map(k => (
           <Grid item xs={12} sm={6} md={2.4} key={k.label}>
