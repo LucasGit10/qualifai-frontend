@@ -10,6 +10,8 @@ import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
 import { toast } from 'react-toastify';
+import { useQuery } from 'react-query';
+import { format } from 'date-fns';
 import api from 'services/api';
 
 const aditivoFields = [
@@ -79,19 +81,56 @@ export default function DocGeneratorDialog({ open, onClose, docType, conversatio
 
   const fields = docType === 'aditivo' ? aditivoFields : confissaoFields;
 
-  // Reseta e preenche os campos com os dados conhecidos ao abrir
+  // Busca os dados da dívida associada a este lead
+  const { data: debtData } = useQuery(
+    ['debtForLead', conversation.lead?._id],
+    () => api.get(`/debts/lead/${conversation.lead._id}`).then(res => res.data),
+    { 
+      enabled: open && !!conversation.lead?._id,
+      retry: false // não tenta novamente se der 404 (lead sem dívida cadastrada)
+    }
+  );
+
+  // Reseta e preenche os campos com os dados conhecidos ao abrir ou quando a dívida carregar
   useEffect(() => {
     if (open) {
-      setFormData({
+      let initialData = {
         NOME_COMPRADOR: conversation.lead?.name || "",
         NOME_DEVEDOR: conversation.lead?.name || "",
         CPF_COMPRADOR: conversation.lead?.taxId || "",
         CPF_DEVEDOR: conversation.lead?.taxId || "",
         NOME_DO_EMPREENDIMENTO: conversation.lead?.company || "",
         EMPREENDIMENTO_ORIGINAL: conversation.lead?.company || "",
-      });
+      };
+
+      if (debtData && debtData.debt) {
+        const { debt, installments = [] } = debtData;
+        const delayedInstallments = installments.filter(i => i.status === 'atrasado');
+
+        initialData = {
+          ...initialData,
+          VALOR_ORIGINAL_DIVIDA: debt.originalAmount ? Number(debt.originalAmount).toFixed(2).replace('.', ',') : "",
+          VALOR_TOTAL_DIVIDA: debt.currentBalance ? Number(debt.currentBalance).toFixed(2).replace('.', ',') : "",
+          PERCENTUAL_JUROS_MES: debt.interestRate ? Number(debt.interestRate).toFixed(2).replace('.', ',') : "",
+          PERCENTUAL_MULTA_MORATORIA: debt.penaltyRate ? Number(debt.penaltyRate).toFixed(2).replace('.', ',') : "",
+          PARCELAS_VENCIDAS: delayedInstallments.length.toString(),
+          NUMERO_PARCELAS_ORIGINAIS: installments.length.toString(),
+          NUMERO_PARCELAS: installments.length.toString(),
+          DATA_ACORDO_ORIGINAL: installments.length > 0 && installments[0].dueDate ? format(new Date(installments[0].dueDate), 'dd/MM/yyyy') : "",
+        };
+
+        // Calcula datas de vencimentos das parcelas (se houver)
+        if (installments.length > 0) {
+          const dates = installments.map(i => format(new Date(i.dueDate), 'dd/MM/yyyy')).join(', ');
+          initialData.DATAS_VENCIMENTO_PARCELAS = dates;
+          initialData.DATA_PRIMEIRA_PARCELA = format(new Date(installments[0].dueDate), 'dd/MM/yyyy');
+          initialData.DIA_VENCIMENTO_PARCELA = new Date(installments[0].dueDate).getDate().toString();
+        }
+      }
+
+      setFormData(initialData);
     }
-  }, [open, docType, conversation]);
+  }, [open, docType, conversation, debtData]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
