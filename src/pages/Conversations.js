@@ -905,7 +905,7 @@ export default function Conversations({ channel, teamMemberId }) {
                             sx={{ fontWeight: 800 }}
                           />
                         )}
-                        {Number.isFinite(Number(conversation.negotiationIntelligence?.agreementProbability)) && (
+                        {conversation.negotiationIntelligence?.agreementProbability != null && Number.isFinite(Number(conversation.negotiationIntelligence?.agreementProbability)) && (
                           <Chip
                             label={`${conversation.negotiationIntelligence.agreementProbability}% acordo`}
                             size="small"

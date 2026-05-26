@@ -193,7 +193,7 @@ const ConversationListItem = ({ conversation, isSelected, onSelect, onDelete }) 
                     sx={{ height: 20, fontSize: '0.65rem', fontWeight: 'bold' }}
                   />
                 )}
-                {Number.isFinite(Number(intelligence?.agreementProbability)) && (
+                {intelligence?.agreementProbability != null && Number.isFinite(Number(intelligence?.agreementProbability)) && (
                   <Chip
                     label={`${intelligence.agreementProbability}% acordo`}
                     size="small"
