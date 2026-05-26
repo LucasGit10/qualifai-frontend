@@ -109,10 +109,10 @@ export default function DocGeneratorDialog({ open, onClose, docType, conversatio
 
         initialData = {
           ...initialData,
-          VALOR_ORIGINAL_DIVIDA: debt.originalAmount ? Number(debt.originalAmount).toFixed(2).replace('.', ',') : "",
-          VALOR_TOTAL_DIVIDA: debt.currentBalance ? Number(debt.currentBalance).toFixed(2).replace('.', ',') : "",
-          PERCENTUAL_JUROS_MES: debt.interestRate ? Number(debt.interestRate).toFixed(2).replace('.', ',') : "",
-          PERCENTUAL_MULTA_MORATORIA: debt.penaltyRate ? Number(debt.penaltyRate).toFixed(2).replace('.', ',') : "",
+          VALOR_ORIGINAL_DIVIDA: debt.originalAmount !== undefined && debt.originalAmount !== null ? Number(debt.originalAmount).toFixed(2).replace('.', ',') : "",
+          VALOR_TOTAL_DIVIDA: debt.currentBalance !== undefined && debt.currentBalance !== null ? Number(debt.currentBalance).toFixed(2).replace('.', ',') : "",
+          PERCENTUAL_JUROS_MES: debt.interestRate !== undefined && debt.interestRate !== null ? Number(debt.interestRate).toFixed(2).replace('.', ',') : "",
+          PERCENTUAL_MULTA_MORATORIA: debt.penaltyRate !== undefined && debt.penaltyRate !== null ? Number(debt.penaltyRate).toFixed(2).replace('.', ',') : "",
           PARCELAS_VENCIDAS: delayedInstallments.length.toString(),
           NUMERO_PARCELAS_ORIGINAIS: installments.length.toString(),
           NUMERO_PARCELAS: installments.length.toString(),
@@ -128,9 +128,16 @@ export default function DocGeneratorDialog({ open, onClose, docType, conversatio
         }
       }
 
-      setFormData(initialData);
+      // Atualiza o estado sobrescrevendo APENAS as chaves que ainda estão vazias, ou que acabaram de chegar da dívida.
+      // Mas para simplificar e garantir que a extração funcione:
+      setFormData(prev => {
+        // Se já tivermos dados de dívida no prev e eles não mudaram, ou para evitar sobrescrever o que o usuário digitou
+        // vamos atualizar apenas se o campo atual for vazio ou estritamente igual ao initialData sem dívida.
+        // No entanto, como o useEffect só roda na abertura ou quando a dívida é carregada:
+        return { ...prev, ...initialData };
+      });
     }
-  }, [open, docType, conversation, debtData]);
+  }, [open, debtData]); // Removed conversation and docType to prevent resetting every 3s
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
