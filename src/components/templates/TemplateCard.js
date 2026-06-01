@@ -10,7 +10,8 @@ import {
   HourglassEmpty as PendingIcon, Drafts as DraftIcon,
   Image as ImageIcon,
   Link as LinkIcon,
-  Reply as ReplyIcon
+  Reply as ReplyIcon,
+  Email as EmailIcon
 } from '@mui/icons-material';
 import { useTranslation } from 'react-i18next';
 import { GradientButton } from 'components/ui/GradientButton'; 
@@ -126,6 +127,7 @@ export const TemplateCard = ({ template, onAction }) => {
   const footerComponent = template.components?.find(c => c.type === 'FOOTER');
 
   const displayName = formatTemplateNameForDisplay(template.name);
+  const isEmailTemplate = template.templateType === 'email';
 
   return (
     <Card sx={{
@@ -175,14 +177,24 @@ export const TemplateCard = ({ template, onAction }) => {
         <Stack spacing={2}>
           <Stack direction="row" spacing={1} alignItems="center">
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {t('templatesPage.card.categoryLabel')} {template.category}
+              {isEmailTemplate ? 'Template de email' : `${t('templatesPage.card.categoryLabel')} ${template.category}`}
             </Typography>
             <Chip
-              label={template.templateType === 'follow_up' ? t('templatesPage.card.followUpChip') : t('templatesPage.card.conversationChip')}
+              icon={isEmailTemplate ? <EmailIcon /> : undefined}
+              label={isEmailTemplate ? 'Email' : template.templateType === 'follow_up' ? t('templatesPage.card.followUpChip') : t('templatesPage.card.conversationChip')}
               size="small"
               variant="outlined"
             />
           </Stack>
+          {isEmailTemplate && (
+            <Box sx={{ p: 1.25, borderRadius: 1, bgcolor: alpha(theme.palette.info.main, 0.08), border: `1px solid ${alpha(theme.palette.info.main, 0.18)}` }}>
+              <Typography variant="caption" color="text.secondary" fontWeight={700}>Assunto</Typography>
+              <Typography variant="body2" fontWeight={700}>{template.emailSubject || 'Sem assunto'}</Typography>
+              {template.emailPreheader && (
+                <Typography variant="caption" color="text.secondary">{template.emailPreheader}</Typography>
+              )}
+            </Box>
+          )}
           
           <Box
             sx={{
@@ -216,7 +228,7 @@ export const TemplateCard = ({ template, onAction }) => {
           )}
         </Stack>
       </CardContent>
-      {template.status === 'draft' && (
+      {template.status === 'draft' && !isEmailTemplate && (
         <CardActions sx={{ p: 2, mt: 'auto' }}>
           <GradientButton
             fullWidth

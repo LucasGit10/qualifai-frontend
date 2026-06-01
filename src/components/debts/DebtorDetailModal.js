@@ -45,6 +45,20 @@ const fmtPhone = (tel) => {
   return tel;
 };
 
+const getDialogPaperSx = (theme, color) => ({
+  borderRadius: 3,
+  background: theme.palette.mode === 'dark'
+    ? 'rgba(18, 18, 30, 0.92)'
+    : 'rgba(255, 255, 255, 0.98)',
+  backdropFilter: 'blur(24px)',
+  WebkitBackdropFilter: 'blur(24px)',
+  border: `1px solid ${alpha(color || theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.24 : 0.16)}`,
+  boxShadow: theme.palette.mode === 'dark'
+    ? `0 24px 64px ${alpha('#000', 0.45)}`
+    : `0 24px 64px ${alpha('#000', 0.12)}`,
+  overflow: 'hidden',
+});
+
 // ─── Chip de atraso ───────────────────────────────────────────────────────────
 const AtrasoChip = ({ dias }) => {
   if (!dias || dias <= 0) return null;
@@ -75,9 +89,8 @@ const MiniKpi = ({ label, value, color, icon, sub }) => {
   return (
     <Box sx={{
       flex: 1, p: 2, borderRadius: 2,
-      background: `linear-gradient(135deg, ${alpha(color, 0.12)} 0%, ${alpha(theme.palette.background.paper, 0.4)} 100%)`,
+      backgroundColor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.45 : 0.9),
       border: `1px solid ${alpha(color, 0.25)}`,
-      backdropFilter: 'blur(8px)',
       minWidth: 120,
     }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
@@ -334,13 +347,7 @@ export default function DebtorDetailModal({ open, onClose, debtor }) {
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 3,
-          background: 'rgba(14, 14, 24, 0.92)',
-          backdropFilter: 'blur(32px)',
-          WebkitBackdropFilter: 'blur(32px)',
-          border: `1px solid ${alpha('#fff', 0.1)}`,
-          boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
-          overflow: 'hidden',
+          ...getDialogPaperSx(theme, avatarColor),
         },
       }}
     >
@@ -348,8 +355,8 @@ export default function DebtorDetailModal({ open, onClose, debtor }) {
       <Box
         sx={{
           px: 3, py: 2.5,
-          background: `linear-gradient(135deg, ${alpha(avatarColor, 0.18)} 0%, ${alpha('#0e0e18', 0.5)} 100%)`,
-          borderBottom: `1px solid ${alpha('#fff', 0.08)}`,
+          backgroundColor: alpha(theme.palette.background.paper, theme.palette.mode === 'dark' ? 0.35 : 0.9),
+          borderBottom: `1px solid ${theme.palette.divider}`,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2.5, justifyContent: 'space-between' }}>
@@ -420,7 +427,7 @@ export default function DebtorDetailModal({ open, onClose, debtor }) {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <ReceiptIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
             <Typography variant="caption" color="text.secondary">
-              Contrato: <strong style={{ color: '#fff' }}>{debtor.contrato}</strong>
+              Contrato: <strong>{debtor.contrato}</strong>
               {debtor.apto ? ` | Apto: ${debtor.apto}` : ''}
             </Typography>
           </Box>
@@ -433,7 +440,7 @@ export default function DebtorDetailModal({ open, onClose, debtor }) {
       </Box>
 
       {/* ─── KPIs ─── */}
-      <Box sx={{ px: 3, py: 2, display: 'flex', gap: 1.5, flexWrap: 'wrap', borderBottom: `1px solid ${alpha('#fff', 0.06)}` }}>
+      <Box sx={{ px: 3, py: 2, display: 'flex', gap: 1.5, flexWrap: 'wrap', borderBottom: `1px solid ${theme.palette.divider}` }}>
         <MiniKpi
           label="Total Geral"
           value={fmt(debtor.totalGeral)}
@@ -458,7 +465,7 @@ export default function DebtorDetailModal({ open, onClose, debtor }) {
       </Box>
 
       {/* ─── Tabs ─── */}
-      <Box sx={{ px: 3, borderBottom: `1px solid ${alpha('#fff', 0.07)}` }}>
+      <Box sx={{ px: 3, borderBottom: `1px solid ${theme.palette.divider}` }}>
         <Tabs
           value={tab}
           onChange={(_, v) => setTab(v)}
@@ -517,7 +524,7 @@ export default function DebtorDetailModal({ open, onClose, debtor }) {
       </DialogContent>
 
       {/* ─── Footer ─── */}
-      <DialogActions sx={{ px: 3, py: 1.5, borderTop: `1px solid ${alpha('#fff', 0.07)}`, gap: 1 }}>
+      <DialogActions sx={{ px: 3, py: 1.5, borderTop: `1px solid ${theme.palette.divider}`, gap: 1 }}>
         <Button
           variant="outlined"
           color="success"
@@ -557,7 +564,7 @@ export default function DebtorDetailModal({ open, onClose, debtor }) {
       <Dialog 
         open={exportOpen} 
         onClose={() => !isExporting && setExportOpen(false)}
-        PaperProps={{ sx: { borderRadius: 3, background: 'rgba(18, 18, 30, 0.98)', backdropFilter: 'blur(16px)', border: `1px solid ${alpha('#10b981', 0.3)}` }}}
+        PaperProps={{ sx: getDialogPaperSx(theme, theme.palette.success.main) }}
       >
         <DialogTitle sx={{ fontWeight: 800, color: '#10b981' }}>Configurações do Relatório</DialogTitle>
         <DialogContent>

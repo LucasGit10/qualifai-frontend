@@ -27,7 +27,7 @@ function TabPanel(props) {
   );
 }
 
-export const TemplateTabs = ({ currentTab, onTabChange, conversationTemplates, followUpTemplates, onCardAction }) => {
+export const TemplateTabs = ({ currentTab, onTabChange, conversationTemplates, followUpTemplates, emailTemplates, onCardAction }) => {
   const { t } = useTranslation();
 
   return (
@@ -51,6 +51,7 @@ export const TemplateTabs = ({ currentTab, onTabChange, conversationTemplates, f
         >
           <Tab label={t('templatesPage.tabs.conversation')} {...a11yProps(0)} />
           <Tab label={t('templatesPage.tabs.followUp')} {...a11yProps(1)} /> 
+          <Tab label="Emails" {...a11yProps(2)} />
         </Tabs>
       </Box>
       
@@ -82,6 +83,22 @@ export const TemplateTabs = ({ currentTab, onTabChange, conversationTemplates, f
         ) : (
           <Typography sx={{ color: 'text.secondary', mt: 4, textAlign: 'center' }}>
             {t('templatesPage.noFollowUpTemplates')}
+          </Typography>
+        )}
+      </TabPanel>
+
+      <TabPanel value={currentTab} index={2}>
+        {emailTemplates.length > 0 ? (
+          <Grid container spacing={3}>
+            {emailTemplates.map((template) => (
+              <Grid item xs={12} md={6} lg={4} key={template._id}>
+                <TemplateCard template={template} onAction={onCardAction} />
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Typography sx={{ color: 'text.secondary', mt: 4, textAlign: 'center' }}>
+            Nenhum template de email criado.
           </Typography>
         )}
       </TabPanel>

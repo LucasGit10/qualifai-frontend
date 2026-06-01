@@ -106,7 +106,7 @@ export const useMessageTemplates = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const [dialogState, setDialogState] = useState({ create: false, edit: false, submit: false, delete: false });
+  const [dialogState, setDialogState] = useState({ create: false, edit: false, emailCreate: false, emailEdit: false, submit: false, delete: false });
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [correctedData, setCorrectedData] = useState(null); 
   const [currentTab, setCurrentTab] = useState(0);
@@ -124,11 +124,12 @@ export const useMessageTemplates = () => {
     }
   );
 
-  const { conversationTemplates, followUpTemplates } = useMemo(() => {
-    if (!templates) return { conversationTemplates: [], followUpTemplates: [] };
-    const conversation = templates.filter(t => t.templateType !== 'follow_up');
+  const { conversationTemplates, followUpTemplates, emailTemplates } = useMemo(() => {
+    if (!templates) return { conversationTemplates: [], followUpTemplates: [], emailTemplates: [] };
+    const conversation = templates.filter(t => !['follow_up', 'email'].includes(t.templateType));
     const followUp = templates.filter(t => t.templateType === 'follow_up');
-    return { conversationTemplates: conversation, followUpTemplates: followUp };
+    const email = templates.filter(t => t.templateType === 'email');
+    return { conversationTemplates: conversation, followUpTemplates: followUp, emailTemplates: email };
   }, [templates]);
 
   useEffect(() => {
@@ -224,12 +225,16 @@ export const useMessageTemplates = () => {
   };
 
   const handleCloseDialogs = () => {
-    setDialogState({ create: false, edit: false, submit: false, delete: false });
+    setDialogState({ create: false, edit: false, emailCreate: false, emailEdit: false, submit: false, delete: false });
     setSelectedTemplate(null);
     setCorrectedData(null);
   };
 
   const handleCardAction = (action, template) => {
+    if (template?.templateType === 'email' && action === 'edit') {
+      handleOpenDialog('emailEdit', template);
+      return;
+    }
     if (['edit', 'submit', 'delete'].includes(action)) {
       handleOpenDialog(action, template);
     }
@@ -244,7 +249,28 @@ export const useMessageTemplates = () => {
       updateTemplateMutation.mutate({ templateId: selectedTemplate._id, data: payload });
     } else if (selectedTemplate?.status === 'rejected') {
       setCorrectedData(payload);
-      setDialogState({ create: false, edit: false, submit: true, delete: false });
+      setDialogState({ create: false, edit: false, emailCreate: false, emailEdit: false, submit: true, delete: false });
+    }
+  };
+
+  const handleEmailFormSubmit = (formData) => {
+    const payload = {
+      name: formData.name,
+      category: 'UTILITY',
+      language: 'pt_BR',
+      templateType: 'email',
+      emailSubject: formData.emailSubject,
+      emailPreheader: formData.emailPreheader,
+      components: [
+        { type: 'BODY', text: formData.bodyText },
+        ...(formData.footerText?.trim() ? [{ type: 'FOOTER', text: formData.footerText }] : [])
+      ],
+    };
+
+    if (dialogState.emailCreate) {
+      createTemplateMutation.mutate(payload);
+    } else if (dialogState.emailEdit && selectedTemplate) {
+      updateTemplateMutation.mutate({ templateId: selectedTemplate._id, data: payload });
     }
   };
 
@@ -304,6 +330,7 @@ export const useMessageTemplates = () => {
     templates,
     conversationTemplates,
     followUpTemplates,
+    emailTemplates,
     instances,
     isLoadingInstances,
     currentTab,
@@ -317,6 +344,7 @@ export const useMessageTemplates = () => {
     handleCloseDialogs,
     handleCardAction,
     handleFormSubmit,
+    handleEmailFormSubmit,
     onSubmitApproval,
     onDeleteConfirm,
     deconstructComponentsForForm

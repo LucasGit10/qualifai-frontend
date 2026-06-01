@@ -5,7 +5,8 @@ import {
   useTheme, Grid, Card, CardContent, Divider, Chip, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip, alpha, TextField,
   InputAdornment, Select, MenuItem, FormControl, InputLabel, Badge, Tab, Tabs, Alert,
-  LinearProgress, Collapse, Stack, Avatar, Pagination, CircularProgress, Autocomplete
+  LinearProgress, Collapse, Stack, Avatar, Pagination, CircularProgress, Autocomplete,
+  FormControlLabel, Switch
 } from '@mui/material';
 import {
   CloudUpload as UploadIcon,
@@ -33,6 +34,10 @@ import {
   NoteAlt as NoteIcon,
   AddComment as AddNoteIcon,
   Delete as DeleteIcon,
+  Send as SendIcon,
+  CancelScheduleSend as CancelScheduleIcon,
+  NotificationsActive as FollowupIcon,
+  Email as EmailIcon,
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { format, subMonths, parseISO } from 'date-fns';
@@ -47,6 +52,28 @@ import DebtorDetailModal from '../components/debts/DebtorDetailModal';
 const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtNum = (v) => new Intl.NumberFormat('pt-BR').format(v || 0);
+
+const getPanelSx = (theme) => ({
+  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'background.paper',
+  backdropFilter: theme.palette.mode === 'dark' ? 'blur(10px)' : 'none',
+  WebkitBackdropFilter: theme.palette.mode === 'dark' ? 'blur(10px)' : 'none',
+  border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : theme.palette.divider}`,
+  borderRadius: 3,
+  boxShadow: theme.palette.mode === 'dark' ? '0 8px 32px 0 rgba(31, 38, 135, 0.37)' : theme.shadows[2],
+});
+
+const getDialogPaperSx = (theme, color) => ({
+  borderRadius: 3,
+  background: theme.palette.mode === 'dark'
+    ? 'rgba(18, 18, 30, 0.92)'
+    : 'rgba(255, 255, 255, 0.98)',
+  backdropFilter: 'blur(24px)',
+  WebkitBackdropFilter: 'blur(24px)',
+  border: `1px solid ${alpha(color || theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.28 : 0.18)}`,
+  boxShadow: theme.palette.mode === 'dark'
+    ? `0 24px 64px ${alpha('#000', 0.45)}`
+    : `0 24px 64px ${alpha('#000', 0.12)}`,
+});
 
 const DEFAULT_DEBTOR_STATUS_OPTIONS = [
   { value: 'novo', label: 'Novo Devedor' },
@@ -82,6 +109,41 @@ const getDebtorStatusConfig = (status, theme) => {
     label: formatStatusLabel(normalized).toUpperCase(),
   };
 };
+
+const NEXT_ACTION_LABELS = {
+  initial_contact: 'Iniciar conversa',
+  followup: 'Follow-up',
+};
+
+const getDefaultScheduleDate = () => {
+  const next = new Date();
+  next.setHours(next.getHours() + 2);
+  next.setMinutes(0, 0, 0);
+  return next;
+};
+
+const toDateInputValue = (date) => format(date, 'yyyy-MM-dd');
+const toTimeInputValue = (date) => format(date, 'HH:mm');
+
+const formatNextActionDate = (value) => {
+  if (!value) return '';
+  try {
+    return format(new Date(value), "dd/MM 'as' HH:mm");
+  } catch {
+    return '';
+  }
+};
+
+const getDefaultNextActionMessage = (debtor, actionType) => {
+  const name = debtor?.cliente?.split(' ')?.[0] || 'tudo bem';
+  if (actionType === 'followup') {
+    return `Oi, ${name}. Passando para retomar nossa conversa sobre as pendencias do contrato ${debtor?.contrato || ''}. Consegue me dar um retorno?`;
+  }
+  return `Oi, ${name}. Tudo bem? Estou entrando em contato sobre as pendencias do contrato ${debtor?.contrato || ''}. Podemos conversar para encontrar a melhor forma de regularizar?`;
+};
+
+const getTemplateBody = (template) => template?.components?.find(component => component.type === 'BODY')?.text || '';
+const getTemplateFooter = (template) => template?.components?.find(component => component.type === 'FOOTER')?.text || '';
 
 
 
@@ -374,19 +436,9 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth PaperProps={{ sx: {
-      borderRadius: 3,
-      background: 'rgba(18, 18, 30, 0.95)',
-      backdropFilter: 'blur(24px)',
-      WebkitBackdropFilter: 'blur(24px)',
-      border: `1px solid ${alpha(theme.palette.primary.main, 0.3)}`,
-      boxShadow: `0 24px 64px ${alpha(theme.palette.primary.main, 0.2)}`,
-    }}}>
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth PaperProps={{ sx: getDialogPaperSx(theme, theme.palette.primary.main) }}>
       <DialogTitle sx={{ pb: 1, textAlign: isExtracting ? 'center' : 'left' }}>
-        <Typography variant="h6" fontWeight={800} sx={{
-          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-        }}>
+        <Typography variant="h6" fontWeight={800}>
           {isExtracting ? 'Processando Planilha' : 'ðŸ“ Importar Planilha de Cobrança'}
         </Typography>
         {!isExtracting && (
@@ -465,8 +517,6 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
             disabled={!file}
             sx={{
               borderRadius: 2, fontWeight: 700, px: 4,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`,
             }}
           >
             Extrair Dados e Importar
@@ -506,26 +556,25 @@ function KpiCard({ label, value, icon, color, sub }) {
   const theme = useTheme();
   return (
     <Card elevation={0} sx={{
+      ...getPanelSx(theme),
       borderRadius: 3,
-      border: `1px solid ${alpha(color, 0.3)}`,
-      background: `linear-gradient(135deg, ${alpha(color,0.12)} 0%, ${alpha(theme.palette.background.paper,0.6)} 100%)`,
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      boxShadow: `0 4px 24px ${alpha(color, 0.1)}, inset 0 1px 0 ${alpha('#fff',0.08)}`,
       height: '100%',
-      transition: 'transform 0.2s, box-shadow 0.2s',
-      '&:hover': { transform: 'translateY(-3px)', boxShadow: `0 8px 32px ${alpha(color, 0.2)}, inset 0 1px 0 ${alpha('#fff',0.12)}` },
+      transition: 'border-color 0.2s ease, transform 0.2s ease',
+      '&:hover': {
+        borderColor: alpha(color, 0.45),
+        transform: 'translateY(-2px)',
+      },
     }}>
       <CardContent sx={{ p: 2.5 }}>
-        <Box sx={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', mb:1.5 }}>
+        <Box sx={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap: 2, mb:1.5 }}>
           <Typography variant="caption" color="text.secondary" sx={{ textTransform:'uppercase', letterSpacing:0.8, fontWeight:700, fontSize:'0.65rem' }}>
             {label}
           </Typography>
-          <Box sx={{ p:1, borderRadius:2, background: `linear-gradient(135deg, ${alpha(color,0.25)}, ${alpha(color,0.1)})`, border: `1px solid ${alpha(color,0.3)}`, backdropFilter:'blur(8px)' }}>
+          <Avatar sx={{ width: 38, height: 38, bgcolor: alpha(color, 0.16), color, border: `1px solid ${alpha(color,0.28)}` }}>
             {React.cloneElement(icon, { sx:{ fontSize:16, color } })}
-          </Box>
+          </Avatar>
         </Box>
-        <Typography variant="h5" fontWeight={800} sx={{ color, lineHeight:1, mb:0.5, letterSpacing:'-0.5px' }}>{value}</Typography>
+        <Typography variant="h5" fontWeight={800} sx={{ color: 'text.primary', lineHeight:1, mb:0.5 }}>{value}</Typography>
         {sub && <Typography variant="caption" color="text.secondary" sx={{ opacity:0.8 }}>{sub}</Typography>}
       </CardContent>
     </Card>
@@ -672,7 +721,339 @@ function DebtorNotesDialog({ open, debtor, onClose }) {
   );
 }
 
-function DebtorCard({ debtor, onViewDetails, onStatusChange, statusOptions, onOpenNotes }) {
+function NextActionBlock({ debtor, onClick }) {
+  const theme = useTheme();
+  if (!debtor?._id) return null;
+
+  const action = debtor.nextAction;
+  const isScheduled = action?.status === 'scheduled';
+  const isFailed = action?.status === 'failed';
+  const color = isFailed ? theme.palette.error.main : isScheduled ? '#0ea5e9' : theme.palette.primary.main;
+  const title = isScheduled
+    ? NEXT_ACTION_LABELS[action.type] || 'Acao agendada'
+    : isFailed
+      ? 'Agendamento com falha'
+      : 'Agendar proxima acao';
+  const subtitle = isScheduled
+    ? `${formatNextActionDate(action.scheduledAt)} pelo ${action.channel || 'whatsapp'}`
+    : isFailed
+      ? (action.lastError || 'Revise o agendamento')
+      : debtor.activeConversation
+        ? 'Iniciar conversa ou marcar follow-up'
+        : 'Iniciar conversa em um horario especifico';
+
+  return (
+    <Paper
+      elevation={0}
+      role="button"
+      tabIndex={0}
+      onClick={() => onClick?.(debtor)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick?.(debtor);
+        }
+      }}
+      sx={{
+        p: 1.15,
+        mb: 2,
+        borderRadius: 2,
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        bgcolor: alpha(color, theme.palette.mode === 'dark' ? 0.13 : 0.08),
+        border: `1px solid ${alpha(color, isScheduled ? 0.34 : 0.22)}`,
+        transition: 'background-color 0.2s ease, border-color 0.2s ease',
+        '&:hover': {
+          bgcolor: alpha(color, theme.palette.mode === 'dark' ? 0.2 : 0.12),
+          borderColor: alpha(color, 0.45),
+        }
+      }}
+    >
+      <Box
+        sx={{
+          width: 30,
+          height: 30,
+          borderRadius: 1.5,
+          display: 'grid',
+          placeItems: 'center',
+          bgcolor: alpha(color, 0.16),
+          color,
+          flexShrink: 0,
+        }}
+      >
+        {isScheduled ? <FollowupIcon sx={{ fontSize: 17 }} /> : <ScheduleIcon sx={{ fontSize: 17 }} />}
+      </Box>
+      <Box sx={{ minWidth: 0, flex: 1 }}>
+        <Typography sx={{ fontSize: '0.74rem', fontWeight: 800, color, lineHeight: 1.2 }} noWrap>
+          {title}
+        </Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', fontSize: '0.66rem' }} noWrap>
+          {subtitle}
+        </Typography>
+      </Box>
+      <Chip
+        size="small"
+        label={isScheduled ? 'Editar' : 'Novo'}
+        sx={{
+          height: 22,
+          fontSize: '0.62rem',
+          fontWeight: 800,
+          color,
+          bgcolor: alpha(color, 0.12),
+          border: `1px solid ${alpha(color, 0.24)}`,
+        }}
+      />
+    </Paper>
+  );
+}
+
+function ScheduleActionDialog({ open, debtor, onClose, onSave, onCancel, isSaving, isCancelling }) {
+  const theme = useTheme();
+  const hasConversation = Boolean(debtor?.activeConversation?._id);
+  const scheduledAction = debtor?.nextAction?.status === 'scheduled' ? debtor.nextAction : null;
+  const initialDate = scheduledAction?.scheduledAt ? new Date(scheduledAction.scheduledAt) : getDefaultScheduleDate();
+  const [actionType, setActionType] = useState(hasConversation ? 'followup' : 'initial_contact');
+  const [date, setDate] = useState(toDateInputValue(initialDate));
+  const [time, setTime] = useState(toTimeInputValue(initialDate));
+  const [channel, setChannel] = useState('whatsapp');
+  const [emailTemplateId, setEmailTemplateId] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [cancelIfReplied, setCancelIfReplied] = useState(true);
+  const { data: emailTemplates = [], isLoading: isLoadingEmailTemplates } = useQuery(
+    ['email-templates-for-schedule'],
+    async () => {
+      const { data } = await api.get('/template-message?templateType=email');
+      return data;
+    },
+    { enabled: open, staleTime: 60000 }
+  );
+
+  useEffect(() => {
+    if (!open || !debtor) return;
+    const nextDate = scheduledAction?.scheduledAt ? new Date(scheduledAction.scheduledAt) : getDefaultScheduleDate();
+    const nextType = scheduledAction?.type || (hasConversation ? 'followup' : 'initial_contact');
+    setActionType(nextType);
+    setDate(toDateInputValue(nextDate));
+    setTime(toTimeInputValue(nextDate));
+    setChannel(scheduledAction?.channel || 'whatsapp');
+    setEmailTemplateId(scheduledAction?.template || '');
+    setEmailSubject(scheduledAction?.emailSubject || 'Regularização do contrato {{contrato}}');
+    setMessage(scheduledAction?.message || getDefaultNextActionMessage(debtor, nextType));
+    setCancelIfReplied(scheduledAction?.cancelIfReplied !== false);
+  }, [open, debtor, hasConversation, scheduledAction?.scheduledAt, scheduledAction?.type, scheduledAction?.message, scheduledAction?.cancelIfReplied, scheduledAction?.channel, scheduledAction?.emailSubject, scheduledAction?.template]);
+
+  const handleTypeChange = (value) => {
+    setActionType(value);
+    setMessage(getDefaultNextActionMessage(debtor, value));
+  };
+
+  const handleEmailTemplateChange = (templateId) => {
+    setEmailTemplateId(templateId);
+    const template = emailTemplates.find(item => item._id === templateId);
+    if (!template) return;
+    const footer = getTemplateFooter(template);
+    setEmailSubject(template.emailSubject || '');
+    setMessage(`${getTemplateBody(template)}${footer ? `\n\n${footer}` : ''}`);
+  };
+
+  const handleSave = () => {
+    const scheduledAt = new Date(`${date}T${time}:00`);
+    onSave?.({
+      leadId: debtor._id,
+      payload: {
+        actionType,
+        scheduledAt: scheduledAt.toISOString(),
+        channel,
+        message,
+        emailSubject: channel === 'email' ? emailSubject : undefined,
+        templateId: channel === 'email' ? emailTemplateId : undefined,
+        conversationId: debtor.activeConversation?._id,
+        cancelIfReplied,
+      }
+    });
+  };
+
+  if (!debtor) return null;
+
+  return (
+    <Dialog
+      open={open}
+      onClose={isSaving || isCancelling ? undefined : onClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{ sx: getDialogPaperSx(theme, theme.palette.primary.main) }}
+    >
+      <DialogTitle sx={{ pb: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+          <ScheduleIcon color="primary" />
+          <Box>
+            <Typography variant="h6" fontWeight={800}>Proxima acao</Typography>
+            <Typography variant="caption" color="text.secondary">
+              {debtor.cliente}
+            </Typography>
+          </Box>
+        </Box>
+      </DialogTitle>
+      <DialogContent sx={{ pt: 1 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 1.5,
+            mb: 2,
+            borderRadius: 2,
+            bgcolor: alpha(theme.palette.primary.main, 0.07),
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
+          }}
+        >
+          <Typography variant="body2" fontWeight={700}>
+            {actionType === 'followup' ? 'Envia um follow-up automatico no horario escolhido.' : 'Inicia uma conversa automaticamente no horario escolhido.'}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            O card do devedor mostra esse agendamento para a equipe nao perder o proximo passo.
+          </Typography>
+        </Paper>
+
+        <Stack spacing={2}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Canal</InputLabel>
+            <Select
+              label="Canal"
+              value={channel}
+              onChange={(event) => setChannel(event.target.value)}
+            >
+              <MenuItem value="whatsapp">WhatsApp</MenuItem>
+              <MenuItem value="email">Email</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth size="small">
+            <InputLabel>Tipo</InputLabel>
+            <Select
+              label="Tipo"
+              value={actionType}
+              onChange={(event) => handleTypeChange(event.target.value)}
+            >
+              <MenuItem value="initial_contact">Iniciar conversa</MenuItem>
+              <MenuItem value="followup" disabled={!hasConversation}>Follow-up da conversa ativa</MenuItem>
+            </Select>
+          </FormControl>
+
+          {!hasConversation && (
+            <Alert severity="info" sx={{ borderRadius: 2 }}>
+              Este devedor ainda nao tem conversa ativa, entao o primeiro agendamento sera de inicio de conversa.
+            </Alert>
+          )}
+
+          {channel === 'email' && (
+            <>
+              <FormControl fullWidth size="small">
+                <InputLabel>Template de email</InputLabel>
+                <Select
+                  label="Template de email"
+                  value={emailTemplateId}
+                  onChange={(event) => handleEmailTemplateChange(event.target.value)}
+                  disabled={isLoadingEmailTemplates}
+                >
+                  <MenuItem value="">Sem template</MenuItem>
+                  {emailTemplates.map(template => (
+                    <MenuItem key={template._id} value={template._id}>
+                      {formatStatusLabel(template.name)} - {template.emailSubject}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
+                label="Assunto do email"
+                value={emailSubject}
+                onChange={(event) => setEmailSubject(event.target.value)}
+                fullWidth
+                size="small"
+                inputProps={{ maxLength: 180 }}
+                helperText={`${emailSubject.length}/180 caracteres`}
+              />
+              <Alert icon={<EmailIcon />} severity="info" sx={{ borderRadius: 2 }}>
+                Use templates com assunto claro, contexto do contrato e assinatura oficial para evitar aparência de golpe.
+              </Alert>
+            </>
+          )}
+
+          <Grid container spacing={1.5}>
+            <Grid item xs={12} sm={7}>
+              <TextField
+                type="date"
+                label="Data"
+                value={date}
+                onChange={(event) => setDate(event.target.value)}
+                InputLabelProps={{ shrink: true }}
+                fullWidth
+                size="small"
+              />
+            </Grid>
+            <Grid item xs={12} sm={5}>
+              <TextField
+                type="time"
+                label="Horario"
+                value={time}
+                onChange={(event) => setTime(event.target.value)}
+                InputLabelProps={{ shrink: true }}
+                fullWidth
+                size="small"
+              />
+            </Grid>
+          </Grid>
+
+          <TextField
+            label="Mensagem"
+            value={message}
+            onChange={(event) => setMessage(event.target.value)}
+            multiline
+            minRows={4}
+            fullWidth
+            inputProps={{ maxLength: 2000 }}
+            helperText={`${message.length}/2000 caracteres`}
+          />
+
+          {actionType === 'followup' && (
+            <FormControlLabel
+              control={<Switch checked={cancelIfReplied} onChange={(event) => setCancelIfReplied(event.target.checked)} />}
+              label="Cancelar se o devedor responder antes do horario"
+            />
+          )}
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+        {scheduledAction && (
+          <Button
+            color="error"
+            startIcon={isCancelling ? <CircularProgress size={16} /> : <CancelScheduleIcon />}
+            onClick={() => onCancel?.(debtor._id)}
+            disabled={isSaving || isCancelling}
+            sx={{ mr: 'auto', borderRadius: 2, fontWeight: 700 }}
+          >
+            Cancelar agendamento
+          </Button>
+        )}
+        <Button onClick={onClose} disabled={isSaving || isCancelling} sx={{ borderRadius: 2 }}>
+          Fechar
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : <SendIcon />}
+          onClick={handleSave}
+          disabled={isSaving || isCancelling || !message.trim() || !date || !time || (channel === 'email' && !emailSubject.trim())}
+          sx={{ borderRadius: 2, fontWeight: 800 }}
+        >
+          Salvar agendamento
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function DebtorCard({ debtor, onViewDetails, onStatusChange, statusOptions, onOpenNotes, onScheduleAction }) {
   const theme = useTheme();
   const AVATAR_COLORS = ['#6366f1','#8b5cf6','#ec4899','#0ea5e9','#10b981'];
   const avatarColor = AVATAR_COLORS[debtor.cpfCnpj?.charCodeAt(0) % AVATAR_COLORS.length || 0];
@@ -701,37 +1082,28 @@ function DebtorCard({ debtor, onViewDetails, onStatusChange, statusOptions, onOp
     <Card
       elevation={0}
       sx={{
+        ...getPanelSx(theme),
         borderRadius: 3,
         border: `1px solid ${hasOverdue ? alpha('#ef4444', 0.3) : alpha(theme.palette.divider, 0.5)}`,
-        background: hasOverdue
-          ? `linear-gradient(135deg, ${alpha('#ef4444',0.05)} 0%, ${alpha(theme.palette.background.paper,0.65)} 100%)`
-          : alpha(theme.palette.background.paper, 0.55),
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        boxShadow: `0 4px 20px ${alpha('#000', 0.12)}, inset 0 1px 0 ${alpha('#fff',0.06)}`,
-        transition: 'all 0.25s cubic-bezier(0.4,0,0.2,1)',
+        transition: 'border-color 0.2s ease, transform 0.2s ease',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: `0 12px 40px ${alpha(avatarColor, 0.2)}, inset 0 1px 0 ${alpha('#fff',0.1)}`,
+          transform: 'translateY(-2px)',
           border: `1px solid ${alpha(avatarColor, 0.4)}`,
         },
       }}
     >
-      <style>{`
-        ::-webkit-scrollbar { display: none !important; }
-        * { -ms-overflow-style: none !important; scrollbar-width: none !important; }
-      `}</style>
       <CardContent sx={{ p: 1.5 }}>
         {/* Top row: avatar + nome + badge */}
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1.5 }}>
           <Avatar
             sx={{
               width: 36, height: 36, fontSize: '0.85rem', fontWeight: 800, flexShrink: 0,
-              background: `linear-gradient(135deg, ${avatarColor}, ${alpha(avatarColor, 0.6)})`,
-              boxShadow: `0 4px 12px ${alpha(avatarColor, 0.35)}`,
+              bgcolor: alpha(avatarColor, 0.18),
+              color: avatarColor,
+              border: `1px solid ${alpha(avatarColor, 0.32)}`,
             }}
           >
             {initials}
@@ -838,11 +1210,13 @@ function DebtorCard({ debtor, onViewDetails, onStatusChange, statusOptions, onOp
           sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 1.5 }, '& .MuiInputBase-input': { fontSize: '0.78rem' } }}
         />
 
+        <NextActionBlock debtor={debtor} onClick={onScheduleAction} />
+
         {/* Stats financeiros */}
         <Box
           sx={{
             p: 1.5, borderRadius: 2, mb: 2,
-            background: alpha(theme.palette.background.default, 0.5),
+            background: alpha(theme.palette.background.default, theme.palette.mode === 'dark' ? 0.45 : 0.7),
             border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
           }}
         >
@@ -879,7 +1253,7 @@ function DebtorCard({ debtor, onViewDetails, onStatusChange, statusOptions, onOp
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
           <Box>
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.65rem' }}>
-              Contrato <strong style={{ color: '#fff' }}>{debtor.contrato}</strong>
+              Contrato <strong>{debtor.contrato}</strong>
               {debtor.apto ? ` · Apto ${debtor.apto}` : ''}
             </Typography>
           </Box>
@@ -913,9 +1287,8 @@ function DebtorCard({ debtor, onViewDetails, onStatusChange, statusOptions, onOp
               onClick={() => onViewDetails(debtor)}
             sx={{
               borderRadius: 2, fontWeight: 700, fontSize: '0.75rem', px: 1.5, py: 0.5,
-              background: `linear-gradient(135deg, ${avatarColor}, ${theme.palette.primary.dark})`,
-              boxShadow: `0 4px 12px ${alpha(avatarColor, 0.35)}`,
-              '&:hover': { boxShadow: `0 6px 20px ${alpha(avatarColor, 0.5)}` },
+              bgcolor: 'primary.main',
+              '&:hover': { bgcolor: 'primary.dark' },
             }}
           >
             Ver Lançamentos
@@ -935,11 +1308,16 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
   const [statusFilter, setStatusFilter] = useState('todos'); // Filtro de status padrão
   const [movementFilter, setMovementFilter] = useState('todos');
   const [notesDebtorId, setNotesDebtorId] = useState(null);
+  const [scheduleDebtorId, setScheduleDebtorId] = useState(null);
   
   const debtors = useMemo(() => debtorsData || [], [debtorsData]);
   const notesDebtor = useMemo(
     () => debtors.find((debtor) => debtor._id === notesDebtorId) || null,
     [debtors, notesDebtorId]
+  );
+  const scheduleDebtor = useMemo(
+    () => debtors.find((debtor) => debtor._id === scheduleDebtorId) || null,
+    [debtors, scheduleDebtorId]
   );
 
   // Busca totais reais diretamente do banco (inclui registros com lead=null)
@@ -965,6 +1343,34 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
       },
       onError: (err) => {
         toast.error(err.response?.data?.message || 'Erro ao salvar status do devedor.');
+      }
+    }
+  );
+  const nextActionMutation = useMutation(
+    ({ leadId, payload }) => api.post(`/spreadsheets/debtors/${leadId}/next-action`, payload),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['debtors-summary']);
+        queryClient.invalidateQueries(['conversations']);
+        toast.success('Agendamento salvo.');
+        setScheduleDebtorId(null);
+      },
+      onError: (err) => {
+        toast.error(err.response?.data?.message || 'Erro ao salvar agendamento.');
+      }
+    }
+  );
+  const cancelNextActionMutation = useMutation(
+    (leadId) => api.delete(`/spreadsheets/debtors/${leadId}/next-action`),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['debtors-summary']);
+        queryClient.invalidateQueries(['conversations']);
+        toast.success('Agendamento cancelado.');
+        setScheduleDebtorId(null);
+      },
+      onError: (err) => {
+        toast.error(err.response?.data?.message || 'Erro ao cancelar agendamento.');
       }
     }
   );
@@ -1073,18 +1479,18 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
 
       {/* Busca */}
       <Paper elevation={0} sx={{
+        ...getPanelSx(theme),
         p: 2, mb: 3, borderRadius: 2.5,
-        background: alpha(theme.palette.background.paper, 0.6),
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-        display: 'flex', gap: 2, alignItems: 'center',
+        display: 'flex',
+        gap: 2,
+        alignItems: { xs: 'stretch', md: 'center' },
+        flexDirection: { xs: 'column', md: 'row' },
       }}>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
+        <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 160 } }}>
           <Select 
             value={statusFilter} 
             onChange={e => setStatusFilter(e.target.value)} 
-            sx={{ borderRadius: 1.5, background: alpha(theme.palette.background.paper, 0.4) }}
+            sx={{ borderRadius: 1.5 }}
           >
             {statusOptions.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
@@ -1092,11 +1498,11 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
           </Select>
         </FormControl>
 
-        <FormControl size="small" sx={{ minWidth: 170 }}>
+        <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 170 } }}>
           <Select
             value={movementFilter}
             onChange={e => setMovementFilter(e.target.value)}
-            sx={{ borderRadius: 1.5, background: alpha(theme.palette.background.paper, 0.4) }}
+            sx={{ borderRadius: 1.5 }}
           >
             <MenuItem value="todos">Todos os movimentos</MenuItem>
             <MenuItem value="novo">Novos na importação</MenuItem>
@@ -1111,9 +1517,9 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
           value={search}
           onChange={e => setSearch(e.target.value)}
           InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ fontSize: 18, color: 'text.secondary' }} /></InputAdornment> }}
-          sx={{ flex: 1, '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
+          sx={{ flex: 1, minWidth: { md: 260 }, '& .MuiOutlinedInput-root': { borderRadius: 1.5 } }}
         />
-        <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+        <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap', alignSelf: { xs: 'flex-start', md: 'center' } }}>
           {filtered.length} de {debtors.length} devedores
         </Typography>
       </Paper>
@@ -1135,10 +1541,9 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
                 color: 'text.primary',
               },
               '& .Mui-selected': {
-                background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main}) !important`,
+                backgroundColor: `${theme.palette.primary.main} !important`,
                 color: '#fff !important',
                 borderColor: 'transparent',
-                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
               }
             }}
           />
@@ -1153,6 +1558,7 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
               debtor={debtor}
               statusOptions={statusOptions}
               onViewDetails={onViewDetails}
+              onScheduleAction={(selectedDebtor) => setScheduleDebtorId(selectedDebtor._id)}
               onOpenNotes={(selectedDebtor) => setNotesDebtorId(selectedDebtor._id)}
               onStatusChange={(leadId, status) => debtorStatusMutation.mutate({ leadId, status })}
             />
@@ -1160,7 +1566,7 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
         ))}
         {filtered.length === 0 && (
           <Grid item xs={12}>
-            <Paper elevation={0} sx={{ p: 6, textAlign: 'center', borderRadius: 2.5, background: alpha(theme.palette.background.paper, 0.4), border: `1px solid ${alpha(theme.palette.divider, 0.4)}` }}>
+            <Paper elevation={0} sx={{ ...getPanelSx(theme), p: 6, textAlign: 'center', borderRadius: 2.5 }}>
               <PeopleIcon sx={{ fontSize: 48, color: 'text.secondary', opacity: 0.3, mb: 2 }} />
               <Typography variant="h6" color="text.secondary">Nenhum devedor encontrado</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Tente outro termo de busca.</Typography>
@@ -1173,6 +1579,16 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
         open={Boolean(notesDebtor)}
         debtor={notesDebtor}
         onClose={() => setNotesDebtorId(null)}
+      />
+
+      <ScheduleActionDialog
+        open={Boolean(scheduleDebtor)}
+        debtor={scheduleDebtor}
+        onClose={() => setScheduleDebtorId(null)}
+        onSave={(variables) => nextActionMutation.mutate(variables)}
+        onCancel={(leadId) => cancelNextActionMutation.mutate(leadId)}
+        isSaving={nextActionMutation.isLoading}
+        isCancelling={cancelNextActionMutation.isLoading}
       />
 
     </Box>
@@ -1388,28 +1804,19 @@ export default function Debts() {
     <Box sx={{ p: { xs: 2, md: 3 }, minHeight: '100vh' }}>
 
       {/* â”€â”€â”€ Header â”€â”€â”€ */}
-      <Box sx={{ display:'flex', alignItems:'center', justifyContent:'space-between', mb: 3, flexWrap:'wrap', gap:2 }}>
+      <Paper sx={{ ...getPanelSx(theme), p: 2, mb: 3, display:'flex', alignItems:{ xs: 'flex-start', md: 'center' }, justifyContent:'space-between', flexDirection: { xs: 'column', md: 'row' }, gap:2 }}>
         <Box sx={{ display:'flex', alignItems:'center', gap:2 }}>
-          <Box sx={{
-            p: 1.5, borderRadius: 2,
-            background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-            boxShadow: `0 4px 16px ${alpha(theme.palette.primary.main, 0.4)}`,
-          }}>
-            <DebtsIcon sx={{ color:'#fff', fontSize:28 }} />
-          </Box>
+          <DebtsIcon sx={{ fontSize: { xs: 32, sm: 40 }, color: 'primary.main' }} />
           <Box>
-            <Typography variant="h5" fontWeight={800} sx={{
-              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
-            }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' }, color: 'text.primary' }}>
               Gestão de Devedores
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.primary', mt: 0.5, opacity: 0.8 }}>
               {isLoading ? 'Carregando dados reais...' : 'Visão geral sincronizada com o banco de dados.'}
             </Typography>
           </Box>
         </Box>
-        <Box sx={{ display:'flex', gap:1, flexWrap:'wrap' }}>
+        <Box sx={{ display:'flex', gap:1, flexWrap:'wrap', width: { xs: '100%', md: 'auto' }, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
           <Button
             variant="outlined"
             color="error"
@@ -1457,12 +1864,12 @@ export default function Debts() {
             variant="contained"
             startIcon={<UploadIcon />}
             onClick={() => setImportOpen(true)}
-            sx={{ borderRadius:2, fontWeight:700, background:`linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})` }}
+            sx={{ borderRadius:2, fontWeight:700 }}
           >
             Importar Cobranças
           </Button>
         </Box>
-      </Box>
+      </Paper>
 
       {/* â”€â”€â”€ Conteúdo único â”€â”€â”€ */}
       {isLoading ? (
@@ -1489,7 +1896,7 @@ export default function Debts() {
       <Dialog 
         open={resetDialogOpen} 
         onClose={() => !isResetting && setResetDialogOpen(false)}
-        PaperProps={{ sx: { borderRadius: 3, background: 'rgba(18, 18, 30, 0.95)', backdropFilter: 'blur(24px)', border: `1px solid ${alpha(theme.palette.error.main, 0.3)}` }}}
+        PaperProps={{ sx: getDialogPaperSx(theme, theme.palette.error.main) }}
       >
         <DialogTitle sx={{ fontWeight: 800, color: 'error.main' }}>Limpar Base de Dados?</DialogTitle>
         <DialogContent>

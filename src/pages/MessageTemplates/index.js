@@ -7,6 +7,7 @@ import { useMessageTemplates } from 'hooks/useMessageTemplates';
 import { TemplateTabs } from 'components/templates/TemplateTabs';
 import { TemplateEmptyState } from 'components/templates/TemplateEmptyState';
 import { TemplateFormDialog } from 'components/templates/TemplateFormDialog';
+import EmailTemplateFormDialog from 'components/templates/EmailTemplateFormDialog';
 import { SubmitApprovalDialog } from 'components/templates/SubmitApprovalDialog';
 import { DeleteConfirmationDialog } from 'components/templates/DeleteConfirmationDialog';
 
@@ -19,6 +20,7 @@ export default function MessageTemplates() {
     templates,
     conversationTemplates,
     followUpTemplates,
+    emailTemplates,
     instances,
     isLoadingInstances,
     currentTab,
@@ -32,6 +34,7 @@ export default function MessageTemplates() {
     handleCloseDialogs,
     handleCardAction,
     handleFormSubmit,
+    handleEmailFormSubmit,
     onSubmitApproval,
     onDeleteConfirm,
     deconstructComponentsForForm
@@ -56,9 +59,9 @@ export default function MessageTemplates() {
         </Typography>
         <GradientButton
           startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog('create')}
+          onClick={() => handleOpenDialog(currentTab === 2 ? 'emailCreate' : 'create')}
         >
-          {t('templatesPage.newTemplateButton')}
+          {currentTab === 2 ? 'Novo email' : t('templatesPage.newTemplateButton')}
         </GradientButton>
       </Paper>
 
@@ -72,6 +75,7 @@ export default function MessageTemplates() {
           onTabChange={handleTabChange}
           conversationTemplates={conversationTemplates}
           followUpTemplates={followUpTemplates}
+          emailTemplates={emailTemplates}
           onCardAction={handleCardAction}
         />
       )}
@@ -83,6 +87,13 @@ export default function MessageTemplates() {
         template={dialogState.edit ? selectedTemplate : null}
         isLoading={mutationIsLoading}
         deconstructComponentsForForm={deconstructComponentsForForm}
+      />
+      <EmailTemplateFormDialog
+        open={dialogState.emailCreate || dialogState.emailEdit}
+        onClose={handleCloseDialogs}
+        onSubmit={handleEmailFormSubmit}
+        template={dialogState.emailEdit ? selectedTemplate : null}
+        isLoading={mutationIsLoading}
       />
       <SubmitApprovalDialog
         open={dialogState.submit}
