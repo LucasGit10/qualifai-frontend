@@ -84,7 +84,13 @@ const TemplateSelectionModal = ({ open, onClose, onConfirm, leadsToContact, isLo
   const { data: templates, isLoading: isLoadingTemplates } = useQuery('messageTemplates', () => api.get('/template-message').then(res => res.data), { enabled: open });
   const { data: teamMembersData, isLoading: isLoadingTeamMembers } = useQuery('teamMembersForTemplateStart', () => api.get('/manager/users').then(res => res.data), { enabled: open && ['manager', 'admin'].includes(user?.role) });
 
-  const selectedTemplate = templates?.find(t => t._id === selectedTemplateId);
+  const availableTemplates = useMemo(
+    () => (templates || []).filter(template =>
+      template.status === 'approved' && (!template.templateType || template.templateType === 'conversation')
+    ),
+    [templates]
+  );
+  const selectedTemplate = availableTemplates.find(t => t._id === selectedTemplateId);
   const hasMediaHeader = selectedTemplate?.components?.some(c => c.type === 'HEADER' && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(c.format));
   const savedMediaUrl = selectedTemplate?.sampleMediaUrl || '';
   const getMediaIcon = (format) => {
@@ -168,7 +174,7 @@ const TemplateSelectionModal = ({ open, onClose, onConfirm, leadsToContact, isLo
             <InputLabel>{t('leadsPage.templateModal.templateLabel')}</InputLabel>
             <Select value={selectedTemplateId} label={t('leadsPage.templateModal.templateLabel')} onChange={(e) => setSelectedTemplateId(e.target.value)} sx={selectStyles}>
               {isLoadingTemplates && <MenuItem value=""><em>{t('leadsPage.templateModal.loading')}</em></MenuItem>}
-              {templates?.map(template => {
+              {availableTemplates.map(template => {
                 const header = template.components?.find(c => c.type === 'HEADER' && ['IMAGE', 'VIDEO', 'DOCUMENT'].includes(c.format));
                 return (
                   <MenuItem key={template._id} value={template._id}>
