@@ -14,8 +14,8 @@ import {
   FormControlLabel,
   Radio
 } from '@mui/material';
-import { 
-  Close as CloseIcon, 
+import {
+  Close as CloseIcon,
   Add as AddIcon,
   Delete as DeleteIcon
 } from '@mui/icons-material';
@@ -112,7 +112,7 @@ export const TemplateFormDialog = ({ open, onClose, onSubmit, template, isLoadin
       enabled: open,
     }
   );
-  
+
   const [defaultInstanceId, setDefaultInstanceId] = useState('');
 
   useEffect(() => {
@@ -186,7 +186,7 @@ export const TemplateFormDialog = ({ open, onClose, onSubmit, template, isLoadin
   const handleNext = async () => {
     const fieldsToValidate = steps[activeStep].fields;
     const isValid = await trigger(fieldsToValidate);
-    
+
     if (isValid) {
       setActiveStep((prevActiveStep) => prevActiveStep + 1);
     } else {
@@ -198,7 +198,7 @@ export const TemplateFormDialog = ({ open, onClose, onSubmit, template, isLoadin
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
-  const handleFormSubmitWithValidation = (formData) => {    
+  const handleFormSubmitWithValidation = (formData) => {
     onSubmit(formData);
   };
 
@@ -211,26 +211,26 @@ export const TemplateFormDialog = ({ open, onClose, onSubmit, template, isLoadin
 
   return (
     <StyledDialog open={open} onClose={onClose} maxWidth="lg" fullWidth component="form" onSubmit={handleSubmit(handleFormSubmitWithValidation)}>
-      <DialogTitle sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between', 
-        color: 'text.primary', 
-        borderBottom: '1px solid', 
-        borderColor: 'divider' 
+      <DialogTitle sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        color: 'text.primary',
+        borderBottom: '1px solid',
+        borderColor: 'divider'
       }}>
         {isEditMode ? t('templatesPage.formDialog.editTitle') : t('templatesPage.formDialog.newTitle')}
         <IconButton aria-label="close" onClick={onClose} sx={{ color: 'text.secondary' }}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      
+
       <DialogContent dividers sx={{ bgcolor: 'background.default' }}>
         <Grid container spacing={3} sx={{ pt: 2 }}>
-          
+
           <Grid item xs={12} md={7}>
             <Stepper activeStep={activeStep} orientation="vertical">
-              
+
               <Step key="panel1">
                 <StepLabel>
                   <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
@@ -339,9 +339,9 @@ export const TemplateFormDialog = ({ open, onClose, onSubmit, template, isLoadin
                             <Select {...field} label={t('templatesPage.formDialog.headerLabel')}>
                               <MenuItem value="NONE">{t('templatesPage.formDialog.headerNone')}</MenuItem>
                               <MenuItem value="TEXT">{t('templatesPage.formDialog.headerText')}</MenuItem>
-                              
+
                               <MenuItem value="IMAGE">{t('templatesPage.formDialog.headerImage', 'Imagem')}</MenuItem>
-                              <MenuItem value="VIDEO">{t('templatesPage.formDialog.headerVideo', 'V?deo')}</MenuItem>
+                              <MenuItem value="VIDEO">{t('templatesPage.formDialog.headerVideo', 'Video')}</MenuItem>
                               <MenuItem value="DOCUMENT">{t('templatesPage.formDialog.headerDocument', 'Documento')}</MenuItem>
 
                             </Select>
@@ -444,7 +444,7 @@ export const TemplateFormDialog = ({ open, onClose, onSubmit, template, isLoadin
                           </Stack>
                         </Paper>
                       )}
-                      
+
                       {buttonType === 'URL' && (
                         <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: 'action.hover' }}>
                           <Stack spacing={2}>
@@ -462,7 +462,7 @@ export const TemplateFormDialog = ({ open, onClose, onSubmit, template, isLoadin
                               control={control}
                               rules={{ required: t('templatesPage.formDialog.buttonUrlRequired') }}
                               render={({ field }) => (
-                                <TextField {...field} label={t('templatesPage.formDialog.buttonUrlLabel')} fullWidth error={!!errors.urlButtonUrl} 
+                                <TextField {...field} label={t('templatesPage.formDialog.buttonUrlLabel')} fullWidth error={!!errors.urlButtonUrl}
                                   InputProps={{
                                     startAdornment: <InputAdornment position="start">https://</InputAdornment>,
                                   }}
@@ -478,7 +478,7 @@ export const TemplateFormDialog = ({ open, onClose, onSubmit, template, isLoadin
               </Step>
             </Stepper>
           </Grid>
-          
+
           <Grid item xs={12} md={5}>
             <Box sx={{ position: 'sticky', top: 16 }}>
               <Paper sx={{ ...glassStyle, p: 2 }}>
@@ -491,19 +491,19 @@ export const TemplateFormDialog = ({ open, onClose, onSubmit, template, isLoadin
           </Grid>
         </Grid>
       </DialogContent>
-      
+
       <DialogActions sx={{ p: '16px 24px', bgcolor: 'background.paper', borderTop: '1px solid', borderColor: 'divider' }}>
         <Button onClick={onClose} color="inherit" disabled={isLoading}>
           {t('common.cancel')}
         </Button>
         <Box sx={{ flexGrow: 1 }} />
-        
+
         {activeStep > 0 && (
           <Button onClick={handleBack} sx={{ mr: 1 }} disabled={isLoading}>
             {t('common.back')}
           </Button>
         )}
-        
+
         {activeStep < steps.length - 1 ? (
           <Button onClick={handleNext} variant="contained" disabled={isLoading}>
             {t('common.next')}
