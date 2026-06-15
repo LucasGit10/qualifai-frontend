@@ -1,385 +1,176 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import {
+    Box,
     Container,
     Typography,
-    Accordion,
-    AccordionSummary,
-    AccordionDetails,
     List,
     ListItem,
     ListItemText,
-    Box,
     Button,
-    IconButton,
-    useTheme,
-    useMediaQuery
+    Paper
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined';
+import { useNavigate } from 'react-router-dom';
 
-const policySections = [
-    {
-        id: 'panel1',
-        title: '1. Introdução',
-        content: (
-            <>
-                <Typography paragraph sx={{ color: '#333', lineHeight: 1.8 }}>
-                    O <strong>Grupo loTeam Software e Aplicativos</strong> está comprometido em proteger a privacidade e os dados pessoais de seus Clientes, Usuários Finais e visitantes de seus websites. Esta Política visa esclarecer, de forma transparente, como tratamos os dados pessoais, em conformidade com a legislação vigente.
-                </Typography>
-                <Typography paragraph sx={{ color: '#333', lineHeight: 1.8 }}>
-                    Esta Política se aplica a todas as empresas que integram o Grupo loTeam. Caso tenha dúvidas após a leitura, entre em contato conosco pelo e-mail: <span style={{ color: '#3a1c71', fontWeight: 600 }}>contato@qualifai.tech</span>.
-                </Typography>
-            </>
-        )
-    },
-    {
-        id: 'panel2',
-        title: '2. Definições',
-        content: (
-            <>
-                <Typography paragraph sx={{ color: '#333' }}>Para facilitar a compreensão, seguem algumas definições importantes:</Typography>
-                <List dense>
-                    {[
-                        { term: "Autoridade de Proteção de Dados", def: "Órgão regulador responsável por fiscalizar a legislação aplicável." },
-                        { term: "Bases Legais", def: "Fundamentos legais que legitimam o tratamento de dados pessoais." },
-                        { term: "Cliente", def: "Pessoa jurídica que utiliza os serviços do Grupo loTeam." },
-                        { term: "Controlador", def: "Aquele que determina as finalidades e meios de tratamento dos dados pessoais." },
-                        { term: "Operador", def: "Aquele que realiza o tratamento de dados em nome do controlador." },
-                        { term: "Dados Pessoais", def: "Qualquer informação que identifique ou possa identificar uma pessoa natural." },
-                        { term: "DPO (Encarregado)", def: "Profissional responsável pela comunicação entre o controlador, titulares e autoridade." },
-                        { term: "Cookies", def: "Tecnologias de rastreamento usadas para coletar dados de navegação." },
-                        { term: "Titular", def: "A pessoa a quem os dados pessoais se referem." },
-                        { term: "Tratamento", def: "Qualquer operação realizada com dados pessoais." },
-                        { term: "Usuário Final", def: "Pessoa física que utiliza os serviços fornecidos ao Cliente." }
-                    ].map((item, index) => (
-                        <ListItem key={index} sx={{ py: 0.5 }}>
-                            <ListItemText 
-                                primary={
-                                    <Typography variant="body2" sx={{ color: '#333' }}>
-                                        <strong style={{ color: '#3a1c71' }}>{item.term}:</strong> {item.def}
-                                    </Typography>
-                                } 
-                            />
-                        </ListItem>
-                    ))}
-                </List>
-            </>
-        )
-    },
-    {
-        id: 'panel3',
-        title: '3. Quais dados coletamos e finalidades',
-        content: (
-            <>
-                <Typography variant="h6" sx={{ color: '#3a1c71', fontSize: '1rem', fontWeight: 700, mb: 2 }}>
-                    3.1 Coleta de Dados Pessoais
-                </Typography>
-                <List dense>
-                    {[
-                        "Acesso ao site: IP, data/hora, navegador, geolocalização.",
-                        "Cadastro: nome, e-mail, cargo, usuário, senha, empresa.",
-                        "Contratação: nome, CPF, endereço, cargo, empresa, telefone, e-mail, dados bancários.",
-                        "Suporte: nome, e-mail, telefone, empresa, gravação de voz.",
-                        "Marketing: nome, e-mail, telefone, empresa.",
-                        "Experiência digital: dados de navegação e comportamento.",
-                        "Pesquisas: nome, empresa, cargo, respostas.",
-                        "Fornecedores: dados cadastrais e bancários.",
-                        "Recrutamento: currículos e contatos.",
-                        "Campanhas: nome, e-mail, telefone."
-                    ].map((text, idx) => (
-                        <ListItem key={idx} sx={{ py: 0.5 }}>
-                            <Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#3a1c71', mr: 2, display: 'inline-block' }} />
-                            <ListItemText primary={<Typography variant="body2" sx={{ color: '#333' }}>{text}</Typography>} />
-                        </ListItem>
-                    ))}
-                </List>
-                
-                <Box sx={{ mt: 3, p: 2, bgcolor: '#f8f9fa', borderRadius: 2, borderLeft: '4px solid #3a1c71' }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#3a1c71' }}>3.2 Dados do Usuário Final</Typography>
-                    <Typography variant="body2" sx={{ mt: 1, color: '#444' }}>
-                        Atuamos como Operadores, tratando dados conforme instruções dos Clientes (Controladores). Recomendamos que Usuários Finais consultem a política do Cliente diretamente.
-                    </Typography>
-                </Box>
-            </>
-        )
-    },
-    {
-        id: 'panel4',
-        title: '4. Cookies e Tecnologias',
-        content: (
-            <>
-                <Typography paragraph sx={{ color: '#333' }}>Tipos de cookies utilizados:</Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                    {['Necessários', 'Analíticos', 'Funcionalidade', 'Marketing'].map((tag) => (
-                        <Box key={tag} sx={{ px: 2, py: 0.5, bgcolor: 'rgba(58, 28, 113, 0.05)', color: '#3a1c71', borderRadius: '16px', fontSize: '0.85rem', fontWeight: 500 }}>
-                            {tag}
-                        </Box>
-                    ))}
-                </Box>
-                <Typography paragraph sx={{ color: '#333', fontSize: '0.9rem' }}>
-                    Gerencie suas preferências na opção "Declaração de Cookies" no rodapé. Web Beacons podem ser desativados bloqueando imagens no navegador.
-                </Typography>
-            </>
-        )
-    },
-    {
-        id: 'panel5',
-        title: '5. Compartilhamento de Dados',
-        content: (
-            <Typography sx={{ color: '#333', lineHeight: 1.8 }}>
-                Compartilhamos com: Empresas do Grupo, prestadores de serviços, plataformas de análise, parceiros de marketing, autoridades públicas (quando legalmente exigido) e terceiros para proteção de direitos.
-            </Typography>
-        )
-    },
-    {
-        id: 'panel6',
-        title: '6. Transferência Internacional',
-        content: (
-            <Typography sx={{ color: '#333', lineHeight: 1.8 }}>
-                Dados podem ser transferidos para países como EUA, Argentina, México e Brasil, sempre com medidas de segurança adequadas. Ao usar nossos serviços, você concorda com essa transferência.
-            </Typography>
-        )
-    },
-    {
-        id: 'panel7',
-        title: '7. Comunicações de Marketing',
-        content: (
-            <Typography sx={{ color: '#333', lineHeight: 1.8 }}>
-                Enviamos promoções mediante consentimento (quando necessário). Todas as mensagens possuem opção clara de descadastramento (opt-out).
-            </Typography>
-        )
-    },
-    {
-        id: 'panel8',
-        title: '8. Segurança dos Dados',
-        content: (
-            <Typography sx={{ color: '#333', lineHeight: 1.8 }}>
-                Utilizamos medidas técnicas rigorosas contra acesso não autorizado. <strong>Sua parte:</strong> não compartilhe senhas com terceiros.
-            </Typography>
-        )
-    },
-    {
-        id: 'panel9',
-        title: '9. Período de Armazenamento',
-        content: (
-            <Typography sx={{ color: '#333', lineHeight: 1.8 }}>
-                Mantemos os dados pelo tempo necessário para as finalidades ou obrigações legais. Mesmo após pedido de exclusão, alguns dados podem ser retidos por lei.
-            </Typography>
-        )
-    },
-    {
-        id: 'panel10',
-        title: '10. Crianças e Adolescentes',
-        content: (
-            <Typography sx={{ color: '#333', lineHeight: 1.8 }}>
-                Serviços não destinados a menores. Tratamento indevido identificado resultará em exclusão imediata dos dados.
-            </Typography>
-        )
-    },
-    {
-        id: 'panel11',
-        title: '11. Seus Direitos',
-        content: (
-            <>
-                <Typography paragraph sx={{ color: '#333' }}>Você pode solicitar:</Typography>
-                <List dense sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1 }}>
-                    {[
-                        "Confirmação de tratamento", "Acesso aos dados", "Correção de dados",
-                        "Anonimização/Bloqueio", "Portabilidade", "Informação de compartilhamento",
-                        "Revogação de consentimento", "Oposição ao tratamento", "Revisão de decisão automatizada"
-                    ].map((right, idx) => (
-                        <ListItem key={idx} disablePadding>
-                             <Box component="span" sx={{ color: '#3a1c71', mr: 1 }}>✓</Box>
-                             <ListItemText primary={<Typography variant="body2" sx={{ color: '#333' }}>{right}</Typography>} />
-                        </ListItem>
-                    ))}
-                </List>
-            </>
-        )
-    },
-    {
-        id: 'panel12',
-        title: '12. Encarregado (DPO)',
-        content: (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, bgcolor: '#f5f5f7', borderRadius: 2 }}>
-                <DescriptionOutlinedIcon sx={{ fontSize: 40, color: '#3a1c71' }} />
-                <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#3a1c71' }}>Matheus César Bento Arantes</Typography>
-                    <Typography variant="body2" sx={{ color: '#444' }}>OAB/MG 159.983</Typography>
-                    <Typography variant="body2" sx={{ color: '#3a1c71', fontWeight: 600, mt: 0.5 }}>contato@qualifai.tech</Typography>
-                </Box>
-            </Box>
-        )
-    },
-    {
-        id: 'panel13',
-        title: '13. Atualizações',
-        content: (
-            <Typography sx={{ color: '#333', lineHeight: 1.8 }}>
-                Política sujeita a atualizações. O uso contínuo dos serviços indica concordância com os novos termos.
-            </Typography>
-        )
-    },
-    {
-        id: 'panel14',
-        title: '14. Planos e Custos Meta',
-        content: (
-            <>
-                 <Typography paragraph sx={{ color: '#333', lineHeight: 1.8 }}>
-                    Os valores dos planos cobrem <strong>exclusivamente</strong> nosso serviço de IA e plataforma.
-                </Typography>
-                <Box sx={{ border: '1px dashed #3a1c71', borderRadius: 2, p: 2, bgcolor: 'rgba(58, 28, 113, 0.05)' }}>
-                    <Typography variant="subtitle2" sx={{ color: '#3a1c71', fontWeight: 700, mb: 1 }}>Nota Importante sobre Custos da Meta:</Typography>
-                    <Typography variant="body2" sx={{ color: '#333' }}>
-                        Custos do WhatsApp (Meta) <strong>não estão inclusos</strong>. Atualmente, a taxa é de aprox. <strong>R$ 0,34</strong> por conversa iniciada ativamente, sujeita a alteração pela Meta sem aviso prévio.
-                    </Typography>
-                </Box>
-            </>
-        )
-    }
-];
+const updatedAt = '15 de junho de 2026';
+
+const Section = ({ title, children }) => (
+    <Paper variant="outlined" sx={{ p: { xs: 2.5, md: 4 }, mb: 2.5, borderRadius: 3 }}>
+        <Typography variant="h5" component="h2" sx={{ color: '#3a1c71', fontWeight: 700, mb: 2 }}>
+            {title}
+        </Typography>
+        {children}
+    </Paper>
+);
+
+const Paragraph = ({ children }) => (
+    <Typography paragraph sx={{ color: '#333', lineHeight: 1.8 }}>{children}</Typography>
+);
+
+const Items = ({ items }) => (
+    <List dense>
+        {items.map((item) => (
+            <ListItem key={item} sx={{ py: 0.4 }}>
+                <ListItemText primary={<Typography sx={{ color: '#333', lineHeight: 1.7 }}>{item}</Typography>} />
+            </ListItem>
+        ))}
+    </List>
+);
 
 function PrivacyPolicyPage() {
-    const [expanded, setExpanded] = useState(false);
     const navigate = useNavigate();
-    const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-
-    const handleChange = (panel) => (event, isExpanded) => {
-        setExpanded(isExpanded ? panel : false);
-    };
 
     return (
-        <Box sx={{
-            minHeight: '100vh',
-            backgroundColor: '#ffffff',
-            color: '#1a1a1a',
-            pb: 8
-        }}>
-            <Box sx={{ 
-                position: 'sticky', 
-                top: 0, 
-                zIndex: 100, 
-                bgcolor: 'rgba(255,255,255,0.9)', 
-                backdropFilter: 'blur(10px)',
-                borderBottom: '1px solid #eaeaea',
-                py: { xs: 2, md: 3 }
-            }}>
-                <Container maxWidth="xl" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Button
-                        onClick={() => navigate(-1)}
-                        startIcon={<ArrowBackIcon />}
-                        sx={{ 
-                            color: '#3a1c71', 
-                            textTransform: 'none', 
-                            fontWeight: 600,
-                            '&:hover': { bgcolor: '#f5f5f5', color: '#3a1c71' }
-                        }}
-                    >
+        <Box sx={{ minHeight: '100vh', bgcolor: '#fff', pb: 8 }}>
+            <Box sx={{ position: 'sticky', top: 0, zIndex: 100, bgcolor: 'rgba(255,255,255,0.94)', borderBottom: '1px solid #eee', py: 2 }}>
+                <Container maxWidth="lg">
+                    <Button onClick={() => navigate(-1)} startIcon={<ArrowBackIcon />} sx={{ color: '#3a1c71', textTransform: 'none', fontWeight: 600 }}>
                         Voltar
                     </Button>
-                    <Box 
-                        component="img" 
-                        src="/Logoooo 1.png" 
-                        alt="QualifAI" 
-                        sx={{ 
-                            height: { xs: 50, md: 45 },
-                            objectFit: 'contain' 
-                        }} 
-                    />
-                    <Box sx={{ width: 64 }} />
                 </Container>
             </Box>
 
-            <Container maxWidth="xl" sx={{ mt: 6 }}>
-                
-                <Box sx={{ textAlign: 'center', mb: 8 }}>
-                    <Typography variant="overline" sx={{ fontWeight: 700, letterSpacing: 2, color: '#3a1c71' }}>
-                        JURÍDICO & PRIVACIDADE
+            <Container maxWidth="lg" sx={{ mt: 6 }}>
+                <Box sx={{ textAlign: 'center', mb: 6 }}>
+                    <Typography variant="overline" sx={{ color: '#3a1c71', fontWeight: 700, letterSpacing: 2 }}>
+                        JURIDICO E PRIVACIDADE
                     </Typography>
-                    <Typography 
-                        variant={isMobile ? "h4" : "h3"} 
-                        component="h1" 
-                        sx={{ 
-                            fontWeight: 800, 
-                            mt: 1, 
-                            mb: 2,
-                            background: 'linear-gradient(135deg, #1a1a1a 0%, #3a1c71 100%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                        }}
-                    >
-                        Política de Privacidade
+                    <Typography variant="h3" component="h1" sx={{ fontWeight: 800, my: 1 }}>
+                        Politica de Privacidade e Protecao de Dados
                     </Typography>
-                    <Typography variant="h6" sx={{ color: '#444', fontWeight: 400, maxWidth: 600, mx: 'auto' }}>
-                        Transparência total sobre como o <span style={{color: '#3a1c71', fontWeight: 600}}>Grupo loTeam (QualifAI)</span> protege e utiliza seus dados.
-                    </Typography>
+                    <Typography sx={{ color: '#666' }}>Ultima atualizacao: {updatedAt}</Typography>
                 </Box>
 
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {policySections.map((section) => {
-                        const isExpanded = expanded === section.id;
-                        return (
-                            <Accordion
-                                key={section.id}
-                                expanded={isExpanded}
-                                onChange={handleChange(section.id)}
-                                disableGutters
-                                elevation={0}
-                                sx={{
-                                    border: isExpanded ? '1px solid #3a1c71' : '1px solid #eaeaea',
-                                    borderRadius: '12px !important',
-                                    transition: 'all 0.3s ease',
-                                    backgroundColor: '#fff',
-                                    boxShadow: isExpanded ? '0 10px 30px -10px rgba(58, 28, 113, 0.15)' : 'none',
-                                    '&:hover': {
-                                        borderColor: isExpanded ? '#3a1c71' : '#ccc',
-                                        transform: isExpanded ? 'none' : 'translateY(-2px)'
-                                    },
-                                    '&:before': { display: 'none' }
-                                }}
-                            >
-                                <AccordionSummary
-                                    expandIcon={
-                                        <ExpandMoreIcon sx={{ 
-                                            color: isExpanded ? '#3a1c71' : '#777',
-                                            transition: 'transform 0.3s'
-                                        }} />
-                                    }
-                                    sx={{
-                                        px: 3,
-                                        py: 1,
-                                        '& .MuiAccordionSummary-content': { my: 2 }
-                                    }}
-                                >
-                                    <Typography sx={{ 
-                                        fontWeight: isExpanded ? 700 : 600, 
-                                        fontSize: '1.1rem',
-                                        color: isExpanded ? '#3a1c71' : '#333',
-                                        transition: 'color 0.2s'
-                                    }}>
-                                        {section.title}
-                                    </Typography>
-                                </AccordionSummary>
-                                <AccordionDetails sx={{ px: 3, pb: 4, pt: 0 }}>
-                                    <Box sx={{ height: '1px', width: '100%', bgcolor: '#f0f0f0', mb: 3 }} />
-                                    {section.content}
-                                </AccordionDetails>
-                            </Accordion>
-                        );
-                    })}
-                </Box>
+                <Section title="1. Quem somos e a quem esta Politica se aplica">
+                    <Paragraph>
+                        A Qualifai e uma plataforma da IoTeam Softwares e Aplicativos LTDA, CNPJ 53.564.165/0001-52. Esta Politica explica como tratamos dados pessoais de clientes, usuarios da plataforma, visitantes, fornecedores e pessoas contatadas por empresas que utilizam a Qualifai.
+                    </Paragraph>
+                    <Paragraph>
+                        Quando tratamos dados para administrar contas, contratos, pagamentos, seguranca, suporte e nosso site, a Qualifai atua como controladora. Quando uma empresa contratante insere dados de seus clientes, devedores, leads ou contatos e utiliza a plataforma para se comunicar com eles, essa empresa normalmente atua como controladora e a Qualifai atua como operadora, seguindo suas instrucoes documentadas.
+                    </Paragraph>
+                </Section>
 
-                <Box sx={{ mt: 10, textAlign: 'center', borderTop: '1px solid #eaeaea', pt: 4 }}>
-                    <Typography variant="body2" sx={{ color: '#777' }}>
-                        © {new Date().getFullYear()} QualifAI - Grupo loTeam. Todos os direitos reservados.
-                    </Typography>
-                    <Typography variant="caption" sx={{ display: 'block', mt: 1, color: '#aaa' }}>
-                        Última atualização: Novembro de 2025
-                    </Typography>
-                </Box>
+                <Section title="2. Responsabilidade da empresa contratante">
+                    <Paragraph>
+                        A empresa contratante declara e se compromete a inserir e utilizar somente dados obtidos licitamente e necessarios para finalidades legitimas. Ela deve definir e documentar a base legal aplicavel, informar os titulares quando exigido, respeitar seus direitos e manter evidencias que demonstrem a regularidade do tratamento.
+                    </Paragraph>
+                    <Paragraph>
+                        A existencia de contrato entre a empresa contratante e seu cliente pode ser uma evidencia relevante e fundamentar determinados tratamentos, mas nao autoriza automaticamente qualquer uso dos dados. A licitude depende da finalidade, da base legal adequada e do cumprimento da LGPD, das regras de comunicacoes comerciais e das politicas dos canais utilizados.
+                    </Paragraph>
+                    <Paragraph>
+                        A Qualifai nao compra bases clandestinas, nao autoriza spam, perseguicao, discriminacao, fraude ou uso de dados para finalidade incompativel. Podemos suspender o tratamento ou solicitar comprovacoes quando identificarmos risco, denuncia ou indicio de irregularidade.
+                    </Paragraph>
+                </Section>
+
+                <Section title="3. Dados pessoais tratados">
+                    <Items items={[
+                        'Dados de cadastro e contrato: nome, empresa, cargo, CPF ou CNPJ, e-mail, telefone, endereco, credenciais e informacoes de cobranca.',
+                        'Dados inseridos pelas empresas contratantes: nome, CPF ou CNPJ, telefones, e-mails, empresa, contatos, dividas, parcelas, vencimentos, garantidores, observacoes, status de cobranca e historico de relacionamento.',
+                        'Dados de conversas: mensagens, respostas, anexos, audios, documentos, identificadores, datas, status de entrega e historico de atendimento em canais conectados.',
+                        'Dados de integracoes: identificadores, tokens de autorizacao, contas conectadas e informacoes necessarias para operar WhatsApp, Instagram, CRM, calendario, e-mail e demais servicos habilitados pelo cliente.',
+                        'Dados tecnicos e de seguranca: IP, dispositivo, navegador, logs, eventos de acesso, cookies, erros e registros de auditoria.',
+                        'Dados gerados pela plataforma: classificacoes, resumos, sugestoes, proximas acoes, relatorios, metricas e inferencias produzidas por automacao ou inteligencia artificial.'
+                    ]} />
+                    <Paragraph>
+                        A plataforma nao deve ser utilizada para inserir dados pessoais sensiveis, dados de criancas e adolescentes ou informacoes excessivas, salvo quando houver necessidade comprovada, base legal adequada e autorizacao contratual especifica.
+                    </Paragraph>
+                </Section>
+
+                <Section title="4. Finalidades e bases legais">
+                    <Items items={[
+                        'Criar contas, autenticar usuarios, executar contratos, faturar e prestar suporte.',
+                        'Importar, organizar e atualizar cadastros, leads, dividas, parcelas e historicos informados pela empresa contratante.',
+                        'Enviar, receber e armazenar comunicacoes nos canais habilitados pela empresa contratante.',
+                        'Automatizar atendimento, cobranca, qualificacao, agendamento, relatorios e proximas acoes.',
+                        'Gerar analises, resumos e sugestoes com inteligencia artificial, sujeitos a revisao humana quando apropriado.',
+                        'Prevenir fraude, proteger contas, manter logs, investigar incidentes e cumprir obrigacoes legais.',
+                        'Melhorar a plataforma com dados agregados ou anonimizados sempre que possivel.'
+                    ]} />
+                    <Paragraph>
+                        Conforme o contexto, o tratamento pode se apoiar na execucao de contrato, cumprimento de obrigacao legal ou regulatoria, exercicio regular de direitos, legitimo interesse, protecao do credito ou consentimento. A empresa contratante e responsavel por determinar a base legal aplicavel aos dados que controla e pelas comunicacoes que solicita.
+                    </Paragraph>
+                </Section>
+
+                <Section title="5. WhatsApp, Instagram, Meta e outros canais">
+                    <Paragraph>
+                        Quando o cliente conecta uma conta do WhatsApp Business, Instagram ou outro canal, a Qualifai trata os dados necessarios para autenticar a integracao, consultar a conta conectada, receber webhooks, enviar e receber mensagens, midias e modelos aprovados, registrar status e apresentar o historico na plataforma.
+                    </Paragraph>
+                    <Paragraph>
+                        O uso desses canais tambem esta sujeito aos termos e politicas de seus fornecedores, inclusive Meta. A empresa contratante deve possuir autorizacao para usar a conta conectada, respeitar as regras de opt-in e opt-out, janelas de atendimento, modelos aprovados e demais politicas aplicaveis.
+                    </Paragraph>
+                </Section>
+
+                <Section title="6. Inteligencia artificial e decisoes automatizadas">
+                    <Paragraph>
+                        A Qualifai pode utilizar inteligencia artificial para classificar contatos, resumir conversas, sugerir respostas e proximas acoes, gerar conteudo e apoiar automacoes. Entradas e resultados podem ser enviados a provedores tecnologicos contratados somente na medida necessaria para executar a funcionalidade habilitada.
+                    </Paragraph>
+                    <Paragraph>
+                        Resultados automatizados podem conter erros e devem ser revisados pela empresa contratante antes de decisoes com efeitos relevantes. O titular pode solicitar informacoes e revisao de decisoes tomadas unicamente com base em tratamento automatizado, nos termos da legislacao aplicavel.
+                    </Paragraph>
+                </Section>
+
+                <Section title="7. Compartilhamento, subprocessadores e transferencia internacional">
+                    <Paragraph>
+                        Podemos compartilhar dados com fornecedores de infraestrutura em nuvem, banco de dados, seguranca, comunicacao, Meta e canais conectados, inteligencia artificial, e-mail, calendario, pagamentos, suporte e analise. O compartilhamento e limitado ao necessario para prestar o servico, cumprir a lei ou proteger direitos.
+                    </Paragraph>
+                    <Paragraph>
+                        Alguns fornecedores podem tratar dados fora do Brasil. Nessas situacoes, adotamos mecanismos contratuais e medidas compativeis com a LGPD e exigimos protecao adequada dos dados. Nao vendemos dados pessoais controlados pelos clientes.
+                    </Paragraph>
+                </Section>
+
+                <Section title="8. Retencao, exclusao e seguranca">
+                    <Paragraph>
+                        Conservamos dados pelo tempo necessario para prestar os servicos, cumprir obrigacoes legais, exercer direitos e atender aos prazos definidos no contrato com a empresa contratante. Apos o encerramento, os dados podem ser excluidos ou anonimizados, ressalvadas copias de seguranca e retencoes legalmente permitidas.
+                    </Paragraph>
+                    <Paragraph>
+                        Adotamos medidas tecnicas e administrativas razoaveis, incluindo controle de acesso, autenticacao, registros de auditoria, protecao de credenciais, backups e procedimentos de resposta a incidentes. Nenhum sistema e absolutamente seguro. Incidentes relevantes serao tratados e comunicados conforme a legislacao.
+                    </Paragraph>
+                </Section>
+
+                <Section title="9. Direitos dos titulares">
+                    <Paragraph>
+                        Titulares podem solicitar confirmacao de tratamento, acesso, correcao, anonimização, bloqueio, eliminacao, portabilidade, informacoes sobre compartilhamento, oposicao, revogacao de consentimento e revisao de decisoes automatizadas, quando aplicavel.
+                    </Paragraph>
+                    <Paragraph>
+                        Para dados inseridos por uma empresa contratante, a solicitacao deve preferencialmente ser dirigida a essa empresa, que e a controladora. A Qualifai prestara assistencia para atendimento das solicitacoes conforme o contrato e a LGPD.
+                    </Paragraph>
+                </Section>
+
+                <Section title="10. Cookies, contato e atualizacoes">
+                    <Paragraph>
+                        Utilizamos cookies essenciais para login, seguranca e funcionamento. Cookies analiticos, funcionais ou de marketing, quando utilizados, devem respeitar as preferencias apresentadas ao visitante.
+                    </Paragraph>
+                    <Paragraph>
+                        Duvidas, solicitacoes de privacidade ou comunicacoes sobre dados podem ser enviadas para contato@qualifai.tech. O encarregado indicado pela Qualifai e Matheus Cesar Bento Arantes, OAB/MG 159.983.
+                    </Paragraph>
+                    <Paragraph>
+                        Esta Politica pode ser atualizada para refletir mudancas legais, tecnicas ou operacionais. Alteracoes relevantes serao comunicadas pelos canais apropriados.
+                    </Paragraph>
+                </Section>
+
+                <Typography variant="body2" sx={{ textAlign: 'center', color: '#777', mt: 5 }}>
+                    © {new Date().getFullYear()} Qualifai - IoTeam Softwares e Aplicativos LTDA.
+                </Typography>
             </Container>
         </Box>
     );
