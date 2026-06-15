@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import {
   Box, Typography, Button, Paper, Grid, Avatar, CircularProgress,
-  Divider, Alert, useTheme, IconButton, Tooltip, Grow, Slide
+  Divider, Alert, useTheme, IconButton, Tooltip, Grow, Slide, TextField
 } from '@mui/material';
 import { keyframes, alpha } from '@mui/system';
 import { Add as AddIcon, WhatsApp as WhatsAppIcon, DeleteForever as DeleteIcon, WarningAmber as WarningIcon } from '@mui/icons-material';
@@ -122,6 +122,7 @@ export default function WhatsAppConnection() {
   const queryClient = useQueryClient();
   const theme = useTheme();
   const isSdkReady = useFacebookSdk();
+  const [registrationPin, setRegistrationPin] = useState('');
 
   const { data: instances, isLoading: isLoadingInstances } = useQuery('whatsapp-instances', () => api.get('/whatsapp').then((res) => res.data));
   const completeOnboardingMutation = useMutation((data) => api.post('/whatsapp/complete-onboarding', data), {
@@ -138,10 +139,18 @@ export default function WhatsAppConnection() {
       toast.warn('O SDK da Meta ainda está carregando, por favor aguarde.');
       return;
     }
+    if (!/^\d{6}$/.test(registrationPin)) {
+      toast.warn('Informe o PIN de 6 digitos usado para registrar o numero na Meta.');
+      return;
+    }
     window.FB.login(
       (response) => {
         if (response.authResponse?.code || response.authResponse?.accessToken) {
-          completeOnboardingMutation.mutate({ code: response.authResponse.code, accessToken: response.authResponse.accessToken });
+          completeOnboardingMutation.mutate({
+            code: response.authResponse.code,
+            accessToken: response.authResponse.accessToken,
+            registrationPin
+          });
         } else {
           toast.info('O processo de conexão foi cancelado.');
         }
@@ -205,6 +214,17 @@ export default function WhatsAppConnection() {
           </Typography>
 
           {/* CORREÇÃO: Alert com cores do tema */}
+          <TextField
+            label="PIN de registro da Meta"
+            type="password"
+            value={registrationPin}
+            onChange={(event) => setRegistrationPin(event.target.value.replace(/\D/g, '').slice(0, 6))}
+            inputProps={{ inputMode: 'numeric', maxLength: 6 }}
+            helperText="Informe o PIN de 6 digitos configurado para registrar o numero na Cloud API."
+            fullWidth
+            sx={{ mb: 3, maxWidth: 420 }}
+          />
+
           <Paper 
             variant="outlined" 
             sx={{
