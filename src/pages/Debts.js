@@ -327,6 +327,9 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionStep, setExtractionStep] = useState('');
   const [extractionProgress, setExtractionProgress] = useState(0);
+  const [previewData, setPreviewData] = useState(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [isImportingConfirmed, setIsImportingConfirmed] = useState(false);
 
   // Escutar progresso via Socket
   React.useEffect(() => {
@@ -335,7 +338,10 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
       socket.emit('join-room', '000000000000000000000001');
       
       const handleProgress = (data) => {
-        if (data.status === 'extraindo') {
+        if (data.status === 'analisando_colunas') {
+          setExtractionProgress(data.percent || 8);
+          setExtractionStep(data.message || 'IA analisando as colunas da planilha...');
+        } else if (data.status === 'extraindo') {
           setExtractionProgress(data.percent);
           setExtractionStep(`Extraindo devedores: ${data.current} de ${data.total} (${data.percent}%)`);
         } else if (data.status === 'finalizado') {
@@ -351,91 +357,130 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
     }
   }, [socket, isExtracting]);
 
+  const attachImportDoneListener = () => {
+    if (socket) {
+      const cleanup = () => socket.off('spreadsheet-done', handler);
+      const timeoutId = setTimeout(() => {
+        cleanup();
+        toast.warning('Import: sem confirmacao em 10 min. Verifique os dados.', { autoClose: 8000 });
+        queryClient.invalidateQueries(['debtors-summary']);
+        queryClient.invalidateQueries(['debts-by-month']);
+        queryClient.invalidateQueries(['carteira-totals']);
+      }, 10 * 60 * 1000);
+
+      const handler = (result) => {
+        clearTimeout(timeoutId);
+        cleanup();
+        if (result.success === false) {
+          toast.error('Erro na importacao: ' + (result.error || 'Falha desconhecida'));
+        } else {
+          const fmtCurrency = (v) => v != null ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-';
+          const somaInfo = result.somaCarteira != null
+            ? ' | Carteira: ' + fmtCurrency(result.somaCarteira) + ' (total c/ juros) | Principal: ' + fmtCurrency(result.somaPrincipal)
+            : '';
+          const erroInfo = (result.errors || 0) > 0 ? ' | Erros: ' + result.errors : '';
+          toast.success(
+            'Import OK! Novas: ' + (result.created || 0) + ' | Atualizadas: ' + (result.updated || 0) + ' | Sairam: ' + (result.exitedDebtors || 0) + erroInfo + somaInfo,
+            { autoClose: 15000 }
+          );
+        }
+        if (onImportSuccess) onImportSuccess();
+        queryClient.invalidateQueries(['debtors-summary']);
+        queryClient.invalidateQueries(['debts-by-month']);
+        queryClient.invalidateQueries(['carteira-totals']);
+      };
+
+      socket.on('spreadsheet-done', handler);
+      return;
+    }
+
+    setTimeout(() => {
+      if (onImportSuccess) onImportSuccess();
+      queryClient.invalidateQueries(['debtors-summary']);
+      queryClient.invalidateQueries(['debts-by-month']);
+      queryClient.invalidateQueries(['carteira-totals']);
+    }, 8000);
+  };
+
   const handleImport = async () => {
     if (!file) return;
     setIsExtracting(true);
     setExtractionProgress(5);
-    setExtractionStep('Enviando arquivo...');
+    setExtractionStep('Enviando arquivo para analise...');
 
     try {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Envia o arquivo — backend responde 202 IMEDIATAMENTE
-      await api.post('/spreadsheets/import/generic', formData, {
+      const response = await api.post('/spreadsheets/import/preview', formData, {
         onUploadProgress: (progressEvent) => {
           const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setExtractionProgress(Math.min(50, pct / 2));
-          setExtractionStep('Enviando: ' + pct + '%');
+          setExtractionProgress(Math.min(70, pct / 2));
+          setExtractionStep('Enviando para validacao: ' + pct + '%');
         }
       });
 
-      // ── Fecha o modal IMEDIATAMENTE ──────────────────────────────────
-      // Não espera o socket — o backend processa em background
-      toast.info('⏳ Importação iniciada! Processando em background...', { autoClose: 4000 });
-      onClose();
-
-      // ── Escuta o resultado em background (fora do modal) ─────────────
-      if (socket) {
-        const cleanup = () => socket.off('spreadsheet-done', handler);
-        const timeoutId = setTimeout(() => {
-          cleanup();
-          toast.warning('⚠️ Import: sem confirmação em 10 min. Verifique os dados.', { autoClose: 8000 });
-          queryClient.invalidateQueries(['debtors-summary']);
-          queryClient.invalidateQueries(['debts-by-month']);
-          queryClient.invalidateQueries(['carteira-totals']);
-        }, 10 * 60 * 1000);
-
-        const handler = (result) => {
-          clearTimeout(timeoutId);
-          cleanup();
-          if (result.success === false) {
-            toast.error('❌ Erro na importação: ' + (result.error || 'Falha desconhecida'));
-          } else {
-            const fmtCurrency = (v) => v != null ? v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-';
-            const somaInfo = result.somaCarteira != null
-              ? ' | Carteira: ' + fmtCurrency(result.somaCarteira) + ' (total c/ juros) | Principal: ' + fmtCurrency(result.somaPrincipal)
-              : '';
-            const erroInfo = (result.errors || 0) > 0 ? ' | ⚠️ Erros: ' + result.errors : '';
-            toast.success(
-              '✅ Import OK! Novas: ' + (result.created || 0) + ' | Atualizadas: ' + (result.updated || 0) + ' | Saíram: ' + (result.exitedDebtors || 0) + erroInfo + somaInfo,
-              { autoClose: 15000 }
-            );
-          }
-          if (onImportSuccess) onImportSuccess();
-          queryClient.invalidateQueries(['debtors-summary']);
-          queryClient.invalidateQueries(['debts-by-month']);
-          queryClient.invalidateQueries(['carteira-totals']);
-        };
-
-        socket.on('spreadsheet-done', handler);
-      } else {
-        // Sem socket: atualiza os dados após 8 segundos (tempo para processar)
-        setTimeout(() => {
-          if (onImportSuccess) onImportSuccess();
-          queryClient.invalidateQueries(['debtors-summary']);
-          queryClient.invalidateQueries(['debts-by-month']);
-          queryClient.invalidateQueries(['carteira-totals']);
-        }, 8000);
-      }
-
+      setPreviewData(response.data);
+      setReviewOpen(true);
+      setExtractionProgress(100);
+      setExtractionStep('Validacao concluida. Revise antes de importar.');
     } catch (err) {
-      const errMsg = err.response?.data?.message || err.message || 'Falha ao enviar o arquivo.';
+      const errMsg = err.response?.data?.message || err.message || 'Falha ao validar o arquivo.';
       toast.error(errMsg);
     } finally {
       setIsExtracting(false);
       setExtractionProgress(0);
+    }
+  };
+
+  const startConfirmedImport = async (applyCorrections) => {
+    if (!file) return;
+    setIsImportingConfirmed(true);
+    setIsExtracting(true);
+    setExtractionProgress(5);
+    setExtractionStep(applyCorrections ? 'Aplicando correcoes e importando...' : 'Importando sem aplicar correcoes...');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('applyValueCorrections', applyCorrections ? 'true' : 'false');
+
+      await api.post('/spreadsheets/import/generic', formData, {
+        onUploadProgress: (progressEvent) => {
+          const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setExtractionProgress(Math.min(50, pct / 2));
+          setExtractionStep('Enviando importacao: ' + pct + '%');
+        }
+      });
+
+      toast.info(applyCorrections
+        ? 'Importacao iniciada com correcoes de valores aprovadas.'
+        : 'Importacao iniciada sem aplicar correcoes de valores.', { autoClose: 5000 });
+      setReviewOpen(false);
+      setPreviewData(null);
       setFile(null);
+      onClose();
+      attachImportDoneListener();
+    } catch (err) {
+      const errMsg = err.response?.data?.message || err.message || 'Falha ao importar o arquivo.';
+      toast.error(errMsg);
+    } finally {
+      setIsImportingConfirmed(false);
+      setIsExtracting(false);
+      setExtractionProgress(0);
     }
   };
 
   const handleClose = () => {
     if (isExtracting) return; // bloqueia fechamento durante extração
     setFile(null);
+    setPreviewData(null);
+    setReviewOpen(false);
     onClose();
   };
 
   return (
+    <>
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth PaperProps={{ sx: getDialogPaperSx(theme, theme.palette.primary.main) }}>
       <DialogTitle sx={{ pb: 1, textAlign: isExtracting ? 'center' : 'left' }}>
         <Typography variant="h6" fontWeight={800}>
@@ -475,6 +520,7 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
             <Box sx={{ mb: 3, p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.info.main, 0.05), border: `1px solid ${alpha(theme.palette.info.main,0.2)}` }}>
               <Typography variant="caption" color="info.main" fontWeight={700}>Formato Ãšnico de Importação</Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                A IA tenta identificar as colunas automaticamente, mesmo quando os nomes mudam.
                 Campos suportados: Cliente, CPF/CNPJ, Contrato, Vencimento, Principal, Juros, Multa, Total, Empreendimento.
                 Lançamentos vencidos e com vencimento futuro (ex: 2026/2027) serão extraídos e agrupados automaticamente.
               </Typography>
@@ -519,11 +565,146 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
               borderRadius: 2, fontWeight: 700, px: 4,
             }}
           >
-            Extrair Dados e Importar
+            Analisar Colunas e Importar
           </Button>
         </DialogActions>
       )}
     </Dialog>
+
+    <Dialog
+      open={reviewOpen}
+      onClose={() => !isImportingConfirmed && setReviewOpen(false)}
+      maxWidth="lg"
+      fullWidth
+      PaperProps={{ sx: getDialogPaperSx(theme, theme.palette.warning.main) }}
+    >
+      <DialogTitle>
+        <Typography variant="h6" fontWeight={800}>Revisar extração da planilha</Typography>
+        <Typography variant="caption" color="text.secondary">
+          Confira os dados extraídos e aprove as correções de valores antes de gravar no sistema.
+        </Typography>
+      </DialogTitle>
+      <DialogContent dividers>
+        {previewData && (
+          <Stack spacing={3}>
+            <Grid container spacing={2}>
+              <Grid item xs={6} md={3}>
+                <Paper sx={{ p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.08) }}>
+                  <Typography variant="caption" color="text.secondary">Linhas extraídas</Typography>
+                  <Typography variant="h6" fontWeight={800}>{fmtNum(previewData.totalRows)}</Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Paper sx={{ p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.success.main, 0.08) }}>
+                  <Typography variant="caption" color="text.secondary">Linhas válidas</Typography>
+                  <Typography variant="h6" fontWeight={800}>{fmtNum(previewData.validRows)}</Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Paper sx={{ p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.error.main, 0.08) }}>
+                  <Typography variant="caption" color="text.secondary">Linhas com alerta</Typography>
+                  <Typography variant="h6" fontWeight={800}>{fmtNum(previewData.invalidRows)}</Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={6} md={3}>
+                <Paper sx={{ p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.warning.main, 0.08) }}>
+                  <Typography variant="caption" color="text.secondary">Correções sugeridas</Typography>
+                  <Typography variant="h6" fontWeight={800}>{fmtNum(previewData.corrections?.length || 0)}</Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            {(previewData.corrections || []).length > 0 ? (
+              <Box>
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  Encontramos totais que não batem com Principal + Juros + Multa. Você pode aplicar essas correções antes da importação.
+                </Alert>
+                <TableContainer component={Paper} sx={{ maxHeight: 260 }}>
+                  <Table size="small" stickyHeader>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Linha</TableCell>
+                        <TableCell>Cliente</TableCell>
+                        <TableCell align="right">Valor atual</TableCell>
+                        <TableCell align="right">Valor sugerido</TableCell>
+                        <TableCell align="right">Diferença</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {previewData.corrections.slice(0, 50).map((correction) => (
+                        <TableRow key={correction.id}>
+                          <TableCell>{correction.line}</TableCell>
+                          <TableCell>{correction.cliente}</TableCell>
+                          <TableCell align="right">{fmt(correction.currentValue)}</TableCell>
+                          <TableCell align="right">{fmt(correction.suggestedValue)}</TableCell>
+                          <TableCell align="right">{fmt(correction.difference)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {previewData.corrections.length > 50 && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                    Mostrando 50 de {fmtNum(previewData.corrections.length)} correções sugeridas.
+                  </Typography>
+                )}
+              </Box>
+            ) : (
+              <Alert severity="success">Nenhuma correção de valor foi sugerida. A extração parece consistente.</Alert>
+            )}
+
+            <Box>
+              <Typography variant="subtitle2" fontWeight={800} sx={{ mb: 1 }}>
+                Amostra extraída
+              </Typography>
+              <TableContainer component={Paper} sx={{ maxHeight: 260 }}>
+                <Table size="small" stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Cliente</TableCell>
+                      <TableCell>Vencimento</TableCell>
+                      <TableCell align="right">Principal</TableCell>
+                      <TableCell align="right">Juros</TableCell>
+                      <TableCell align="right">Multa</TableCell>
+                      <TableCell align="right">Total</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {(previewData.previewRows || []).slice(0, 15).map((row) => (
+                      <TableRow key={row.rowIndex}>
+                        <TableCell>{row.cliente}</TableCell>
+                        <TableCell>{row.vencimento || '-'}</TableCell>
+                        <TableCell align="right">{fmt(row.principal)}</TableCell>
+                        <TableCell align="right">{fmt(row.juros)}</TableCell>
+                        <TableCell align="right">{fmt(row.multa)}</TableCell>
+                        <TableCell align="right">{fmt(row.total)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          </Stack>
+        )}
+      </DialogContent>
+      <DialogActions sx={{ p: 2, gap: 1, flexWrap: 'wrap' }}>
+        <Button onClick={() => setReviewOpen(false)} disabled={isImportingConfirmed}>Voltar</Button>
+        {(previewData?.corrections?.length || 0) > 0 && (
+          <Button onClick={() => startConfirmedImport(false)} disabled={isImportingConfirmed}>
+            Importar sem corrigir
+          </Button>
+        )}
+        <Button
+          variant="contained"
+          onClick={() => startConfirmedImport((previewData?.corrections?.length || 0) > 0)}
+          disabled={isImportingConfirmed}
+          startIcon={isImportingConfirmed ? <CircularProgress size={16} color="inherit" /> : null}
+        >
+          {(previewData?.corrections?.length || 0) > 0 ? 'Aplicar correções e importar' : 'Confirmar importação'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+    </>
   );
 }
 

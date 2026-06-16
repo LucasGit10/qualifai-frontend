@@ -10,13 +10,6 @@ import {
   Checkbox,
   FormControlLabel,
   Link,
-  Card,
-  CardContent,
-  Divider,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   InputAdornment,
   IconButton,
   CircularProgress,
@@ -24,13 +17,11 @@ import {
   LinearProgress
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Person, Business, Email, Lock, CheckCircle, Visibility, VisibilityOff, Badge, ArrowBack, Shield, VerifiedUser } from '@mui/icons-material';
+import { Person, Business, Email, Lock, Visibility, VisibilityOff, Badge, ArrowBack, Shield, VerifiedUser } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import PolicyModal from '../components/TermsModal';
 import TermsOfUseModal from '../components/UsesModal';
 import { useAuthStore } from '../stores/authStore';
-
-import { PLANS } from '../utils/constants';
 
 // ... (O início do componente, hooks e outras funções permanecem os mesmos)
 const staggerContainer = {
@@ -102,7 +93,6 @@ const RegisterPage = () => {
   const [isUseModalOpen, setIsUseModalOpen] = useState(false);
   const [policyAgreed, setPolicyAgreed] = useState(false);
   const [useAgreed, setUseAgreed] = useState(false);
-  const [featuredPlanIndex, setFeaturedPlanIndex] = useState(2);
   const [passwordVisibility, setPasswordVisibility] = useState({ password: false, confirmPassword: false });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -116,13 +106,6 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const { register: authRegister } = useAuthStore();
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFeaturedPlanIndex(prevIndex => (prevIndex + 1) % PLANS.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
-  
   useEffect(() => {
     const password = formData.password;
     const validations = {
@@ -155,8 +138,6 @@ const RegisterPage = () => {
     setPasswordHint(hint);
   }, [formData.password]);
   
-  const currentPlan = PLANS[featuredPlanIndex];
-
   // ... O restante das funções (handleChange, etc.) continua o mesmo
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -329,49 +310,24 @@ const RegisterPage = () => {
               </Grid>
 
               <Grid item xs={12} md={6} sx={{p: {xs: 3, md: 4}, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                <AnimatePresence mode="wait">
-                  <motion.div key={featuredPlanIndex} initial={{opacity: 0, scale: 0.95}} animate={{opacity: 1, scale: 1}} exit={{opacity: 0, scale: 0.95}} transition={{duration: 0.6, ease: [0.43, 0.13, 0.23, 0.96]}}>
-                    <Card sx={{width: '100%', maxWidth: 500, minHeight: 620, height: '100%', p: 3, borderRadius: 5, background: currentPlan.highlight ? 'linear-gradient(135deg, #3a1c71 0%, #d76d77 100%)' : 'rgba(30, 25, 60, 0.8)', color: currentPlan.highlight ? '#fff' : '#e2d6ff', boxShadow: `0 8px 40px rgba(0, 0, 0, ${currentPlan.highlight ? '0.4' : '0.3'})`, border: `1px solid rgba(226, 214, 255, ${currentPlan.highlight ? '0.3' : '0.1'})`}}>
-                      <CardContent>
-                        <Typography variant="h5" sx={{fontWeight: 700}}>{currentPlan.name}</Typography>
-                        
-                        {/* --- ADIÇÃO: DESCRIÇÃO PARA O ÚLTIMO PLANO (ABAIXO DO PREÇO) --- */}
-                        {currentPlan.description && featuredPlanIndex === PLANS.length - 1 && (
-                          <Typography 
-                            variant="body2"
-                            component="p" 
-                            sx={{ 
-                              mb: 2,
-                              color: 'rgba(226, 214, 255, 0.9)'
-                            }}
-                          >
-                            {currentPlan.description}
-                          </Typography>
-                        )}
-
-                        <Divider sx={{my: 2, bgcolor: `rgba(226, 214, 255, ${currentPlan.highlight ? '0.3' : '0.1'})`}} />
-                        <List>
-                          {currentPlan.features.map((feature, i) => (<ListItem key={i} disableGutters sx={{py: 0.5}}><ListItemIcon sx={{minWidth: 32}}><CheckCircle sx={{fontSize: 22, color: currentPlan.highlight ? '#fff' : '#d76d77'}} /></ListItemIcon><ListItemText primary={<Typography variant="body1" sx={{fontWeight: 500}}>{feature}</Typography>} /></ListItem>))}
-                        </List>
-
-                        {/* --- ADIÇÃO: DESCRIÇÃO PARA O PRIMEIRO PLANO (EMBAIXO) --- */}
-                        {currentPlan.description && featuredPlanIndex === 0 && (
-                          <Typography 
-                            variant="caption" 
-                            component="p" 
-                            sx={{ 
-                              mt: 2,
-                              fontStyle: 'italic',
-                              color: 'rgba(226, 214, 255, 0.7)'
-                            }}
-                          >
-                            {currentPlan.description}
-                          </Typography>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                </AnimatePresence>
+                <motion.div variants={fadeInUp} style={{ width: '100%', maxWidth: 500 }}>
+                  <Paper sx={{ minHeight: 520, p: { xs: 3, md: 5 }, borderRadius: 5, background: 'linear-gradient(135deg, rgba(58, 28, 113, 0.88) 0%, rgba(215, 109, 119, 0.82) 100%)', color: '#fff', boxShadow: '0 8px 40px rgba(0, 0, 0, 0.35)', border: '1px solid rgba(226, 214, 255, 0.25)', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 3 }}>
+                    <Typography variant="h4" sx={{ fontWeight: 800 }}>
+                      Comece sem escolher plano
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.88)', lineHeight: 1.8 }}>
+                      Por enquanto o cadastro fica liberado sem etapa de assinatura. Depois que sua conta for confirmada, nossa equipe ativa os recursos combinados diretamente com a empresa.
+                    </Typography>
+                    <Box sx={{ p: 2.5, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                        O que acontece agora?
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.82)', lineHeight: 1.7 }}>
+                        Crie a conta, confirme o e-mail e acesse o login. A parte de planos ficou desativada neste fluxo para manter o onboarding mais simples.
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </motion.div>
               </Grid>
             </Grid>
           </motion.div>

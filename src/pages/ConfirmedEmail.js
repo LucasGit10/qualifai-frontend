@@ -52,7 +52,7 @@ const EmailConfirmedPage = () => {
       const timer = setTimeout(() => setCountdown(prev => prev - 1), 1000);
       return () => clearTimeout(timer);
     } else if (success && countdown === 0) {
-      window.location.href = '/signature';
+      window.location.href = '/login';
     }
   }, [success, countdown]);
 
@@ -95,7 +95,7 @@ const EmailConfirmedPage = () => {
               <Box component={motion.div} variants={fadeInUp} sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column' }}>
                 <CircularProgress size={24} sx={{ color: '#d76d77', mb: 2 }} />
                 <Typography sx={{ color: '#f5dce0' }}>
-                  Redirecionando para a próxima etapa em {countdown} segundos...
+                  Redirecionando para o login em {countdown} segundos...
                 </Typography>
               </Box>
             </>
