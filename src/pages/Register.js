@@ -187,8 +187,8 @@ const RegisterPage = () => {
     };
     const result = await authRegister(payload);
     if (result.success) {
-      setSuccess('Conta criada com sucesso! Verifique seu email para continuar.');
-      navigate('/confirmationEmail', { state: { email: formData.email } });
+      setSuccess('Conta criada com sucesso! Redirecionando...');
+      navigate('/app/dashboard');
     } else {
       setError(result.error);
     }
@@ -316,14 +316,14 @@ const RegisterPage = () => {
                       Comece sem escolher plano
                     </Typography>
                     <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.88)', lineHeight: 1.8 }}>
-                      Por enquanto o cadastro fica liberado sem etapa de assinatura. Depois que sua conta for confirmada, nossa equipe ativa os recursos combinados diretamente com a empresa.
+                      Por enquanto o cadastro fica liberado sem etapa de assinatura. Depois que sua conta for criada, nossa equipe ativa os recursos combinados diretamente com a empresa.
                     </Typography>
                     <Box sx={{ p: 2.5, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }}>
                       <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
                         O que acontece agora?
                       </Typography>
                       <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.82)', lineHeight: 1.7 }}>
-                        Crie a conta, confirme o e-mail e acesse o login. A parte de planos ficou desativada neste fluxo para manter o onboarding mais simples.
+                        Crie a conta e acesse a plataforma. A parte de planos ficou desativada neste fluxo para manter o onboarding mais simples.
                       </Typography>
                     </Box>
                   </Paper>
