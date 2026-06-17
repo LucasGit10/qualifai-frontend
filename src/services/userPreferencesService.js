@@ -4,7 +4,7 @@ class UserPreferencesService {
   
   async createDefaultPreferences(userId) {
     try {
-      const response = await api.post('/api/preferences/ensure-default', { userId });
+      const response = await api.post('/preferences/ensure-default', { userId });
       return response.data;
     } catch (error) {
       console.error('❌ Erro ao criar preferências padrão:', error);
@@ -14,7 +14,7 @@ class UserPreferencesService {
   
   async getUserPreferences() {
     try {
-      const response = await api.get('/api/preferences');
+      const response = await api.get('/preferences');
       return response.data;
     } catch (error) {
       console.error('❌ Erro ao obter preferências:', error);
@@ -24,7 +24,7 @@ class UserPreferencesService {
   
   async updateUserPreferences(updates) {
     try {
-      const response = await api.put('/api/preferences', updates);
+      const response = await api.put('/preferences', updates);
       return response.data;
     } catch (error) {
       console.error('❌ Erro ao atualizar preferências:', error);

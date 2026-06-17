@@ -13,7 +13,19 @@ api.interceptors.response.use(
   (error) => {
     if (!USE_MOCKS && error.response?.status === 401) {
       localStorage.removeItem('auth-storage');
-      window.location.href = '/login';
+      const publicPaths = [
+        '/login',
+        '/register',
+        '/register-calendar',
+        '/forgot-password',
+        '/reset-password',
+        '/privacy',
+        '/terms',
+      ];
+      const isPublicPath = publicPaths.some((path) => window.location.pathname.startsWith(path));
+      if (!isPublicPath) {
+        window.location.replace('/login');
+      }
     }
     return Promise.reject(error);
   }
