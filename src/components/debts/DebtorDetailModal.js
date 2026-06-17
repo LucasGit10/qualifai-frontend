@@ -39,11 +39,16 @@ const fmtDate = (d) => {
 
 const fmtPhone = (tel) => {
   if (!tel) return '—';
-  const n = tel.replace(/\D/g, '');
+  const digits = String(tel).replace(/\D/g, '');
+  const n = digits.startsWith('55') && (digits.length === 12 || digits.length === 13)
+    ? digits.slice(2)
+    : digits;
   if (n.length === 11) return `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`;
   if (n.length === 10) return `(${n.slice(0,2)}) ${n.slice(2,6)}-${n.slice(6)}`;
   return tel;
 };
+
+const normalizeContactValue = (value) => String(value || '').replace(/\D/g, '');
 
 const getDialogPaperSx = (theme, color) => ({
   borderRadius: 3,
@@ -304,6 +309,32 @@ export default function DebtorDetailModal({ open, onClose, debtor }) {
     () => (debtor?.charges || []).filter((c) => new Date(c.vencimento) > today),
     [debtor, today]
   );
+  const contactItems = useMemo(() => {
+    const items = [];
+    const seen = new Set();
+    const addPhone = (value, label) => {
+      const normalized = normalizeContactValue(value);
+      if (!normalized || seen.has(normalized)) return;
+      seen.add(normalized);
+      items.push({ type: 'phone', value, label });
+    };
+
+    addPhone(debtor?.telefone1, 'Telefone 1');
+    addPhone(debtor?.telefone2, 'Telefone 2');
+    (debtor?.contacts || []).forEach((contact) => {
+      if (contact?.type === 'phone') {
+        addPhone(contact.value, contact.label || 'Telefone importado');
+        return;
+      }
+      if (!contact?.value) return;
+      const key = `${contact.type || 'contact'}:${contact.value}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      items.push(contact);
+    });
+
+    return items;
+  }, [debtor]);
 
   const handleExport = async () => {
     if (!debtor?._id) return;
@@ -402,18 +433,15 @@ export default function DebtorDetailModal({ open, onClose, debtor }) {
               <Typography variant="caption" color="text.secondary">{debtor.enderecoResidencial}</Typography>
             </Box>
           )}
-          {debtor.telefone1 && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <PhoneIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
-              <Typography variant="caption" color="text.secondary">{fmtPhone(debtor.telefone1)}</Typography>
+          {contactItems.map((contact, index) => (
+            <Box key={`${contact.type || 'contact'}-${contact.value}-${index}`} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {contact.type === 'phone' && <PhoneIcon sx={{ fontSize: 13, color: 'text.secondary' }} />}
+              <Typography variant="caption" color="text.secondary">
+                {contact.type === 'phone' ? fmtPhone(contact.value) : contact.value}
+                {contact.label ? ` (${contact.label})` : ''}
+              </Typography>
             </Box>
-          )}
-          {debtor.telefone2 && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <PhoneIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
-              <Typography variant="caption" color="text.secondary">{fmtPhone(debtor.telefone2)}</Typography>
-            </Box>
-          )}
+          ))}
         </Box>
 
         {/* Info de contrato / empreendimento */}

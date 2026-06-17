@@ -9,6 +9,7 @@ import {
   FormControlLabel, Switch
 } from '@mui/material';
 import {
+  Add as AddIcon,
   CloudUpload as UploadIcon,
   ReceiptLong as DebtsIcon,
   Search as SearchIcon,
@@ -52,6 +53,16 @@ import DebtorDetailModal from '../components/debts/DebtorDetailModal';
 const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtNum = (v) => new Intl.NumberFormat('pt-BR').format(v || 0);
+const fmtPhone = (phone) => {
+  if (!phone) return '';
+  const digits = String(phone).replace(/\D/g, '');
+  const local = digits.startsWith('55') && (digits.length === 12 || digits.length === 13)
+    ? digits.slice(2)
+    : digits;
+  if (local.length === 11) return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+  if (local.length === 10) return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+  return String(phone);
+};
 
 const getPanelSx = (theme) => ({
   backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'background.paper',
@@ -709,6 +720,189 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
 }
 
 // â”€â”€â”€ Gráfico mensal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function ManualDebtorDialog({ open, onClose, onCreated }) {
+  const theme = useTheme();
+  const [form, setForm] = useState({
+    cliente: '',
+    cpfCnpj: '',
+    email: '',
+    telefone1: '',
+    telefone2: '',
+    contatosExtras: '',
+    empreendimento: '',
+    contrato: '',
+    vencimento: format(new Date(), 'yyyy-MM-dd'),
+    principal: '',
+    juros: '',
+    multa: '',
+    total: '',
+    parcela: 1,
+    torre: '',
+    apto: '',
+    enderecoResidencial: '',
+    profissao: '',
+    status: 'novo',
+    note: ''
+  });
+
+  const update = (field) => (event) => {
+    setForm((current) => ({ ...current, [field]: event.target.value }));
+  };
+
+  const calculatedTotal = useMemo(() => {
+    const principal = Number(form.principal) || 0;
+    const juros = Number(form.juros) || 0;
+    const multa = Number(form.multa) || 0;
+    return principal + juros + multa;
+  }, [form.principal, form.juros, form.multa]);
+
+  const createMutation = useMutation(
+    async () => {
+      const extraPhones = form.contatosExtras
+        .split(/[\n,;]+/)
+        .map((value) => value.trim())
+        .filter(Boolean);
+      const payload = {
+        ...form,
+        contatos: extraPhones,
+        principal: Number(form.principal) || 0,
+        juros: Number(form.juros) || 0,
+        multa: Number(form.multa) || 0,
+        total: Number(form.total) || calculatedTotal,
+        parcela: Number(form.parcela) || 1
+      };
+      delete payload.contatosExtras;
+      const { data } = await api.post('/spreadsheets/debtors/manual', payload);
+      return data;
+    },
+    {
+      onSuccess: () => {
+        toast.success('Devedor cadastrado com sucesso.');
+        onCreated?.();
+        onClose();
+      },
+      onError: (err) => {
+        toast.error(err.response?.data?.message || 'Erro ao cadastrar devedor.');
+      }
+    }
+  );
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (!form.cliente.trim() && !form.cpfCnpj.trim()) return toast.warn('Informe pelo menos nome ou CPF/CNPJ.');
+    if (!form.vencimento) return toast.warn('Informe o vencimento da cobranca.');
+    if ((Number(form.total) || calculatedTotal) <= 0) return toast.warn('Informe um valor para a cobranca.');
+    createMutation.mutate();
+  };
+
+  return (
+    <Dialog open={open} onClose={createMutation.isLoading ? undefined : onClose} maxWidth="md" fullWidth PaperProps={{ sx: getDialogPaperSx(theme, theme.palette.primary.main) }}>
+      <Box component="form" onSubmit={handleSubmit}>
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <PeopleIcon color="primary" />
+            <Box>
+              <Typography variant="h6" fontWeight={800}>Novo devedor manual</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Cadastre sem planilha, com contatos, contrato, valor e observacao inicial.
+              </Typography>
+            </Box>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2.5}>
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.03) }}>
+              <Typography variant="subtitle2" fontWeight={800} gutterBottom>1. Dados do devedor</Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={7}>
+                  <TextField fullWidth label="Nome do devedor" value={form.cliente} onChange={update('cliente')} autoFocus />
+                </Grid>
+                <Grid item xs={12} md={5}>
+                  <TextField fullWidth label="CPF/CNPJ" value={form.cpfCnpj} onChange={update('cpfCnpj')} helperText="Usado para evitar duplicidade" />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextField fullWidth label="Empreendimento / Empresa" value={form.empreendimento} onChange={update('empreendimento')} />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField fullWidth label="Torre" value={form.torre} onChange={update('torre')} />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField fullWidth label="Apto / Unidade" value={form.apto} onChange={update('apto')} />
+                </Grid>
+                <Grid item xs={12} md={8}>
+                  <TextField fullWidth label="Endereco" value={form.enderecoResidencial} onChange={update('enderecoResidencial')} />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField fullWidth label="Profissao" value={form.profissao} onChange={update('profissao')} />
+                </Grid>
+              </Grid>
+            </Paper>
+
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+              <Typography variant="subtitle2" fontWeight={800} gutterBottom>2. Contatos</Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <TextField fullWidth label="Telefone principal" value={form.telefone1} onChange={update('telefone1')} placeholder="(11) 99999-9999" />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField fullWidth label="Telefone secundario" value={form.telefone2} onChange={update('telefone2')} />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField fullWidth label="E-mail" type="email" value={form.email} onChange={update('email')} />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField fullWidth multiline minRows={2} label="Outros telefones" value={form.contatosExtras} onChange={update('contatosExtras')} helperText="Um por linha, ou separados por virgula/ponto e virgula." />
+                </Grid>
+              </Grid>
+            </Paper>
+
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+              <Typography variant="subtitle2" fontWeight={800} gutterBottom>3. Cobranca</Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <TextField fullWidth label="Contrato" value={form.contrato} onChange={update('contrato')} />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField fullWidth label="Vencimento" type="date" value={form.vencimento} onChange={update('vencimento')} InputLabelProps={{ shrink: true }} required />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField fullWidth label="Parcela" type="number" value={form.parcela} onChange={update('parcela')} inputProps={{ min: 1 }} />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField fullWidth label="Principal" type="number" value={form.principal} onChange={update('principal')} inputProps={{ min: 0, step: '0.01' }} />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField fullWidth label="Juros" type="number" value={form.juros} onChange={update('juros')} inputProps={{ min: 0, step: '0.01' }} />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField fullWidth label="Multa" type="number" value={form.multa} onChange={update('multa')} inputProps={{ min: 0, step: '0.01' }} />
+                </Grid>
+                <Grid item xs={12} md={3}>
+                  <TextField fullWidth label="Total" type="number" value={form.total} onChange={update('total')} helperText={calculatedTotal > 0 ? `Sugestao: ${fmt(calculatedTotal)}` : 'Pode preencher direto'} inputProps={{ min: 0, step: '0.01' }} />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField fullWidth label="Status do devedor" value={form.status} onChange={update('status')} helperText="Ex: novo, contatado, em_negociacao" />
+                </Grid>
+              </Grid>
+            </Paper>
+
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+              <Typography variant="subtitle2" fontWeight={800} gutterBottom>4. Observacao inicial</Typography>
+              <TextField fullWidth multiline minRows={3} label="Nota interna" value={form.note} onChange={update('note')} helperText="Essa nota tambem sai no relatorio completo do devedor." />
+            </Paper>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button onClick={onClose} disabled={createMutation.isLoading}>Cancelar</Button>
+          <Button type="submit" variant="contained" startIcon={createMutation.isLoading ? <CircularProgress size={16} /> : <AddIcon />} disabled={createMutation.isLoading}>
+            {createMutation.isLoading ? 'Cadastrando...' : 'Cadastrar devedor'}
+          </Button>
+        </DialogActions>
+      </Box>
+    </Dialog>
+  );
+}
+
 function MonthlyChart({ months }) {
   const data = [...months].reverse().map(m => ({
     name: `${MESES_PT[m.mes - 1]}/${String(m.ano).slice(2)}`,
@@ -1328,10 +1522,10 @@ function DebtorCard({ debtor, onViewDetails, onStatusChange, statusOptions, onOp
           </Box>
         </Box>
 
-        {/* Lista de Contatos (Novidade) */}
+        {/* Lista de contatos importados */}
         {debtor.contacts && debtor.contacts.length > 0 && (
           <Box sx={{ mb: 2, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-            {debtor.contacts.slice(0, 3).map((ct, idx) => (
+            {debtor.contacts.map((ct, idx) => (
               <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 {ct.type === 'phone' ? (
                   <Badge overlap="circular" variant="dot" color="success" sx={{ '& .MuiBadge-badge': { width: 6, height: 6, minWidth: 6, bottom: 2, right: 2 } }}>
@@ -1348,15 +1542,10 @@ function DebtorCard({ debtor, onViewDetails, onStatusChange, statusOptions, onOp
                   overflow: 'hidden',
                   whiteSpace: 'nowrap'
                 }}>
-                  {ct.value} {ct.label && <span style={{ opacity: 0.5, fontSize: '0.6rem' }}>({ct.label})</span>}
+                  {ct.type === 'phone' ? fmtPhone(ct.value) : ct.value} {ct.label && <span style={{ opacity: 0.5, fontSize: '0.6rem' }}>({ct.label})</span>}
                 </Typography>
               </Box>
             ))}
-            {debtor.contacts.length > 3 && (
-              <Typography variant="caption" color="primary.main" sx={{ fontSize: '0.65rem', fontWeight: 700, mt: 0.5 }}>
-                + {debtor.contacts.length - 3} contatos
-              </Typography>
-            )}
           </Box>
         )}
 
@@ -1904,6 +2093,7 @@ export default function Debts() {
   const theme = useTheme();
   const queryClient = useQueryClient();
   const [importOpen, setImportOpen] = useState(false);
+  const [manualDebtorOpen, setManualDebtorOpen] = useState(false);
   const [selectedDebtor, setSelectedDebtor] = useState(null);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -1999,6 +2189,14 @@ export default function Debts() {
         </Box>
         <Box sx={{ display:'flex', gap:1, flexWrap:'wrap', width: { xs: '100%', md: 'auto' }, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
           <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setManualDebtorOpen(true)}
+            sx={{ borderRadius:2, fontWeight:700 }}
+          >
+            Novo Devedor
+          </Button>
+          <Button
             variant="outlined"
             color="error"
             onClick={() => setResetDialogOpen(true)}
@@ -2066,6 +2264,16 @@ export default function Debts() {
       )}
 
       {/* â”€â”€â”€ Modais â”€â”€â”€ */}
+      <ManualDebtorDialog
+        open={manualDebtorOpen}
+        onClose={() => setManualDebtorOpen(false)}
+        onCreated={() => {
+          refetch();
+          queryClient.invalidateQueries(['debts-by-month']);
+          queryClient.invalidateQueries(['debtors-summary']);
+          queryClient.invalidateQueries(['dashboard-stats']);
+        }}
+      />
       <ImportDialog open={importOpen} onClose={() => setImportOpen(false)} onImportSuccess={() => refetch()} />
       <DebtorDetailModal
         open={!!selectedDebtor}
