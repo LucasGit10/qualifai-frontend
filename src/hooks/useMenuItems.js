@@ -13,9 +13,10 @@ import {
 
 export function useMenuItems(user, canAccess, plan) {
   const { t, i18n } = useTranslation();
+  const effectivePlan = user && plan === 'guest' ? 'pro' : plan;
 
   const showcaseContextValue = useMemo(() => {
-    const isGuestMode = !user || plan === 'guest';
+    const isGuestMode = !user;
     const featurePermissions = {
       TEMPLATE: ['basic', 'medium', 'pro'], CALENDAR: ['basic', 'medium', 'pro'],
       KANBAN: ['basic', 'medium', 'pro'], VOICE_AI: ['medium', 'pro'],
@@ -24,11 +25,11 @@ export function useMenuItems(user, canAccess, plan) {
     
     const checkAccess = (featureKey) => {
       if (isGuestMode || !featureKey || !featurePermissions[featureKey]) return !isGuestMode;
-      return featurePermissions[featureKey].includes(plan);
+      return featurePermissions[featureKey].includes(effectivePlan);
     };
 
     return { checkAccess };
-  }, [user, plan]);
+  }, [user, effectivePlan]);
   
   const checkAccess = showcaseContextValue.checkAccess;
 
@@ -75,7 +76,7 @@ export function useMenuItems(user, canAccess, plan) {
     
     return (finalItems || []).map(item => ({ ...item, texto: t(item.tKey) }));
 
-  }, [user?.role, plan, i18n.language, t]);
+  }, [user?.role, effectivePlan, i18n.language, t]);
 
   return { itensMenu, canAccess: checkAccess };
 }

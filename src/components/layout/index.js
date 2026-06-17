@@ -44,14 +44,14 @@ export default function Layout({ toggleColorMode }) {
   
   const showCardsView = useLayoutStore(state => state.showCardsView);
 
-  const plan = isAuthenticated ? (user?.plan || 'guest') : 'guest';
+  const plan = isAuthenticated ? (user?.plan === 'guest' ? 'pro' : (user?.plan || 'pro')) : 'guest';
   
   const { itensMenu, canAccess: hookCanAccess } = useMenuItems(user, null, plan); 
   
   const { data: teamMembersData } = useQuery(
     'teamMembersForMenu',
     () => api.get('/manager/users').then(res => res.data),
-    { enabled: isAuthenticated && ['manager', 'admin'].includes(user?.role) && plan !== 'guest' }
+    { enabled: isAuthenticated && ['manager', 'admin'].includes(user?.role) }
   );
 
   const itensMenuCompletos = useMemo(() => {
@@ -91,7 +91,7 @@ export default function Layout({ toggleColorMode }) {
     return menuComInstagram;
   }, [itensMenu, t, user?.role, teamMembersData?.users]);
   const showcaseContextValue = useMemo(() => {
-    const isGuestMode = !isAuthenticated || plan === 'guest';
+    const isGuestMode = !isAuthenticated;
     
     const canAccess = (featureKey) => {
         if (!hookCanAccess) return false;
@@ -104,7 +104,7 @@ export default function Layout({ toggleColorMode }) {
   const { data: dadosEscalados } = useQuery(
     'verificarConversasEscaladas',
     () => api.get('/conversations?status=escalated&limit=1').then(res => res.data),
-    { refetchInterval: 15000, enabled: isAuthenticated && plan !== 'guest' }
+    { refetchInterval: 15000, enabled: isAuthenticated }
   );
   const temConversasEscaladas = dadosEscalados?.total > 0;
 
