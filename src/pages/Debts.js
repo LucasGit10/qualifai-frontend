@@ -730,31 +730,46 @@ function ManualDebtorDialog({ open, onClose, onCreated }) {
     telefone2: '',
     contatosExtras: '',
     empreendimento: '',
-    contrato: '',
-    vencimento: format(new Date(), 'yyyy-MM-dd'),
-    principal: '',
-    juros: '',
-    multa: '',
-    total: '',
-    parcela: 1,
     torre: '',
     apto: '',
     enderecoResidencial: '',
     profissao: '',
     status: 'novo',
-    note: ''
+    note: '',
+    dividas: [{
+      contrato: '',
+      vencimento: format(new Date(), 'yyyy-MM-dd'),
+      principal: '',
+      juros: '',
+      multa: '',
+      total: '',
+      parcela: 1
+    }]
   });
 
   const update = (field) => (event) => {
     setForm((current) => ({ ...current, [field]: event.target.value }));
   };
 
-  const calculatedTotal = useMemo(() => {
-    const principal = Number(form.principal) || 0;
-    const juros = Number(form.juros) || 0;
-    const multa = Number(form.multa) || 0;
-    return principal + juros + multa;
-  }, [form.principal, form.juros, form.multa]);
+  const updateDivida = (index, field) => (event) => {
+    const newDividas = [...form.dividas];
+    newDividas[index][field] = event.target.value;
+    setForm((current) => ({ ...current, dividas: newDividas }));
+  };
+
+  const addDivida = () => {
+    setForm((current) => ({
+      ...current,
+      dividas: [...current.dividas, { contrato: '', vencimento: format(new Date(), 'yyyy-MM-dd'), principal: '', juros: '', multa: '', total: '', parcela: 1 }]
+    }));
+  };
+
+  const removeDivida = (index) => {
+    setForm((current) => ({
+      ...current,
+      dividas: current.dividas.filter((_, i) => i !== index)
+    }));
+  };
 
   const createMutation = useMutation(
     async () => {
@@ -762,14 +777,24 @@ function ManualDebtorDialog({ open, onClose, onCreated }) {
         .split(/[\n,;]+/)
         .map((value) => value.trim())
         .filter(Boolean);
+        
       const payload = {
         ...form,
         contatos: extraPhones,
-        principal: Number(form.principal) || 0,
-        juros: Number(form.juros) || 0,
-        multa: Number(form.multa) || 0,
-        total: Number(form.total) || calculatedTotal,
-        parcela: Number(form.parcela) || 1
+        dividas: form.dividas.map(d => {
+          const principal = Number(d.principal) || 0;
+          const juros = Number(d.juros) || 0;
+          const multa = Number(d.multa) || 0;
+          return {
+            contrato: d.contrato,
+            vencimento: d.vencimento,
+            parcela: Number(d.parcela) || 1,
+            principal,
+            juros,
+            multa,
+            total: Number(d.total) || (principal + juros + multa)
+          };
+        })
       };
       delete payload.contatosExtras;
       const { data } = await api.post('/spreadsheets/debtors/manual', payload);
@@ -790,8 +815,12 @@ function ManualDebtorDialog({ open, onClose, onCreated }) {
   const handleSubmit = (event) => {
     event.preventDefault();
     if (!form.cliente.trim() && !form.cpfCnpj.trim()) return toast.warn('Informe pelo menos nome ou CPF/CNPJ.');
-    if (!form.vencimento) return toast.warn('Informe o vencimento da cobranca.');
-    if ((Number(form.total) || calculatedTotal) <= 0) return toast.warn('Informe um valor para a cobranca.');
+    if (form.dividas.length === 0) return toast.warn('Adicione pelo menos uma cobranca.');
+    for (const d of form.dividas) {
+      if (!d.vencimento) return toast.warn('Informe o vencimento de todas as cobrancas.');
+      const t = Number(d.total) || ((Number(d.principal) || 0) + (Number(d.juros) || 0) + (Number(d.multa) || 0));
+      if (t <= 0) return toast.warn('Informe um valor total maior que zero para todas as cobrancas.');
+    }
     createMutation.mutate();
   };
 
@@ -857,33 +886,52 @@ function ManualDebtorDialog({ open, onClose, onCreated }) {
             </Paper>
 
             <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
-              <Typography variant="subtitle2" fontWeight={800} gutterBottom>3. Cobranca</Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="subtitle2" fontWeight={800}>3. Cobrancas / Dividas</Typography>
+                <Button size="small" startIcon={<AddIcon />} onClick={addDivida} variant="outlined">Adicionar Divida</Button>
+              </Box>
+              
               <Grid container spacing={2}>
-                <Grid item xs={12} md={4}>
-                  <TextField fullWidth label="Contrato" value={form.contrato} onChange={update('contrato')} />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField fullWidth label="Vencimento" type="date" value={form.vencimento} onChange={update('vencimento')} InputLabelProps={{ shrink: true }} required />
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <TextField fullWidth label="Parcela" type="number" value={form.parcela} onChange={update('parcela')} inputProps={{ min: 1 }} />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <TextField fullWidth label="Principal" type="number" value={form.principal} onChange={update('principal')} inputProps={{ min: 0, step: '0.01' }} />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <TextField fullWidth label="Juros" type="number" value={form.juros} onChange={update('juros')} inputProps={{ min: 0, step: '0.01' }} />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <TextField fullWidth label="Multa" type="number" value={form.multa} onChange={update('multa')} inputProps={{ min: 0, step: '0.01' }} />
-                </Grid>
-                <Grid item xs={12} md={3}>
-                  <TextField fullWidth label="Total" type="number" value={form.total} onChange={update('total')} helperText={calculatedTotal > 0 ? `Sugestao: ${fmt(calculatedTotal)}` : 'Pode preencher direto'} inputProps={{ min: 0, step: '0.01' }} />
-                </Grid>
                 <Grid item xs={12} md={4}>
                   <TextField fullWidth label="Status do devedor" value={form.status} onChange={update('status')} helperText="Ex: novo, contatado, em_negociacao" />
                 </Grid>
               </Grid>
+
+              {form.dividas.map((divida, index) => {
+                const calcT = (Number(divida.principal) || 0) + (Number(divida.juros) || 0) + (Number(divida.multa) || 0);
+                return (
+                  <Box key={index} sx={{ mt: 2, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2, position: 'relative' }}>
+                    {form.dividas.length > 1 && (
+                      <IconButton size="small" color="error" onClick={() => removeDivida(index)} sx={{ position: 'absolute', top: 4, right: 4 }}>
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={4}>
+                        <TextField fullWidth size="small" label="Contrato" value={divida.contrato} onChange={updateDivida(index, 'contrato')} />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField fullWidth size="small" label="Vencimento" type="date" value={divida.vencimento} onChange={updateDivida(index, 'vencimento')} InputLabelProps={{ shrink: true }} required />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField fullWidth size="small" label="Parcela" type="number" value={divida.parcela} onChange={updateDivida(index, 'parcela')} inputProps={{ min: 1 }} />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <TextField fullWidth size="small" label="Principal" type="number" value={divida.principal} onChange={updateDivida(index, 'principal')} inputProps={{ min: 0, step: '0.01' }} />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <TextField fullWidth size="small" label="Juros" type="number" value={divida.juros} onChange={updateDivida(index, 'juros')} inputProps={{ min: 0, step: '0.01' }} />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <TextField fullWidth size="small" label="Multa" type="number" value={divida.multa} onChange={updateDivida(index, 'multa')} inputProps={{ min: 0, step: '0.01' }} />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <TextField fullWidth size="small" label="Total" type="number" value={divida.total} onChange={updateDivida(index, 'total')} helperText={calcT > 0 ? `Sug: ${fmt(calcT)}` : ''} inputProps={{ min: 0, step: '0.01' }} />
+                      </Grid>
+                    </Grid>
+                  </Box>
+                );
+              })}
             </Paper>
 
             <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
