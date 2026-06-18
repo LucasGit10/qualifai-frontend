@@ -277,6 +277,7 @@ export default function PaginaLeads() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isVerySmall = useMediaQuery('(max-width:450px)');
+  const { user } = useAuthStore();
   
   // --- HOOKS PARA O TOUR ---
   const { isTourActive, currentStage, runStepTour, advanceTour } = useTour();
@@ -328,9 +329,12 @@ export default function PaginaLeads() {
   const { data: statusEnumData, isLoading: isLoadingStatusEnum } = useQuery('leadStatusEnums', () => api.get('/leads/statuses').then(res => res.data), { staleTime: 60000, initialData: [] });
   const { data: statusCountsData, isLoading: isLoadingStatusCounts } = useQuery('leadStatusCounts', () => api.get('/leads/status-counts').then(res => res.data), { enabled: !isGuestMode, staleTime: 30000 });
 
-  const allStatuses = statusEnumData && Array.isArray(statusEnumData) && statusEnumData.length > 0
-    ? uniqueOptions(statusEnumData)
-    : ['novo', 'contatado', 'em_negociacao', 'acordado', 'quitado'];
+  const allStatuses = uniqueOptions([
+    ...(statusEnumData && Array.isArray(statusEnumData) && statusEnumData.length > 0
+      ? statusEnumData
+      : ['novo', 'contatado', 'em_negociacao', 'acordado', 'quitado']),
+    ...(user?.settings?.debtorStatuses || [])
+  ]);
   const visibleStatuses = allStatuses.filter(status => !HIDDEN_STATUSES.includes(status));
   const availableStatuses = showSemRespostaStatus ? allStatuses : visibleStatuses;
 

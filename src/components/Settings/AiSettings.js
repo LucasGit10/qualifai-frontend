@@ -516,7 +516,7 @@ export default function AiSettings() {
             Personalize o comportamento, a linguagem e os critérios de prioridade do seu agente de IA.
           </Typography>
         </Box>
-        <Button
+        {/* <Button
           variant="outlined"
           color="primary"
           startIcon={<TourIcon />}
@@ -524,7 +524,7 @@ export default function AiSettings() {
           sx={{ display: { xs: 'none', md: 'flex' } }}
         >
           Fazer Tour
-        </Button>
+        </Button> */}
       </Box>
 
       <Fade in timeout={300}>

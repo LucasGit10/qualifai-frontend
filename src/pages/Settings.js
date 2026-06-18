@@ -3,12 +3,13 @@ import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { Box, Typography, Paper, Tabs, Tab, useTheme, Grid, Fade, Slide, alpha } from '@mui/material';
 import { useQueryClient } from 'react-query';
-import { Tune as TuneIcon, SyncAlt as SyncAltIcon, SmartToy as SmartToyIcon, WhatsApp as WhatsAppIcon, Assessment as AssessmentIcon } from '@mui/icons-material';
+import { Tune as TuneIcon, SyncAlt as SyncAltIcon, SmartToy as SmartToyIcon, WhatsApp as WhatsAppIcon, Assessment as AssessmentIcon, Label as LabelIcon } from '@mui/icons-material';
 
 import AiSettings from '../components/Settings/AiSettings';
 import IntegrationsSettings from '../components/Settings/IntegrationsSettings';
 import WhatsApp from './WhatsApp';
 import PerformanceReportSettings from '../components/Settings/PerformanceReportSettings';
+import DebtorStatusesSettings from '../components/Settings/DebtorStatusesSettings';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -92,7 +93,8 @@ export default function Settings() {
     { label: "IA", icon: <SmartToyIcon /> },
     { label: "Integrações", icon: <SyncAltIcon /> },
     { label: "WhatsApp", icon: <WhatsAppIcon /> },
-    { label: "Relatórios", icon: <AssessmentIcon /> }
+    { label: "Relatórios", icon: <AssessmentIcon /> },
+    { label: "Status de Devedores", icon: <LabelIcon /> }
   ];
 
   return (
@@ -156,6 +158,7 @@ export default function Settings() {
                   <TabPanel value={tabValue} index={1}><IntegrationsSettings onTabChange={setTabValue} /></TabPanel>
                   <TabPanel value={tabValue} index={2}><WhatsApp /></TabPanel>
                   <TabPanel value={tabValue} index={3}><PerformanceReportSettings /></TabPanel>
+                  <TabPanel value={tabValue} index={4}><DebtorStatusesSettings /></TabPanel>
                 </div>
               </Fade>
             </Grid>

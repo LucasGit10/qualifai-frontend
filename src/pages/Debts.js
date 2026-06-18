@@ -1674,6 +1674,7 @@ function DebtorCard({ debtor, onViewDetails, onStatusChange, statusOptions, onOp
 function DebtorsTab({ debtorsData, onViewDetails }) {
   const theme = useTheme();
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos'); // Filtro de status padrão
   const [movementFilter, setMovementFilter] = useState('todos');
@@ -1746,8 +1747,10 @@ function DebtorsTab({ debtorsData, onViewDetails }) {
   );
 
   const statusOptions = useMemo(() => {
+    const customStatuses = user?.settings?.debtorStatuses || [];
     const statuses = [
       ...DEFAULT_DEBTOR_STATUS_OPTIONS.map(option => option.value),
+      ...customStatuses,
       ...debtors.map(debtor => debtor.status),
     ];
     const uniqueStatuses = [...new Set(statuses.map(status => cleanStatusOption(status)).filter(Boolean))];
@@ -2092,6 +2095,7 @@ function ChargesTab({ importOpen, setImportOpen }) {
 export default function Debts() {
   const theme = useTheme();
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [importOpen, setImportOpen] = useState(false);
   const [manualDebtorOpen, setManualDebtorOpen] = useState(false);
   const [selectedDebtor, setSelectedDebtor] = useState(null);
