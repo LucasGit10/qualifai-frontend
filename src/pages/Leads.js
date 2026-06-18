@@ -28,6 +28,7 @@ import { USE_MOCKS } from '../config/env';
 import ShowcaseBlocker from '../components/Showcase/ShowcaseBlocker';
 import ImportFileDialog from '../components/ImportFileDialog';
 import DebtManagementDialog from '../components/DebtManagementDialog';
+import ManualDebtorDialog from '../components/debts/ManualDebtorDialog';
 
 import { StyledDialog } from '../components/ui/StyledDialog';
 import { GradientButton } from '../components/ui/GradientButton';
@@ -298,6 +299,7 @@ export default function PaginaLeads() {
   
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [debtDialogOpen, setDebtDialogOpen] = useState(false);
+  const [manualDebtorOpen, setManualDebtorOpen] = useState(false);
   const [selectedLeadForDebt, setSelectedLeadForDebt] = useState(null);
 
   const [statusFilter, setStatusFilter] = useState('');
@@ -567,7 +569,7 @@ export default function PaginaLeads() {
           </>) : (<Typography variant="subtitle1" color="text.secondary">{t('leadsPage.selectHint')}</Typography>)}
         </Box>
         <Box display="flex" gap={2} sx={{ justifyContent: 'center', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center' }}>
-          <GradientButton startIcon={<AddIcon />} onClick={() => handleOpenDialog()} sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: 150 }}>
+          <GradientButton startIcon={<AddIcon />} onClick={() => setManualDebtorOpen(true)} sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: 150 }}>
             {t('leadsPage.buttons.newLead')}
           </GradientButton>
           <Tooltip title={t('common.managementActions')} placement="bottom"><IconButton onClick={handleOpenMenu} sx={{ background: 'rgba(255, 255, 255, 0.1)', '&:hover': { background: 'rgba(255, 255, 255, 0.2)' } }}><MoreVertIcon /></IconButton></Tooltip>
@@ -740,7 +742,7 @@ export default function PaginaLeads() {
       <ImportFileDialog open={importDialogOpen} onClose={() => setImportDialogOpen(false)} onSubmit={handleImportFromFile} isLoading={importFromFileMutation.isLoading}/>
       <TemplateSelectionModal open={templateModalOpen} onClose={() => setTemplateModalOpen(false)} onConfirm={handleTemplateModalConfirm} leadsToContact={leadsToContact} isLoadingConfirm={startWhatsappConversationMutation.isLoading || startMultipleWhatsappConversationsMutation.isLoading}/>
       <DebtManagementDialog open={debtDialogOpen} onClose={handleCloseDebtDialog} leadId={selectedLeadForDebt?._id} leadName={selectedLeadForDebt?.name} />
-    
+      <ManualDebtorDialog open={manualDebtorOpen} onClose={() => setManualDebtorOpen(false)} onCreated={() => queryClient.invalidateQueries('leads')} />
     </Box>
   );
 }
