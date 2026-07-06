@@ -15,6 +15,7 @@ import Debts from 'pages/Debts';
 import BlogEditor from 'pages/BlogEditor';
 import CalendarPage from 'pages/CalendarPage';
 import Campaigns from 'pages/Campaigns';
+import ComplianceDocument from 'pages/ComplianceDocument';
 import TermsOfUsePage from 'pages/ConditionUse';
 import PrivacyPolicyPage from 'pages/ConditionsPage';
 import EmailConfirmedPage from 'pages/ConfirmedEmail';
@@ -94,6 +95,7 @@ export const createRouter = (isAuthenticated, toggleColorMode) => createBrowserR
             element: <Layout toggleColorMode={toggleColorMode} />,
             children: [
               { path: "dashboard", element: <Dashboard /> },
+              { path: "compliance", element: <ComplianceDocument /> },
               { path: "leads", element: <Leads /> },
               { path: "debts", element: <Debts /> },
               { path: "conversations-whats", element: <Conversations /> },

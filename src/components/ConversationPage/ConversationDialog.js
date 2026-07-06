@@ -220,6 +220,17 @@ export default function ConversationDialog({
   const handleKeyPress = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(e); } };
   const handleAdminUpdate = (updates) => onAdminUpdate?.({ conversationId: conversation._id, updates });
   const handleUseSuggestedMessage = (suggestedMessage) => setMessage(suggestedMessage || '');
+
+  const handleOpenComplianceDocument = async () => {
+    try {
+      const response = await api.get('/compliance/document/download', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: response.headers['content-type'] }));
+      window.open(url, '_blank', 'noopener,noreferrer');
+      setTimeout(() => window.URL.revokeObjectURL(url), 30000);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Nao foi possivel abrir o comprovante.');
+    }
+  };
   
   const isAdmin = userRole === 'admin';
   const isLoadingAnything = isLoading || isToggleAILoading || isUpdatingByAdmin;
@@ -362,6 +373,18 @@ export default function ConversationDialog({
                     variant="outlined" 
                     size="small"
                     sx={{ 
+                      color: theme.palette.text.primary,
+                      borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+                    }}
+                  />
+                  <Chip
+                    icon={<DescriptionIcon />}
+                    label="Comprovante Meta"
+                    variant="outlined"
+                    size="small"
+                    clickable
+                    onClick={handleOpenComplianceDocument}
+                    sx={{
                       color: theme.palette.text.primary,
                       borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
                     }}

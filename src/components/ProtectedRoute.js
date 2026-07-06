@@ -3,11 +3,18 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 
 const ProtectedRoute = () => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
   const location = useLocation();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  const hasComplianceDocument = Boolean(user?.compliance?.documentApprovedAt);
+  const isCompliancePage = location.pathname === '/app/compliance';
+
+  if (!hasComplianceDocument && !isCompliancePage) {
+    return <Navigate to="/app/compliance" state={{ from: location }} replace />;
   }
 
   // Plan gating is temporarily disabled while signup runs without plans.

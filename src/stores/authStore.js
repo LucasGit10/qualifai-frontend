@@ -18,7 +18,8 @@ export const useAuthStore = create(
             name: 'Dev Admin (Mock)',
             email: email || 'admin@qualifai.tech',
             role: 'admin',
-            plan: 'pro'
+            plan: 'pro',
+            compliance: { documentApprovedAt: new Date().toISOString() }
           };
           const mockToken = 'mock-jwt-token-for-development';
           
@@ -97,6 +98,7 @@ export const useAuthStore = create(
             email: 'admin@qualifai.tech',
             role: 'admin',
             plan: 'pro',
+            compliance: { documentApprovedAt: new Date().toISOString() },
           };
           const mockToken = 'mock-jwt-token-for-development';
           useAuthStore.setState({
@@ -127,6 +129,7 @@ if (USE_MOCKS) {
       email: 'admin@qualifai.tech',
       role: 'admin',
       plan: 'pro',
+      compliance: { documentApprovedAt: new Date().toISOString() },
     },
     token: 'mock-jwt-token-for-development',
     isAuthenticated: true,
