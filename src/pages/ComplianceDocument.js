@@ -3,7 +3,9 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
   CircularProgress,
+  FormControlLabel,
   Paper,
   Stack,
   TextField,
@@ -35,6 +37,7 @@ export default function ComplianceDocument() {
   const updateUser = useAuthStore((state) => state.updateUser);
   const [file, setFile] = useState(null);
   const [notes, setNotes] = useState('');
+  const [skipDocument, setSkipDocument] = useState(false);
 
   const { data, isLoading } = useQuery(
     'complianceStatus',
@@ -71,6 +74,21 @@ export default function ComplianceDocument() {
     }
   );
 
+  const exemptMutation = useMutation(
+    () => api.post('/compliance/exempt', { reason: notes.trim() }),
+    {
+      onSuccess: (response) => {
+        updateUser({ compliance: response.data?.compliance });
+        queryClient.invalidateQueries('complianceStatus');
+        toast.success('Conta liberada sem exigencia de documento.');
+        navigate('/app/dashboard', { replace: true });
+      },
+      onError: (error) => {
+        toast.error(error.response?.data?.message || 'Nao foi possivel liberar a conta.');
+      },
+    }
+  );
+
   const handleDownload = async () => {
     try {
       const response = await api.get('/compliance/document/download', { responseType: 'blob' });
@@ -82,7 +100,8 @@ export default function ComplianceDocument() {
     }
   };
 
-  const canSubmit = Boolean(file) && !uploadMutation.isLoading;
+  const canSubmit = Boolean(file) && !uploadMutation.isLoading && !skipDocument;
+  const canExempt = skipDocument && !exemptMutation.isLoading;
 
   return (
     <Box
@@ -117,13 +136,17 @@ export default function ComplianceDocument() {
           </Box>
 
           <Alert severity="warning">
-            O envio e o inicio de mensagens ficam bloqueados ate que este documento esteja salvo no sistema.
+            O envio e o inicio de mensagens ficam bloqueados ate que este documento esteja salvo no sistema ou a conta seja liberada manualmente.
           </Alert>
 
           {isLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
               <CircularProgress />
             </Box>
+          ) : data?.exempted ? (
+            <Alert severity="success" icon={<CheckCircleIcon />}>
+              Esta conta esta liberada sem exigencia de documento.
+            </Alert>
           ) : data?.completed ? (
             <Alert
               severity="success"
@@ -147,6 +170,7 @@ export default function ComplianceDocument() {
               alignItems: 'center',
               gap: 2,
               flexWrap: 'wrap',
+              opacity: skipDocument ? 0.55 : 1,
             }}
           >
             <DescriptionIcon color="primary" />
@@ -168,23 +192,34 @@ export default function ComplianceDocument() {
             <Button
               variant="outlined"
               startIcon={<CloudUploadIcon />}
+              disabled={skipDocument}
               onClick={() => fileInputRef.current?.click()}
             >
               Selecionar
             </Button>
           </Box>
 
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={skipDocument}
+                onChange={(event) => setSkipDocument(event.target.checked)}
+              />
+            }
+            label="Liberar esta conta sem anexar documento"
+          />
+
           <TextField
-            label="Observacoes internas"
+            label={skipDocument ? 'Motivo da liberacao' : 'Observacoes internas'}
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             multiline
             minRows={3}
-            placeholder="Ex.: origem da base, data do opt-in, campanha ou contrato relacionado."
+            placeholder={skipDocument ? 'Ex.: conta interna/teste, autorizacao feita fora da plataforma.' : 'Ex.: origem da base, data do opt-in, campanha ou contrato relacionado.'}
           />
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent="flex-end">
-            {data?.completed && (
+            {(data?.completed || data?.exempted) && (
               <Button variant="text" onClick={() => navigate('/app/dashboard')}>
                 Continuar
               </Button>
@@ -197,6 +232,16 @@ export default function ComplianceDocument() {
             >
               Salvar documento
             </Button>
+            {skipDocument && (
+              <Button
+                variant="outlined"
+                color="warning"
+                disabled={!canExempt}
+                onClick={() => exemptMutation.mutate()}
+              >
+                {exemptMutation.isLoading ? 'Liberando...' : 'Liberar sem documento'}
+              </Button>
+            )}
           </Stack>
         </Stack>
       </Paper>

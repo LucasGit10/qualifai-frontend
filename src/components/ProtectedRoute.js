@@ -10,7 +10,7 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  const hasComplianceDocument = Boolean(user?.compliance?.documentApprovedAt);
+  const hasComplianceDocument = Boolean(user?.compliance?.documentApprovedAt || user?.compliance?.exemptedAt);
   const isCompliancePage = location.pathname === '/app/compliance';
 
   if (!hasComplianceDocument && !isCompliancePage) {
