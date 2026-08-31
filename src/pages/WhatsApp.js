@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import {
   Box, Typography, Button, Paper, Grid, Avatar, CircularProgress,
-  Divider, Alert, useTheme, IconButton, Tooltip, Grow, Slide, TextField
+  Divider, Alert, useTheme, IconButton, Tooltip, Grow, Slide
 } from '@mui/material';
 import { keyframes, alpha } from '@mui/system';
 import { Add as AddIcon, WhatsApp as WhatsAppIcon, DeleteForever as DeleteIcon, WarningAmber as WarningIcon } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import api from '../services/api';
 import useFacebookSdk from '../services/useFacebookSdk';
+
+const META_CONFIG_ID = process.env.REACT_APP_META_CONFIG_ID;
+
+const isFacebookMessageOrigin = (origin) => {
+  try {
+    const { protocol, hostname } = new URL(origin);
+    return protocol === 'https:'
+      && (hostname === 'facebook.com' || hostname.endsWith('.facebook.com'));
+  } catch {
+    return false;
+  }
+};
 
 // --- ANIMAÇÃO APRIMORADA ---
 const pulseAnimation = keyframes`
@@ -122,7 +134,9 @@ export default function WhatsAppConnection() {
   const queryClient = useQueryClient();
   const theme = useTheme();
   const isSdkReady = useFacebookSdk();
-  const [registrationPin, setRegistrationPin] = useState('');
+  const [authorizationCode, setAuthorizationCode] = useState(null);
+  const [signupSession, setSignupSession] = useState(null);
+  const onboardingSubmittedRef = useRef(false);
 
   const { data: instances, isLoading: isLoadingInstances } = useQuery('whatsapp-instances', () => api.get('/whatsapp').then((res) => res.data));
   const completeOnboardingMutation = useMutation((data) => api.post('/whatsapp/complete-onboarding', data), {
@@ -134,30 +148,78 @@ export default function WhatsAppConnection() {
     onError: (error) => { toast.error(error.response?.data?.message || 'Erro ao excluir instância.'); },
   });
   
+  useEffect(() => {
+    const sessionInfoListener = (event) => {
+      if (!isFacebookMessageOrigin(event.origin)) return;
+
+      try {
+        const payload = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (payload?.type !== 'WA_EMBEDDED_SIGNUP') return;
+
+        if (payload.event === 'FINISH') {
+          const phoneNumberId = payload.data?.phone_number_id;
+          const wabaId = payload.data?.waba_id;
+
+          if (!phoneNumberId || !wabaId) {
+            toast.error('A Meta concluiu o cadastro sem retornar os identificadores do WhatsApp.');
+            return;
+          }
+
+          setSignupSession({ phoneNumberId: String(phoneNumberId), wabaId: String(wabaId) });
+        } else if (payload.event === 'ERROR') {
+          toast.error(payload.data?.error_message || 'A Meta informou um erro durante o cadastro.');
+        } else if (payload.event === 'CANCEL') {
+          toast.info('O processo de conexão foi cancelado.');
+        }
+      } catch {
+        // O SDK também publica mensagens que não pertencem ao Embedded Signup.
+      }
+    };
+
+    window.addEventListener('message', sessionInfoListener);
+    return () => window.removeEventListener('message', sessionInfoListener);
+  }, []);
+
+  useEffect(() => {
+    if (!authorizationCode || !signupSession || onboardingSubmittedRef.current) return;
+
+    onboardingSubmittedRef.current = true;
+    completeOnboardingMutation.mutate({
+      code: authorizationCode,
+      wabaId: signupSession.wabaId,
+      phoneNumberId: signupSession.phoneNumberId,
+    });
+  }, [authorizationCode, signupSession, completeOnboardingMutation]);
+
   const handleConnectWithMeta = () => {
-    if (!isSdkReady) {
+    if (!META_CONFIG_ID) {
+      toast.error('O Configuration ID do cadastro incorporado não está configurado.');
+      return;
+    }
+    if (!isSdkReady || !window.FB) {
       toast.warn('O SDK da Meta ainda está carregando, por favor aguarde.');
       return;
     }
-    if (!/^\d{6}$/.test(registrationPin)) {
-      toast.warn('Informe o PIN de 6 digitos usado para registrar o numero na Meta.');
-      return;
-    }
+
+    setAuthorizationCode(null);
+    setSignupSession(null);
+    onboardingSubmittedRef.current = false;
+
     window.FB.login(
       (response) => {
-        if (response.authResponse?.code || response.authResponse?.accessToken) {
-          completeOnboardingMutation.mutate({
-            code: response.authResponse.code,
-            accessToken: response.authResponse.accessToken,
-            registrationPin
-          });
+        const code = response.authResponse?.code;
+        if (code) {
+          setAuthorizationCode(code);
         } else {
-          toast.info('O processo de conexão foi cancelado.');
+          toast.info('O processo de conexão foi cancelado ou não foi autorizado.');
         }
       },
       {
-        scope: 'whatsapp_business_management,whatsapp_business_messaging',
-        extras: { feature: 'whatsapp_embedded_signup', setup: {} },
+        config_id: META_CONFIG_ID,
+        response_type: 'code',
+        override_default_response_type: true,
+        auth_type: 'rerequest',
+        extras: { version: 'v4' },
       }
     );
   };
@@ -213,17 +275,6 @@ export default function WhatsAppConnection() {
             Use o botão acima para conectar de forma segura uma nova conta do WhatsApp Business.
           </Typography>
 
-          {/* CORREÇÃO: Alert com cores do tema */}
-          <TextField
-            label="PIN de registro da Meta"
-            type="password"
-            value={registrationPin}
-            onChange={(event) => setRegistrationPin(event.target.value.replace(/\D/g, '').slice(0, 6))}
-            inputProps={{ inputMode: 'numeric', maxLength: 6 }}
-            helperText="Informe o PIN de 6 digitos configurado para registrar o numero na Cloud API."
-            fullWidth
-            sx={{ mb: 3, maxWidth: 420 }}
-          />
 
           <Paper 
             variant="outlined" 

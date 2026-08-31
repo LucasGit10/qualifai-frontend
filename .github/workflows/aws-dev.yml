@@ -32,8 +32,11 @@ jobs:
 
       - name: Build da imagem Docker
         run: |
-          sudo docker build -t $ECR_REPO_NAME . --platform linux/amd64
-
+          sudo docker build --platform linux/amd64 \
+            --build-arg REACT_APP_META_APP_ID=${{ secrets.REACT_APP_META_APP_ID }} \
+            --build-arg REACT_APP_META_CONFIG_ID=${{ secrets.REACT_APP_META_CONFIG_ID }} \
+            --build-arg REACT_APP_META_GRAPH_API_VERSION=v26.0 \
+            -t $ECR_REPO_NAME .
       - name: Tag da imagem Docker
         run: |
           docker tag $ECR_REPO_NAME:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPO_NAME:latest

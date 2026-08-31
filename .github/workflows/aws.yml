@@ -37,8 +37,11 @@ jobs:
 
       - name: Build da imagem Docker
         run: |
-          sudo docker build -t ${PROJECT_NAME}-frontend . --platform linux/amd64
-
+          sudo docker build --platform linux/amd64 \
+            --build-arg REACT_APP_META_APP_ID=${{ secrets.REACT_APP_META_APP_ID }} \
+            --build-arg REACT_APP_META_CONFIG_ID=${{ secrets.REACT_APP_META_CONFIG_ID }} \
+            --build-arg REACT_APP_META_GRAPH_API_VERSION=v26.0 \
+            -t ${PROJECT_NAME}-frontend .
       - name: Tag da imagem Docker
         run: |
           docker tag ${PROJECT_NAME}-frontend:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/${PROJECT_NAME}-frontend:latest

@@ -42,8 +42,12 @@ jobs:
         id: vars
         run: |
           # Extrai o valor da variável do secret FRONTEND_ENV
-          URL=$(echo "${{ secrets.FRONTEND_ENV }}" | grep REACT_APP_API_URL | cut -d'=' -f2- | tr -d '\r' | xargs)
+          URL=$(echo "${{ secrets.FRONTEND_ENV }}" | grep '^REACT_APP_API_URL=' | cut -d'=' -f2- | tr -d '\r' | xargs)
+          META_APP_ID=$(echo "${{ secrets.FRONTEND_ENV }}" | grep '^REACT_APP_META_APP_ID=' | cut -d'=' -f2- | tr -d '\r' | xargs)
+          META_CONFIG_ID=$(echo "${{ secrets.FRONTEND_ENV }}" | grep '^REACT_APP_META_CONFIG_ID=' | cut -d'=' -f2- | tr -d '\r' | xargs)
           echo "api_url=$URL" >> $GITHUB_OUTPUT
+          echo "meta_app_id=$META_APP_ID" >> $GITHUB_OUTPUT
+          echo "meta_config_id=$META_CONFIG_ID" >> $GITHUB_OUTPUT
 
       - name: Build e Push da imagem Docker
         uses: docker/build-push-action@v4
@@ -53,6 +57,9 @@ jobs:
           tags: ghcr.io/${{ env.IMAGE_NAME }}:latest
           build-args: |
             REACT_APP_API_URL=${{ steps.vars.outputs.api_url }}
+            REACT_APP_META_APP_ID=${{ steps.vars.outputs.meta_app_id }}
+            REACT_APP_META_CONFIG_ID=${{ steps.vars.outputs.meta_config_id }}
+            REACT_APP_META_GRAPH_API_VERSION=v26.0
           # Cache para acelerar builds futuros
           cache-from: type=gha
           cache-to: type=gha,mode=max
