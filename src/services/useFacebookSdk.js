@@ -1,52 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-const FacebookLoginButton = () => {
-  const [isSdkLoaded, setIsSdkLoaded] = useState(false);
+const FACEBOOK_SDK_ID = 'facebook-jssdk';
+const META_APP_ID = process.env.REACT_APP_META_APP_ID;
+const META_GRAPH_API_VERSION = process.env.REACT_APP_META_GRAPH_API_VERSION || 'v26.0';
+
+export default function useFacebookSdk() {
+  const [isSdkReady, setIsSdkReady] = useState(Boolean(window.FB));
 
   useEffect(() => {
-    if (document.getElementById('facebook-jssdk')) {
-      setIsSdkLoaded(true);
-      return;
+    if (!META_APP_ID) {
+      setIsSdkReady(false);
+      return undefined;
     }
 
-    window.fbAsyncInit = function() {
-      window.FB.init({
-        appId      : '1720465665330010',
-        cookie     : true,
-        xfbml      : true,
-        version    : 'v20.0'
-      });
+    const initializeSdk = () => {
+      if (!window.FB) return;
 
-      setIsSdkLoaded(true); 
+      window.FB.init({
+        appId: META_APP_ID,
+        autoLogAppEvents: true,
+        cookie: true,
+        xfbml: true,
+        version: META_GRAPH_API_VERSION,
+      });
+      setIsSdkReady(true);
     };
 
-    (function(d, s, id){
-       var js, fjs = d.getElementsByTagName(s)[0];
-       if (d.getElementById(id)) {return;}
-       js = d.createElement(s); js.id = id;
-       js.src = "https://connect.facebook.net/pt_BR/sdk.js";
-       fjs.parentNode.insertBefore(js, fjs);
-     }(document, 'script', 'facebook-jssdk'));
+    if (window.FB) {
+      initializeSdk();
+      return undefined;
+    }
 
+    const previousAsyncInit = window.fbAsyncInit;
+    window.fbAsyncInit = () => {
+      if (typeof previousAsyncInit === 'function') previousAsyncInit();
+      initializeSdk();
+    };
+
+    let sdkScript = document.getElementById(FACEBOOK_SDK_ID);
+    if (!sdkScript) {
+      sdkScript = document.createElement('script');
+      sdkScript.id = FACEBOOK_SDK_ID;
+      sdkScript.async = true;
+      sdkScript.defer = true;
+      sdkScript.crossOrigin = 'anonymous';
+      sdkScript.src = 'https://connect.facebook.net/pt_BR/sdk.js';
+      document.body.appendChild(sdkScript);
+    }
+
+    return undefined;
   }, []);
 
-  const handleLoginClick = () => {
-    if (!isSdkLoaded) return;
-
-    window.FB.login(function(response) {
-      if (response.authResponse) {
-        console.log('Login bem-sucedido!', response);
-      } else {
-        console.log('Login cancelado ou falhou.');
-      }
-    }, {scope: 'email,public_profile'});
-  };
-
-  return (
-    <button onClick={handleLoginClick} disabled={!isSdkLoaded}>
-      {isSdkLoaded ? 'Entrar com Facebook' : 'Carregando...'}
-    </button>
-  );
-};
-
-export default FacebookLoginButton;
+  return isSdkReady;
+}
