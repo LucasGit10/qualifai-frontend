@@ -53,6 +53,38 @@ import DebtorDetailModal from '../components/debts/DebtorDetailModal';
 const MESES_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 const fmtNum = (v) => new Intl.NumberFormat('pt-BR').format(v || 0);
+const IMPORT_CHUNK_SIZE = 5 * 1024 * 1024;
+
+const uploadImportInChunks = async (file, onProgress) => {
+  const totalChunks = Math.ceil(file.size / IMPORT_CHUNK_SIZE);
+  const { data: started } = await api.post('/spreadsheets/import/upload/start', {
+    originalName: file.name,
+    totalSize: file.size,
+    totalChunks,
+  });
+
+  for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex += 1) {
+    const start = chunkIndex * IMPORT_CHUNK_SIZE;
+    const chunk = file.slice(start, Math.min(start + IMPORT_CHUNK_SIZE, file.size));
+    const formData = new FormData();
+    formData.append('chunk', chunk, file.name);
+    formData.append('uploadId', started.uploadId);
+    formData.append('chunkIndex', String(chunkIndex));
+
+    await api.post('/spreadsheets/import/upload/chunk', formData, {
+      onUploadProgress: (event) => {
+        const loaded = event.loaded || chunk.size;
+        const progress = ((chunkIndex + loaded / chunk.size) / totalChunks) * 70;
+        onProgress(Math.min(70, Math.round(progress)), `Enviando parte ${chunkIndex + 1} de ${totalChunks}...`);
+      },
+    });
+    onProgress(Math.min(70, Math.round(((chunkIndex + 1) / totalChunks) * 70)), `Parte ${chunkIndex + 1} de ${totalChunks} enviada.`);
+  }
+
+  await api.post('/spreadsheets/import/upload/complete', { uploadId: started.uploadId });
+  return started.uploadId;
+};
+
 const fmtPhone = (phone) => {
   if (!phone) return '';
   const digits = String(phone).replace(/\D/g, '');
@@ -339,6 +371,7 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
   const [extractionStep, setExtractionStep] = useState('');
   const [extractionProgress, setExtractionProgress] = useState(0);
   const [previewData, setPreviewData] = useState(null);
+  const [chunkUploadId, setChunkUploadId] = useState(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [isImportingConfirmed, setIsImportingConfirmed] = useState(false);
 
@@ -420,15 +453,14 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
     setExtractionStep('Enviando arquivo para analise...');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await api.post('/spreadsheets/import/preview', formData, {
-        onUploadProgress: (progressEvent) => {
-          const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setExtractionProgress(Math.min(70, pct / 2));
-          setExtractionStep('Enviando para validacao: ' + pct + '%');
-        }
+      const uploadId = await uploadImportInChunks(file, (progress, step) => {
+        setExtractionProgress(progress);
+        setExtractionStep(step);
+      });
+      setChunkUploadId(uploadId);
+      const response = await api.post('/spreadsheets/import/preview', {
+        uploadId,
+        preserveUpload: true,
       });
 
       setPreviewData(response.data);
@@ -452,16 +484,9 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
     setExtractionStep(applyCorrections ? 'Aplicando correcoes e importando...' : 'Importando sem aplicar correcoes...');
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('applyValueCorrections', applyCorrections ? 'true' : 'false');
-
-      await api.post('/spreadsheets/import/generic', formData, {
-        onUploadProgress: (progressEvent) => {
-          const pct = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          setExtractionProgress(Math.min(50, pct / 2));
-          setExtractionStep('Enviando importacao: ' + pct + '%');
-        }
+      await api.post('/spreadsheets/import/generic', {
+        uploadId: chunkUploadId,
+        applyValueCorrections: applyCorrections ? 'true' : 'false',
       });
 
       toast.info(applyCorrections
@@ -469,6 +494,7 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
         : 'Importacao iniciada sem aplicar correcoes de valores.', { autoClose: 5000 });
       setReviewOpen(false);
       setPreviewData(null);
+      setChunkUploadId(null);
       setFile(null);
       onClose();
       attachImportDoneListener();
@@ -495,7 +521,7 @@ function ImportDialog({ open, onClose, onImportSuccess }) {
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth PaperProps={{ sx: getDialogPaperSx(theme, theme.palette.primary.main) }}>
       <DialogTitle sx={{ pb: 1, textAlign: isExtracting ? 'center' : 'left' }}>
         <Typography variant="h6" fontWeight={800}>
-          {isExtracting ? 'Processando Planilha' : 'ðŸ“ Importar Planilha de Cobrança'}
+          {isExtracting ? 'Processando Planilha' : 'Importar Planilha de Cobrança'}
         </Typography>
         {!isExtracting && (
           <Typography variant="caption" color="text.secondary">Faça upload do extrato de cobranças e inadimplência</Typography>
