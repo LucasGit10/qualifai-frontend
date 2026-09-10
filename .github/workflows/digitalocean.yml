@@ -89,6 +89,7 @@ jobs:
             docker system prune -f
             
             echo "${{ secrets.FRONTEND_ENV }}" > .env
+            echo "BACKEND_UPSTREAM=http://${{ secrets.DO_BACKEND_IP }}:80" >> .env
             
             # --- CRIA O ARQUIVO DE PRODUÇÃO NA HORA ---
             cat <<EOF > docker-compose.prod.yml
