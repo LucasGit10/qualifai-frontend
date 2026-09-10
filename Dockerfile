@@ -23,8 +23,7 @@ RUN npm run build
 # Estágio 2: Servidor Nginx de Alta Performance
 FROM nginx:stable-alpine
 COPY --from=build-stage /app/build /usr/share/nginx/html
+# Copia sua configuração personalizada do Nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY docker-entrypoint.sh /usr/local/bin/qualifai-nginx-entrypoint.sh
-RUN chmod +x /usr/local/bin/qualifai-nginx-entrypoint.sh
 EXPOSE 80
-ENTRYPOINT ["/usr/local/bin/qualifai-nginx-entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]
